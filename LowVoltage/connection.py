@@ -12,7 +12,7 @@ import urlparse
 
 import requests
 
-from operations import UpdateItem
+from operations import PutItem, UpdateItem
 import exceptions
 
 
@@ -64,6 +64,9 @@ class Connection(object):
             raise exceptions.ServerError(data)
         else:
             raise exceptions.UnknownError(r.status_code, r.text)
+
+    def put_item(self, table_name, item):
+        return PutItem(self, table_name, item)
 
     def update_item(self, table_name, key):
         return UpdateItem(self, table_name, key)

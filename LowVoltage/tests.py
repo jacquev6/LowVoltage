@@ -12,7 +12,7 @@ import tarfile
 import time
 import unittest
 
-from operations import UpdateItemTestCase
+from operations import PutItemTestCase, UpdateItemTestCase
 from connection import ConnectionTestCase
 
 from LowVoltage import Connection, StaticCredentials, ValidationException, ResourceNotFoundException, ServerError
@@ -87,6 +87,28 @@ class IntegrationTestsMixin:
                     "__type": "com.amazon.coral.validate#ValidationException",
                 },),
             ]
+        )
+
+    def testPutItem(self):
+        first_put = (
+            self.connection
+                .put_item("LowVoltage.TableWithHash", {"hash": "testPutItem", "a": 42, "b": "foo"})
+                .return_all_old_values()
+                .go()
+        )
+        self.assertEqual(
+            first_put,
+            {}
+        )
+        second_put = (
+            self.connection
+                .put_item("LowVoltage.TableWithHash", {"hash": "testPutItem", "a": 42, "c": "bar"})
+                .return_all_old_values()
+                .go()
+        )
+        self.assertEqual(
+            second_put,
+            {u'Attributes': {u'a': {u'N': u'42'}, u'b': {u'S': u'foo'}, u'hash': {u'S': u'testPutItem'}}}
         )
 
     def testUpdateItem(self):
