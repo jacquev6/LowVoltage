@@ -1,0 +1,4 @@
+/.dynamodblocal
+/.coverage
+/AwsCredentials.py
+*.pyc
