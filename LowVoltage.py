@@ -235,6 +235,54 @@ class UpdateItem(Operation):
         self.__expected[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [self._convert_value(value)]}
         return self
 
+    def expect_not_equal(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "NE", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+    def expect_less_than_or_equal(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "LE", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+    def expect_less_than(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "LT", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+    def expect_greater_than_or_equal(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "GE", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+    def expect_greater_than(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "GT", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+    def expect_not_null(self, name):
+        self.__expected[name] = {"ComparisonOperator": "NOT_NULL"}
+        return self
+
+    def expect_null(self, name):
+        self.__expected[name] = {"ComparisonOperator": "NULL"}
+        return self
+
+    def expect_contains(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "CONTAINS", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+    def expect_not_contains(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "NOT_CONTAINS", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+    def expect_begins_with(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+    def expect_in(self, name, values):
+        self.__expected[name] = {"ComparisonOperator": "IN", "AttributeValueList": [self._convert_value(value) for value in values]}
+        return self
+
+    def expect_between(self, name, low, high):
+        self.__expected[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [self._convert_value(low), self._convert_value(high)]}
+        return self
+
 
 class ConnectionTestCase(unittest.TestCase):
     def setUp(self):
@@ -325,26 +373,6 @@ class UpdateItemTestCase(unittest.TestCase):
             }
         )
 
-    def testConditionalOperator(self):
-        self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).conditional_operator("AND")._build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ConditionalOperator": "AND",
-            }
-        )
-
-    def testExpectEqual(self):
-        self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_equal("attr", 42)._build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
     def testReturnAllNewValues(self):
         self.assertEqual(
             UpdateItem(None, "Table", {"hash": "h"}).return_all_new_values()._build(),
@@ -392,6 +420,146 @@ class UpdateItemTestCase(unittest.TestCase):
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
                 "ReturnValues": "NONE",
+            }
+        )
+
+    def testConditionalOperator(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).conditional_operator("AND")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ConditionalOperator": "AND",
+            }
+        )
+
+    def testExpectEqual(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_equal("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectNotEqual(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_not_equal("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "NE", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectLessThanOrEqual(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_less_than_or_equal("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "LE", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectLessThan(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_less_than("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "LT", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectGreaterThanOrEqual(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_greater_than_or_equal("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "GE", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectGreaterThan(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_greater_than("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "GT", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectNotNull(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_not_null("attr")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "NOT_NULL"}},
+            }
+        )
+
+    def testExpectNull(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_null("attr")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "NULL"}},
+            }
+        )
+
+    def testExpectContains(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_contains("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "CONTAINS", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectNotContains(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_not_contains("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "NOT_CONTAINS", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectBeginsWith(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_begins_with("attr", "prefix")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [{"S": "prefix"}]}},
+            }
+        )
+
+    def testExpectIn(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_in("attr", [42, 43])._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "IN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
+            }
+        )
+
+    def testExpectBetween(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).expect_between("attr", 42, 43)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "BETWEEN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
             }
         )
 
