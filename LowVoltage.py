@@ -38,11 +38,18 @@ class ValidationException(ClientError):
     pass
 
 
+class StaticCredentials:
+    def __init__(self, key, secret):
+        self.__credentials = (key, secret)
+
+    def get(self):
+        return self.__credentials
+
+
 class Connection:
-    def __init__(self, region, key, secret, endpoint=None):
+    def __init__(self, region, credentials, endpoint=None):
         self.__region = region
-        self.__key = key
-        self.__secret = secret
+        self.__credentials = credentials
         if endpoint is None:
             self.__endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)
         else:
@@ -99,11 +106,13 @@ class Connection:
             hashlib.sha256(request).hexdigest(),
         )
 
+        aws_key, aws_secret = self.__credentials.get()
+
         key = hmac.new(
             hmac.new(
                 hmac.new(
                     hmac.new(
-                        "AWS4{}".format(self.__secret),
+                        "AWS4{}".format(aws_secret),
                         datestamp,
                         hashlib.sha256
                     ).digest(),
@@ -118,7 +127,7 @@ class Connection:
         ).digest()
 
         headers["Authorization"] = "AWS4-HMAC-SHA256 Credential={}/{}, SignedHeaders={}, Signature={}".format(
-            self.__key,
+            aws_key,
             credentials,
             header_names,
             hmac.new(key, to_sign, hashlib.sha256).hexdigest(),
@@ -195,7 +204,7 @@ class UpdateItemBuilder(OperationBuilder):
 
 class ConnectionTestCase(unittest.TestCase):
     def setUp(self):
-        self.connection = Connection("us-west-2", "DummyKey", "DummySecret", "http://localhost:65432/")
+        self.connection = Connection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
     def test_sign(self):
         self.assertEqual(
@@ -359,7 +368,7 @@ try:
     class RealIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
         @classmethod
         def setUpClass(cls):
-            cls.connection = Connection(AwsCredentials.region, AwsCredentials.key, AwsCredentials.secret)
+            cls.connection = Connection(AwsCredentials.region, StaticCredentials(AwsCredentials.key, AwsCredentials.secret))
             cls.createTestTables()
 
         @classmethod
@@ -389,7 +398,7 @@ class LocalIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
         time.sleep(1)
         assert cls.dynamodblocal.poll() is None
 
-        cls.connection = Connection("us-west-2", "DummyKey", "DummySecret", "http://localhost:65432/")
+        cls.connection = Connection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
         cls.createTestTables()
 
     @classmethod
