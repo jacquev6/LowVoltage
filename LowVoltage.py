@@ -63,7 +63,7 @@ class Connection:
             elif typ.endswith("ValidationException"):
                 raise ValidationException(r.json())
             else:
-                raise ClientError(r.json())
+                raise ClientError(r.json())  # pragma no cover
         elif r.status_code == 500:
             raise ServerError(r.json())
         else:
@@ -125,6 +125,182 @@ class Connection:
         )
 
         return headers, payload
+
+
+class OperationBuilder:
+    def _convert_dict(self, attributes):
+        return {
+            key: self._convert_value(val)
+            for key, val in attributes.iteritems()
+        }
+
+    def _convert_value(self, value):
+        if isinstance(value, basestring):
+            return {"S": value}
+        elif isinstance(value, numbers.Integral):
+            return {"N": str(value)}
+        else:
+            assert len(value) > 0
+            if isinstance(value[0], basestring):
+                return {"SS": value}
+            elif isinstance(value[0], numbers.Integral):
+                return {"NS": [str(n) for n in value]}
+            else:
+                assert False  # pragma no cover
+
+
+class UpdateItemBuilder(OperationBuilder):
+    def __init__(self, table_name, key):
+        self.__table_name = table_name
+        self.__key = key
+        self.__attribute_updates = {}
+        self.__conditional_operator = None
+        self.__expected = {}
+
+    def build(self):
+        data = {
+            "TableName": self.__table_name,
+            "Key": self._convert_dict(self.__key),
+        }
+        if self.__attribute_updates:
+            data["AttributeUpdates"] = self.__attribute_updates
+        if self.__conditional_operator:
+            data["ConditionalOperator"] = self.__conditional_operator
+        if self.__expected:
+            data["Expected"] = self.__expected
+        return data
+
+    def put(self, name, value):
+        self.__attribute_updates[name] = {"Action": "PUT", "Value": self._convert_value(value)}
+        return self
+
+    def delete(self, name, value=None):
+        self.__attribute_updates[name] = {"Action": "DELETE"}
+        if value is not None:
+            self.__attribute_updates[name]["Value"] = self._convert_value(value)
+        return self
+
+    def add(self, name, value):
+        self.__attribute_updates[name] = {"Action": "ADD", "Value": self._convert_value(value)}
+        return self
+
+    def conditional_operator(self, operator):
+        self.__conditional_operator = operator
+        return self
+
+    def expect_equal(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [self._convert_value(value)]}
+        return self
+
+
+class ConnectionTestCase(unittest.TestCase):
+    def setUp(self):
+        self.connection = Connection("us-west-2", "DummyKey", "DummySecret", "http://localhost:65432/")
+
+    def test_sign(self):
+        self.assertEqual(
+            self.connection._sign(datetime.datetime(2014, 10, 4, 6, 33, 2), "Operation", {"Payload": "Value"}),
+            (
+                {
+                    "Host": "localhost",
+                    "Content-Type": "application/x-amz-json-1.0",
+                    "Authorization": "AWS4-HMAC-SHA256 Credential=DummyKey/20141004/us-west-2/dynamodb/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=f47b4025d95692c1623d01bd7db6d53e68f7a8a28264c1ab3393477f0dae520a",
+                    "X-Amz-Date": "20141004T063302Z",
+                    "X-Amz-Target": "DynamoDB_20120810.Operation",
+                },
+                '{"Payload": "Value"}'
+            )
+        )
+
+
+class UpdateItemBuilderTestCase(unittest.TestCase):
+    def testStringKey(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "value"}).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "value"}},
+            }
+        )
+
+    def testIntKey(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": 42}).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+            }
+        )
+
+    def testPutInt(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).put("attr", 42).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "PUT", "Value": {"N": "42"}}},
+            }
+        )
+
+    def testDelete(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).delete("attr").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "DELETE"}},
+            }
+        )
+
+    def testAddInt(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).add("attr", 42).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"N": "42"}}},
+            }
+        )
+
+    def testDeleteSetOfInts(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).delete("attr", [42, 43]).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "DELETE", "Value": {"NS": ["42", "43"]}}},
+            }
+        )
+
+    def testAddSetOfStrings(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).add("attr", ["42", "43"]).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"SS": ["42", "43"]}}},
+            }
+        )
+
+    def testConditionalOperator(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).conditional_operator("AND").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ConditionalOperator": "AND",
+            }
+        )
+
+    def testExpectEqual(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).expect_equal("attr", 42).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
 
 
 class RealIntegrationTestCase(unittest.TestCase):
@@ -270,180 +446,6 @@ class LocalIntegrationTestCase(unittest.TestCase):
                     "TableName": "TableWithHash",
                 }
             )
-
-
-class SigningTestCase(unittest.TestCase):
-    def setUp(self):
-        self.connection = Connection("us-west-2", "DummyKey", "DummySecret", "http://localhost:65432/")
-
-    def test(self):
-        self.assertEqual(
-            self.connection._sign(datetime.datetime(2014, 10, 4, 6, 33, 2), "Operation", {"Payload": "Value"}),
-            (
-                {
-                    "Host": "localhost",
-                    "Content-Type": "application/x-amz-json-1.0",
-                    "Authorization": "AWS4-HMAC-SHA256 Credential=DummyKey/20141004/us-west-2/dynamodb/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=f47b4025d95692c1623d01bd7db6d53e68f7a8a28264c1ab3393477f0dae520a",
-                    "X-Amz-Date": "20141004T063302Z",
-                    "X-Amz-Target": "DynamoDB_20120810.Operation",
-                },
-                '{"Payload": "Value"}'
-            )
-        )
-
-
-class OperationBuilder:
-    def _convert_dict(self, attributes):
-        return {
-            key: self._convert_value(val)
-            for key, val in attributes.iteritems()
-        }
-
-    def _convert_value(self, value):
-        if isinstance(value, basestring):
-            return {"S": value}
-        elif isinstance(value, numbers.Integral):
-            return {"N": str(value)}
-        else:
-            assert len(value) > 0
-            if isinstance(value[0], basestring):
-                return {"SS": value}
-            elif isinstance(value[0], numbers.Integral):
-                return {"NS": [str(n) for n in value]}
-
-
-class UpdateItemBuilder(OperationBuilder):
-    def __init__(self, table_name, key):
-        self.__table_name = table_name
-        self.__key = key
-        self.__attribute_updates = {}
-        self.__conditional_operator = None
-        self.__expected = {}
-
-    def build(self):
-        data = {
-            "TableName": self.__table_name,
-            "Key": self._convert_dict(self.__key),
-        }
-        if self.__attribute_updates:
-            data["AttributeUpdates"] = self.__attribute_updates
-        if self.__conditional_operator:
-            data["ConditionalOperator"] = self.__conditional_operator
-        if self.__expected:
-            data["Expected"] = self.__expected
-        return data
-
-    def put(self, name, value):
-        self.__attribute_updates[name] = {"Action": "PUT", "Value": self._convert_value(value)}
-        return self
-
-    def delete(self, name, value=None):
-        self.__attribute_updates[name] = {"Action": "DELETE"}
-        if value is not None:
-            self.__attribute_updates[name]["Value"] = self._convert_value(value)
-        return self
-
-    def add(self, name, value):
-        self.__attribute_updates[name] = {"Action": "ADD", "Value": self._convert_value(value)}
-        return self
-
-    def conditional_operator(self, operator):
-        self.__conditional_operator = operator
-        return self
-
-    def expect_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-
-class UpdateItemBuilderTestCase(unittest.TestCase):
-    def testStringKey(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "value"}).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "value"}},
-            }
-        )
-
-    def testIntKey(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": 42}).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"N": "42"}},
-            }
-        )
-
-    def testPutInt(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).put("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "PUT", "Value": {"N": "42"}}},
-            }
-        )
-
-    def testDelete(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).delete("attr").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "DELETE"}},
-            }
-        )
-
-    def testAddInt(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).add("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"N": "42"}}},
-            }
-        )
-
-    def testDeleteSetOfInts(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).delete("attr", [42, 43]).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "DELETE", "Value": {"NS": ["42", "43"]}}},
-            }
-        )
-
-    def testAddSetOfStrings(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).add("attr", ["42", "43"]).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"SS": ["42", "43"]}}},
-            }
-        )
-
-    def testConditionalOperator(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).conditional_operator("AND").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ConditionalOperator": "AND",
-            }
-        )
-
-    def testExpectEqual(self):
-        self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).expect_equal("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
 
 
 if __name__ == "__main__":  # pragma no branch
