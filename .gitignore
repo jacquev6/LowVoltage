@@ -1,4 +1,6 @@
 /.dynamodblocal
 /.coverage
 /AwsCredentials.py
+/LowVoltage.egg-info/
+/dist/
 *.pyc
