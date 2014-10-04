@@ -15,10 +15,10 @@ class Operation(object):
         return self.__connection.request(self.__operation, self._build())
 
     def _convert_dict(self, attributes):
-        return dict(
-            (key, self._convert_value(val))
+        return {
+            key: self._convert_value(val)
             for key, val in attributes.iteritems()
-        )
+        }
 
     def _convert_value(self, value):
         if isinstance(value, basestring):
