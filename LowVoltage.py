@@ -18,15 +18,19 @@ import urlparse
 import requests
 
 
-class DynamoDbError(Exception):
+class Error(Exception):
     pass
 
 
-class ServerError(DynamoDbError):
+class UnknownError(Error):
     pass
 
 
-class ClientError(DynamoDbError):
+class ServerError(Error):
+    pass
+
+
+class ClientError(Error):
     pass
 
 
@@ -63,18 +67,29 @@ class Connection(object):
         r = self.__session.post(self.__endpoint, data=payload, headers=headers)
         if r.status_code == 200:
             return r.json()
-        elif r.status_code == 400:
-            typ = r.json().get("__type")
-            if typ.endswith("ResourceNotFoundException"):
-                raise ResourceNotFoundException(r.json())
-            elif typ.endswith("ValidationException"):
-                raise ValidationException(r.json())
-            else:
-                raise ClientError(r.json())  # pragma no cover
-        elif r.status_code == 500:
-            raise ServerError(r.json())
         else:
-            raise DynamoDbError  # pragma no cover
+            self._raise(r)
+
+    def _raise(self, r):
+        try:
+            data = r.json()
+            typ = data.get("__type")
+        except ValueError:
+            data = r.text
+            typ = None
+        if r.status_code == 400:
+            if typ is None:
+                raise ClientError(data)
+            elif typ.endswith("ResourceNotFoundException"):
+                raise ResourceNotFoundException(data)
+            elif typ.endswith("ValidationException"):
+                raise ValidationException(data)
+            else:
+                raise ClientError(data)
+        elif r.status_code == 500:
+            raise ServerError(data)
+        else:
+            raise UnknownError(r.status_code, r.text)
 
     def update_item(self, table_name, key):
         return UpdateItem(self, table_name, key)
@@ -285,6 +300,14 @@ class UpdateItem(Operation):
 
 
 class ConnectionTestCase(unittest.TestCase):
+    class FakeResponse(object):
+        def __init__(self, status_code, text):
+            self.status_code = status_code
+            self.text = text
+
+        def json(self):
+            return json.loads(self.text)
+
     def setUp(self):
         self.connection = Connection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
@@ -302,6 +325,51 @@ class ConnectionTestCase(unittest.TestCase):
                 '{"Payload": "Value"}'
             )
         )
+
+    def testUnknownError(self):
+        with self.assertRaises(UnknownError) as catcher:
+            self.connection._raise(self.FakeResponse(999, "{}"))
+        self.assertEqual(catcher.exception.args, (999, "{}"))
+
+    def testUnknownErrorWithoutJson(self):
+        with self.assertRaises(UnknownError) as catcher:
+            self.connection._raise(self.FakeResponse(999, "not json"))
+        self.assertEqual(catcher.exception.args, (999, "not json"))
+
+    def testServerError(self):
+        with self.assertRaises(ServerError) as catcher:
+            self.connection._raise(self.FakeResponse(500, '{"foo": "bar"}'))
+        self.assertEqual(catcher.exception.args, ({"foo": "bar"},))
+
+    def testServerErrorWithoutJson(self):
+        with self.assertRaises(ServerError) as catcher:
+            self.connection._raise(self.FakeResponse(500, "not json"))
+        self.assertEqual(catcher.exception.args, ("not json",))
+
+    def testClientErrorWithoutType(self):
+        with self.assertRaises(ClientError) as catcher:
+            self.connection._raise(self.FakeResponse(400, "{}"))
+        self.assertEqual(catcher.exception.args, ({},))
+
+    def testClientErrorWithUnknownType(self):
+        with self.assertRaises(ClientError) as catcher:
+            self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.UnhandledException", "Message": "tralala"}'))
+        self.assertEqual(catcher.exception.args, ({"__type": "xxx.UnhandledException", "Message": "tralala"},))
+
+    def testClientErrorWithoutJson(self):
+        with self.assertRaises(ClientError) as catcher:
+            self.connection._raise(self.FakeResponse(400, "not json"))
+        self.assertEqual(catcher.exception.args, ("not json",))
+
+    def testResourceNotFoundException(self):
+        with self.assertRaises(ResourceNotFoundException) as catcher:
+            self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ResourceNotFoundException", "Message": "tralala"}'))
+        self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceNotFoundException", "Message": "tralala"},))
+
+    def testValidationException(self):
+        with self.assertRaises(ValidationException) as catcher:
+            self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ValidationException", "Message": "tralala"}'))
+        self.assertEqual(catcher.exception.args, ({"__type": "xxx.ValidationException", "Message": "tralala"},))
 
 
 class UpdateItemTestCase(unittest.TestCase):
@@ -596,18 +664,44 @@ class IntegrationTestsMixin:
         }
 
     def testResourceNotFoundException(self):
-        with self.assertRaises(ResourceNotFoundException):
+        with self.assertRaises(ResourceNotFoundException) as catcher:
             self.connection.request(
                 "DescribeTable",
                 {"TableName": "UnexistingTable"}
             )
+        self.assertIn(
+            catcher.exception.args,
+            [
+                ({  # DynamoDBLocal
+                    "Message": "Cannot do operations on a non-existent table",
+                    "__type": "com.amazonaws.dynamodb.v20120810#ResourceNotFoundException",
+                },),
+                ({  # Real DynamoDB
+                    "message": "Requested resource not found: Table: UnexistingTable not found",
+                    "__type": "com.amazonaws.dynamodb.v20120810#ResourceNotFoundException",
+                },),
+            ]
+        )
 
     def testValidationException(self):
-        with self.assertRaises(ValidationException):
+        with self.assertRaises(ValidationException) as catcher:
             self.connection.request(
                 "PutItem",
                 {"TableName": "LowVoltage.TableWithHash"}
             )
+        self.assertIn(
+            catcher.exception.args,
+            [
+                ({  # DynamoDBLocal
+                    "Message": "Item to put in PutItem cannot be null",
+                    "__type": "com.amazon.coral.validate#ValidationException",
+                },),
+                ({  # Real DynamoDB
+                    "message": "1 validation error detected: Value null at 'item' failed to satisfy constraint: Member must not be null",
+                    "__type": "com.amazon.coral.validate#ValidationException",
+                },),
+            ]
+        )
 
     def testUpdateItem(self):
         update = (
@@ -668,7 +762,7 @@ class LocalIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
 
     def testServerError(self):
         # DynamoDBLocal is not as robust as the real one. This is useful for our test coverage :)
-        with self.assertRaises(ServerError):
+        with self.assertRaises(ServerError) as catcher:
             self.connection.request(
                 "PutItem",
                 {
@@ -676,6 +770,13 @@ class LocalIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
                     "Item": {"hash": 42}
                 }
             )
+        self.assertEqual(
+            catcher.exception.args,
+            ({
+                "Message": "The request processing has failed because of an unknown error, exception or failure.",
+                "__type": "com.amazonaws.dynamodb.v20120810#InternalFailure",
+            },)
+        )
 
 
 if __name__ == "__main__":  # pragma no branch
