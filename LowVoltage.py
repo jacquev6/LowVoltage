@@ -38,7 +38,7 @@ class ValidationException(ClientError):
     pass
 
 
-class StaticCredentials:
+class StaticCredentials(object):
     def __init__(self, key, secret):
         self.__credentials = (key, secret)
 
@@ -46,7 +46,7 @@ class StaticCredentials:
         return self.__credentials
 
 
-class Connection:
+class Connection(object):
     def __init__(self, region, credentials, endpoint=None):
         self.__region = region
         self.__credentials = credentials
@@ -75,6 +75,9 @@ class Connection:
             raise ServerError(r.json())
         else:
             raise DynamoDbError  # pragma no cover
+
+    def update_item(self, table_name, key):
+        return UpdateItem(self, table_name, key)
 
     def _sign(self, now, operation, payload):
         # http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
@@ -136,7 +139,14 @@ class Connection:
         return headers, payload
 
 
-class OperationBuilder:
+class Operation(object):
+    def __init__(self, operation, connection):
+        self.__operation = operation
+        self.__connection = connection
+
+    def go(self):
+        return self.__connection.request(self.__operation, self._build())
+
     def _convert_dict(self, attributes):
         return {
             key: self._convert_value(val)
@@ -158,15 +168,17 @@ class OperationBuilder:
                 assert False  # pragma no cover
 
 
-class UpdateItemBuilder(OperationBuilder):
-    def __init__(self, table_name, key):
+class UpdateItem(Operation):
+    def __init__(self, connection, table_name, key):
+        super(UpdateItem, self).__init__("UpdateItem", connection)
         self.__table_name = table_name
         self.__key = key
         self.__attribute_updates = {}
         self.__conditional_operator = None
+        self.__return_values = None
         self.__expected = {}
 
-    def build(self):
+    def _build(self):
         data = {
             "TableName": self.__table_name,
             "Key": self._convert_dict(self.__key),
@@ -175,6 +187,8 @@ class UpdateItemBuilder(OperationBuilder):
             data["AttributeUpdates"] = self.__attribute_updates
         if self.__conditional_operator:
             data["ConditionalOperator"] = self.__conditional_operator
+        if self.__return_values:
+            data["ReturnValues"] = self.__return_values
         if self.__expected:
             data["Expected"] = self.__expected
         return data
@@ -193,6 +207,10 @@ class UpdateItemBuilder(OperationBuilder):
         self.__attribute_updates[name] = {"Action": "ADD", "Value": self._convert_value(value)}
         return self
 
+    def return_all_new_attributes(self):
+        self.__return_values = "ALL_NEW"
+        return self
+
     def conditional_operator(self, operator):
         self.__conditional_operator = operator
         return self
@@ -206,7 +224,7 @@ class ConnectionTestCase(unittest.TestCase):
     def setUp(self):
         self.connection = Connection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
-    def test_sign(self):
+    def testSign(self):
         self.assertEqual(
             self.connection._sign(datetime.datetime(2014, 10, 4, 6, 33, 2), "Operation", {"Payload": "Value"}),
             (
@@ -222,10 +240,10 @@ class ConnectionTestCase(unittest.TestCase):
         )
 
 
-class UpdateItemBuilderTestCase(unittest.TestCase):
+class UpdateItemTestCase(unittest.TestCase):
     def testStringKey(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "value"}).build(),
+            UpdateItem(None, "Table", {"hash": "value"})._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "value"}},
@@ -234,7 +252,7 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
 
     def testIntKey(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": 42}).build(),
+            UpdateItem(None, "Table", {"hash": 42})._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -243,7 +261,7 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
 
     def testPutInt(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).put("attr", 42).build(),
+            UpdateItem(None, "Table", {"hash": "h"}).put("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -253,7 +271,7 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
 
     def testDelete(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).delete("attr").build(),
+            UpdateItem(None, "Table", {"hash": "h"}).delete("attr")._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -263,7 +281,7 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
 
     def testAddInt(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).add("attr", 42).build(),
+            UpdateItem(None, "Table", {"hash": "h"}).add("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -273,7 +291,7 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
 
     def testDeleteSetOfInts(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).delete("attr", [42, 43]).build(),
+            UpdateItem(None, "Table", {"hash": "h"}).delete("attr", [42, 43])._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -283,7 +301,7 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
 
     def testAddSetOfStrings(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).add("attr", ["42", "43"]).build(),
+            UpdateItem(None, "Table", {"hash": "h"}).add("attr", ["42", "43"])._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -293,7 +311,7 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
 
     def testConditionalOperator(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).conditional_operator("AND").build(),
+            UpdateItem(None, "Table", {"hash": "h"}).conditional_operator("AND")._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -303,11 +321,21 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
 
     def testExpectEqual(self):
         self.assertEqual(
-            UpdateItemBuilder("Table", {"hash": "h"}).expect_equal("attr", 42).build(),
+            UpdateItem(None, "Table", {"hash": "h"}).expect_equal("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
                 "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testReturnAllNewAttributes(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_all_new_attributes()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_NEW",
             }
         )
 
@@ -358,8 +386,17 @@ class IntegrationTestsMixin:
             )
 
     def testUpdateItem(self):
-        payload = UpdateItemBuilder("LowVoltage.TableWithHash", {"hash": "testUpdateItem"}).put("a", 42).build()
-        self.connection.request("UpdateItem", payload)
+        update = (
+            self.connection
+                .update_item("LowVoltage.TableWithHash", {"hash": "testUpdateItem"})
+                .put("a", 42)
+                .return_all_new_attributes()
+                .go()
+        )
+        self.assertEqual(
+            update,
+            {u'Attributes': {u'a': {u'N': u'42'}, u'hash': {u'S': u'testUpdateItem'}}}
+        )
 
 
 try:
