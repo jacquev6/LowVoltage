@@ -20,3 +20,7 @@ class ResourceNotFoundException(ClientError):
 
 class ValidationException(ClientError):
     pass
+
+
+class ConditionalCheckFailedException(ClientError):
+	pass

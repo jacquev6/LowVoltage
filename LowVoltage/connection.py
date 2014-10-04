@@ -58,6 +58,8 @@ class Connection(object):
                 raise exceptions.ResourceNotFoundException(data)
             elif typ.endswith("ValidationException"):
                 raise exceptions.ValidationException(data)
+            elif typ.endswith("ConditionalCheckFailedException"):
+                raise exceptions.ConditionalCheckFailedException(data)
             else:
                 raise exceptions.ClientError(data)
         elif r.status_code == 500:
