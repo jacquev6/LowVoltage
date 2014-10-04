@@ -207,8 +207,24 @@ class UpdateItem(Operation):
         self.__attribute_updates[name] = {"Action": "ADD", "Value": self._convert_value(value)}
         return self
 
-    def return_all_new_attributes(self):
+    def return_all_new_values(self):
         self.__return_values = "ALL_NEW"
+        return self
+
+    def return_updated_new_values(self):
+        self.__return_values = "UPDATED_NEW"
+        return self
+
+    def return_all_old_values(self):
+        self.__return_values = "ALL_OLD"
+        return self
+
+    def return_updated_old_values(self):
+        self.__return_values = "UPDATED_OLD"
+        return self
+
+    def return_no_values(self):
+        self.__return_values = "NONE"
         return self
 
     def conditional_operator(self, operator):
@@ -329,13 +345,53 @@ class UpdateItemTestCase(unittest.TestCase):
             }
         )
 
-    def testReturnAllNewAttributes(self):
+    def testReturnAllNewValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_all_new_attributes()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_all_new_values()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
                 "ReturnValues": "ALL_NEW",
+            }
+        )
+
+    def testReturnUpdatedNewValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_updated_new_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "UPDATED_NEW",
+            }
+        )
+
+    def testReturnAllOldValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_all_old_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_OLD",
+            }
+        )
+
+    def testReturnUpdatedOldValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_updated_old_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "UPDATED_OLD",
+            }
+        )
+
+    def testReturnNoValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_no_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "NONE",
             }
         )
 
@@ -390,7 +446,7 @@ class IntegrationTestsMixin:
             self.connection
                 .update_item("LowVoltage.TableWithHash", {"hash": "testUpdateItem"})
                 .put("a", 42)
-                .return_all_new_attributes()
+                .return_all_new_values()
                 .go()
         )
         self.assertEqual(
