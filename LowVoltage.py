@@ -327,12 +327,12 @@ class IntegrationTestsMixin:
 
     @classmethod
     def __getTestTables(cls):
-        yield dict(
-            TableName="LowVoltage.TableWithHash",
-            AttributeDefinitions=[dict(AttributeName="hash", AttributeType="S")],
-            KeySchema=[dict(AttributeName="hash", KeyType="HASH")],
-            ProvisionedThroughput=dict(ReadCapacityUnits=1, WriteCapacityUnits=1),
-        )
+        yield {
+            "TableName": "LowVoltage.TableWithHash",
+            "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
+            "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
+            "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+        }
 
     def testResourceNotFoundException(self):
         with self.assertRaises(ResourceNotFoundException):
@@ -345,9 +345,7 @@ class IntegrationTestsMixin:
         with self.assertRaises(ValidationException):
             self.connection.request(
                 "PutItem",
-                {
-                    "TableName": "LowVoltage.TableWithHash",
-                }
+                {"TableName": "LowVoltage.TableWithHash"}
             )
 
     def testUpdateItem(self):
