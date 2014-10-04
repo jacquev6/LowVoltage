@@ -5,10 +5,11 @@ import hashlib
 import hmac
 import io
 import json
+import numbers
 import os
 import stat
-import sys
 import subprocess
+import sys
 import tarfile
 import time
 import unittest
@@ -288,6 +289,54 @@ class SigningTestCase(unittest.TestCase):
                 },
                 '{"Payload": "Value"}'
             )
+        )
+
+
+class OperationBuilder:
+    def _to_dynamo(self, attributes):
+        return {
+            key: self.__to_dynamo(val)
+            for key, val in attributes.iteritems()
+        }
+
+    def __to_dynamo(self, value):
+        if isinstance(value, basestring):
+            return {"S": value}
+        elif isinstance(value, numbers.Integral):
+            return {"N": str(value)}
+        else:
+            assert False  # pragma no cover
+
+
+class UpdateItemBuilder(OperationBuilder):
+    def __init__(self, table_name, key):
+        self.__table_name = table_name
+        self.__key = key
+
+    def build(self):
+        return {
+            "TableName": self.__table_name,
+            "Key": self._to_dynamo(self.__key),
+        }
+
+
+class UpdateItemBuilderTestCase(unittest.TestCase):
+    def testStringKey(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "value"}).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "value"}},
+            }
+        )
+
+    def testIntKey(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": 42}).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+            }
         )
 
 
