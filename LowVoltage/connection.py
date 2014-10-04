@@ -86,7 +86,7 @@ class Connection(object):
         request = "POST\n/\n\n{}\n{}\n{}".format(
             "".join("{}:{}\n".format(key.lower(), val) for key, val in sorted(headers.iteritems())),
             header_names,
-            hashlib.sha256(payload).hexdigest(),
+            hashlib.sha256(payload.encode("utf-8")).hexdigest(),
         )
         credentials = "{}/{}/dynamodb/aws4_request".format(
             datestamp,
@@ -95,7 +95,7 @@ class Connection(object):
         to_sign = "AWS4-HMAC-SHA256\n{}\n{}\n{}".format(
             timestamp,
             credentials,
-            hashlib.sha256(request).hexdigest(),
+            hashlib.sha256(request.encode("utf-8")).hexdigest(),
         )
 
         aws_key, aws_secret = self.__credentials.get()
@@ -104,17 +104,17 @@ class Connection(object):
             hmac.new(
                 hmac.new(
                     hmac.new(
-                        "AWS4{}".format(aws_secret),
-                        datestamp,
+                        "AWS4{}".format(aws_secret).encode("utf-8"),
+                        datestamp.encode("utf-8"),
                         hashlib.sha256
                     ).digest(),
-                    self.__region,
+                    self.__region.encode("utf-8"),
                     hashlib.sha256
                 ).digest(),
-                "dynamodb",
+                "dynamodb".encode("utf-8"),
                 hashlib.sha256
             ).digest(),
-            "aws4_request",
+            "aws4_request".encode("utf-8"),
             hashlib.sha256
         ).digest()
 
@@ -122,7 +122,7 @@ class Connection(object):
             aws_key,
             credentials,
             header_names,
-            hmac.new(key, to_sign, hashlib.sha256).hexdigest(),
+            hmac.new(key, to_sign.encode("utf-8"), hashlib.sha256).hexdigest(),
         )
 
         return headers, payload

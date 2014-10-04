@@ -4,3 +4,4 @@
 /LowVoltage.egg-info/
 /dist/
 *.pyc
+/build/
