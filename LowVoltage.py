@@ -293,31 +293,67 @@ class SigningTestCase(unittest.TestCase):
 
 
 class OperationBuilder:
-    def _to_dynamo(self, attributes):
+    def _convert_dict(self, attributes):
         return {
-            key: self.__to_dynamo(val)
+            key: self._convert_value(val)
             for key, val in attributes.iteritems()
         }
 
-    def __to_dynamo(self, value):
+    def _convert_value(self, value):
         if isinstance(value, basestring):
             return {"S": value}
         elif isinstance(value, numbers.Integral):
             return {"N": str(value)}
         else:
-            assert False  # pragma no cover
+            assert len(value) > 0
+            if isinstance(value[0], basestring):
+                return {"SS": value}
+            elif isinstance(value[0], numbers.Integral):
+                return {"NS": [str(n) for n in value]}
 
 
 class UpdateItemBuilder(OperationBuilder):
     def __init__(self, table_name, key):
         self.__table_name = table_name
         self.__key = key
+        self.__attribute_updates = {}
+        self.__conditional_operator = None
+        self.__expected = {}
 
     def build(self):
-        return {
+        data = {
             "TableName": self.__table_name,
-            "Key": self._to_dynamo(self.__key),
+            "Key": self._convert_dict(self.__key),
         }
+        if self.__attribute_updates:
+            data["AttributeUpdates"] = self.__attribute_updates
+        if self.__conditional_operator:
+            data["ConditionalOperator"] = self.__conditional_operator
+        if self.__expected:
+            data["Expected"] = self.__expected
+        return data
+
+    def put(self, name, value):
+        self.__attribute_updates[name] = {"Action": "PUT", "Value": self._convert_value(value)}
+        return self
+
+    def delete(self, name, value=None):
+        self.__attribute_updates[name] = {"Action": "DELETE"}
+        if value is not None:
+            self.__attribute_updates[name]["Value"] = self._convert_value(value)
+        return self
+
+    def add(self, name, value):
+        self.__attribute_updates[name] = {"Action": "ADD", "Value": self._convert_value(value)}
+        return self
+
+    def conditional_operator(self, operator):
+        self.__conditional_operator = operator
+        return self
+
+    def expect_equal(self, name, value):
+        self.__expected[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [self._convert_value(value)]}
+        return self
 
 
 class UpdateItemBuilderTestCase(unittest.TestCase):
@@ -336,6 +372,76 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
+            }
+        )
+
+    def testPutInt(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).put("attr", 42).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "PUT", "Value": {"N": "42"}}},
+            }
+        )
+
+    def testDelete(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).delete("attr").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "DELETE"}},
+            }
+        )
+
+    def testAddInt(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).add("attr", 42).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"N": "42"}}},
+            }
+        )
+
+    def testDeleteSetOfInts(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).delete("attr", [42, 43]).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "DELETE", "Value": {"NS": ["42", "43"]}}},
+            }
+        )
+
+    def testAddSetOfStrings(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).add("attr", ["42", "43"]).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"SS": ["42", "43"]}}},
+            }
+        )
+
+    def testConditionalOperator(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).conditional_operator("AND").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ConditionalOperator": "AND",
+            }
+        )
+
+    def testExpectEqual(self):
+        self.assertEqual(
+            UpdateItemBuilder("Table", {"hash": "h"}).expect_equal("attr", 42).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
             }
         )
 
