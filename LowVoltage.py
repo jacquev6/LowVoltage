@@ -303,87 +303,76 @@ class UpdateItemBuilderTestCase(unittest.TestCase):
         )
 
 
-class RealIntegrationTestCase(unittest.TestCase):
-    def setUp(self):
-        import AwsCredentials
-        self.connection = Connection(AwsCredentials.region, AwsCredentials.key, AwsCredentials.secret)
+class IntegrationTestsMixin:
+    @classmethod
+    def createTestTables(cls):
+        for payload in cls.__getTestTables():
+            cls.connection.request("CreateTable", payload)
+        sleep = True
+        while sleep:
+            sleep = False
+            for payload in cls.__getTestTables():
+                name = payload["TableName"]
+                status = cls.connection.request("DescribeTable", {"TableName": name})["Table"]["TableStatus"]
+                if status == "CREATING":
+                    sleep = True
+            if sleep:
+                time.sleep(1)
 
-    def testCreateDeleteTable(self):
-        create = self.connection.request(
-            "CreateTable",
-            dict(
-                TableName="LowVoltage.CreateDeleteTable",
-                AttributeDefinitions=[dict(AttributeName="the_hash", AttributeType="S")],
-                KeySchema=[dict(AttributeName="the_hash", KeyType="HASH")],
-                ProvisionedThroughput=dict(ReadCapacityUnits=1, WriteCapacityUnits=1),
-            )
+    @classmethod
+    def deleteTestTables(cls):
+        for payload in cls.__getTestTables():
+            name = payload["TableName"]
+            cls.connection.request("DeleteTable", {"TableName": name})
+
+    @classmethod
+    def __getTestTables(cls):
+        yield dict(
+            TableName="LowVoltage.TableWithHash",
+            AttributeDefinitions=[dict(AttributeName="hash", AttributeType="S")],
+            KeySchema=[dict(AttributeName="hash", KeyType="HASH")],
+            ProvisionedThroughput=dict(ReadCapacityUnits=1, WriteCapacityUnits=1),
         )
 
-        status = create["TableDescription"]["TableStatus"]
-        while status == "CREATING":
-            time.sleep(5)
-            status = self.connection.request(
+    def testResourceNotFoundException(self):
+        with self.assertRaises(ResourceNotFoundException):
+            self.connection.request(
                 "DescribeTable",
-                {"TableName": "LowVoltage.CreateDeleteTable"}
-            )["Table"]["TableStatus"]
+                {"TableName": "UnexistingTable"}
+            )
 
-        delete = self.connection.request(
-            "DeleteTable",
-            {
-                "TableName": "LowVoltage.CreateDeleteTable",
-            }
-        )
-
-        del create["TableDescription"]["CreationDateTime"]
-        self.assertEqual(
-            create,
-            {
-                "TableDescription": {
-                    "AttributeDefinitions": [
-                        {
-                            "AttributeName": "the_hash",
-                            "AttributeType": "S",
-                        },
-                    ],
-                    # "CreationDateTime": 1.412395289605E9,
-                    "ItemCount": 0,
-                    "KeySchema": [
-                        {
-                            "AttributeName": "the_hash",
-                            "KeyType": "HASH",
-                        }
-                    ],
-                    "ProvisionedThroughput": {
-                        "NumberOfDecreasesToday": 0,
-                        "ReadCapacityUnits": 1,
-                        "WriteCapacityUnits": 1
-                    },
-                    "TableName": "LowVoltage.CreateDeleteTable",
-                    "TableSizeBytes": 0,
-                    "TableStatus": "CREATING"
+    def testValidationException(self):
+        with self.assertRaises(ValidationException):
+            self.connection.request(
+                "PutItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
                 }
-            }
-        )
+            )
 
-        self.assertEqual(
-            delete,
-            {
-                "TableDescription": {
-                    "ItemCount": 0,
-                    "ProvisionedThroughput": {
-                        "NumberOfDecreasesToday": 0,
-                        "ReadCapacityUnits": 1,
-                        "WriteCapacityUnits": 1
-                    },
-                    "TableName": "LowVoltage.CreateDeleteTable",
-                    "TableSizeBytes": 0,
-                    "TableStatus": "DELETING"
-                }
-            }
-        )
+    def testUpdateItem(self):
+        payload = UpdateItemBuilder("LowVoltage.TableWithHash", {"hash": "testUpdateItem"}).put("a", 42).build()
+        self.connection.request("UpdateItem", payload)
 
 
-class LocalIntegrationTestCase(unittest.TestCase):
+try:
+    import AwsCredentials
+
+    class RealIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
+        @classmethod
+        def setUpClass(cls):
+            cls.connection = Connection(AwsCredentials.region, AwsCredentials.key, AwsCredentials.secret)
+            cls.createTestTables()
+
+        @classmethod
+        def tearDownClass(cls):
+            cls.deleteTestTables()
+
+except ImportError:  # pragma no cover
+    pass  # pragma no cover
+
+
+class LocalIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if not os.path.exists(".dynamodblocal/DynamoDBLocal.jar"):
@@ -402,30 +391,12 @@ class LocalIntegrationTestCase(unittest.TestCase):
         time.sleep(1)
         assert cls.dynamodblocal.poll() is None
 
-        connection = Connection("us-west-2", "DummyKey", "DummySecret", "http://localhost:65432/")
-        connection.request(
-            "CreateTable",
-            dict(
-                TableName="TableWithHash",
-                AttributeDefinitions=[dict(AttributeName="hash", AttributeType="S")],
-                KeySchema=[dict(AttributeName="hash", KeyType="HASH")],
-                ProvisionedThroughput=dict(ReadCapacityUnits=1, WriteCapacityUnits=1),
-            )
-        )
+        cls.connection = Connection("us-west-2", "DummyKey", "DummySecret", "http://localhost:65432/")
+        cls.createTestTables()
 
     @classmethod
     def tearDownClass(cls):
         cls.dynamodblocal.kill()
-
-    def setUp(self):
-        self.connection = Connection("us-west-2", "DummyKey", "DummySecret", "http://localhost:65432/")
-
-    def testResourceNotFoundException(self):
-        with self.assertRaises(ResourceNotFoundException):
-            self.connection.request(
-                "DescribeTable",
-                {"TableName": "UnexistingTable"}
-            )
 
     def testServerError(self):
         # DynamoDBLocal is not as robust as the real one. This is useful for our test coverage :)
@@ -435,15 +406,6 @@ class LocalIntegrationTestCase(unittest.TestCase):
                 {
                     "TableName": "TableWithHash",
                     "Item": {"hash": 42}
-                }
-            )
-
-    def testValidationException(self):
-        with self.assertRaises(ValidationException):
-            self.connection.request(
-                "PutItem",
-                {
-                    "TableName": "TableWithHash",
                 }
             )
 
