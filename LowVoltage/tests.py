@@ -2,10 +2,15 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
-import time
+import glob
+import io
 import os
+import requests
+import stat
 import subprocess
+import tarfile
+import time
+import unittest
 
 from operations import UpdateItemTestCase
 from connection import ConnectionTestCase

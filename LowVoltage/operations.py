@@ -2,8 +2,8 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
 import numbers
+import unittest
 
 
 class Operation(object):

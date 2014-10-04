@@ -3,12 +3,12 @@
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
 
-import unittest
-import urlparse
-import json
 import datetime
 import hashlib
 import hmac
+import json
+import unittest
+import urlparse
 
 import requests
 
