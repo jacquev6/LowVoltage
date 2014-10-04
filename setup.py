@@ -32,6 +32,6 @@ if __name__ == "__main__":
             # "Programming Language :: Python :: 3.4",
             "Environment :: Web Environment",
         ],
-        test_suite="LowVoltage",
+        test_suite="LowVoltage.tests",
         use_2to3=True
     )
