@@ -59,7 +59,7 @@ class Connection(object):
         self.__region = region
         self.__credentials = credentials
         if endpoint is None:
-            self.__endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)
+            self.__endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)  # pragma no cover (Covered by optional integ tests)
         else:
             self.__endpoint = endpoint
         self.__host = urlparse.urlparse(self.__endpoint).hostname
@@ -638,7 +638,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
 class IntegrationTestsMixin:
     @classmethod
-    def createTestTables(cls):
+    def createTestTables(cls):  # pragma no cover (Covered by optional integ tests)
         for payload in cls.__getTestTables():
             cls.connection.request("CreateTable", payload)
         sleep = True
@@ -653,7 +653,7 @@ class IntegrationTestsMixin:
                 time.sleep(1)
 
     @classmethod
-    def deleteTestTables(cls):
+    def deleteTestTables(cls):  # pragma no cover (Covered by optional integ tests)
         for payload in cls.__getTestTables():
             name = payload["TableName"]
             cls.connection.request("DeleteTable", {"TableName": name})
@@ -722,9 +722,9 @@ class IntegrationTestsMixin:
 
 
 try:
-    import AwsCredentials
+    import AwsCredential
 
-    class RealIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
+    class RealIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):  # pragma no cover (Covered by optional integ tests)
         @classmethod
         def setUpClass(cls):
             cls.connection = Connection(AwsCredentials.region, StaticCredentials(AwsCredentials.key, AwsCredentials.secret))
@@ -783,5 +783,5 @@ class LocalIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
         )
 
 
-if __name__ == "__main__":  # pragma no branch
-    unittest.main()
+if __name__ == "__main__":  # pragma no branch (Test code)
+    unittest.main()  # pragma no cover (Test code)
