@@ -33,6 +33,10 @@ class ResourceNotFoundException(ClientError):
     pass
 
 
+class ValidationException(ClientError):
+    pass
+
+
 class Connection:
     def __init__(self, region, key, secret, endpoint=None):
         self.__region = region
@@ -43,23 +47,26 @@ class Connection:
         else:
             self.__endpoint = endpoint
         self.__host = urlparse.urlparse(self.__endpoint).hostname
+        self.__session = requests.Session()
 
     def request(self, operation, payload):
         headers, payload = self._sign(datetime.datetime.utcnow(), operation, payload)
 
-        r = requests.post(self.__endpoint, data=payload, headers=headers)
+        r = self.__session.post(self.__endpoint, data=payload, headers=headers)
         if r.status_code == 200:
             return r.json()
         elif r.status_code == 400:
             typ = r.json().get("__type")
             if typ.endswith("ResourceNotFoundException"):
-                raise ResourceNotFoundException
+                raise ResourceNotFoundException(r.json())
+            elif typ.endswith("ValidationException"):
+                raise ValidationException(r.json())
             else:
                 raise ClientError(r.json())
         elif r.status_code == 500:
             raise ServerError(r.json())
         else:
-            raise DynamoDbError
+            raise DynamoDbError  # pragma no cover
 
     def _sign(self, now, operation, payload):
         # http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
@@ -203,11 +210,11 @@ class LocalIntegrationTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if not os.path.exists(".dynamodblocal/DynamoDBLocal.jar"):
-            archive = requests.get("http://dynamodb-local.s3-website-us-west-2.amazonaws.com/dynamodb_local_latest").content
-            tarfile.open(fileobj=io.BytesIO(archive)).extractall(".dynamodblocal")
+            archive = requests.get("http://dynamodb-local.s3-website-us-west-2.amazonaws.com/dynamodb_local_latest").content  # pragma no cover
+            tarfile.open(fileobj=io.BytesIO(archive)).extractall(".dynamodblocal")  # pragma no cover
             # Fix permissions, needed at least when running with Cygwin's Python
-            for f in glob.glob(".dynamodblocal/DynamoDBLocal_lib/*"):
-                os.chmod(f, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)
+            for f in glob.glob(".dynamodblocal/DynamoDBLocal_lib/*"):  # pragma no cover
+                os.chmod(f, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)  # pragma no cover
 
         cls.dynamodblocal = subprocess.Popen(
             ["java", "-Djava.library.path=./DynamoDBLocal_lib", "-jar", "DynamoDBLocal.jar", "-inMemory", "-port", "65432"],
@@ -217,6 +224,17 @@ class LocalIntegrationTestCase(unittest.TestCase):
 
         time.sleep(1)
         assert cls.dynamodblocal.poll() is None
+
+        connection = Connection("us-west-2", "DummyKey", "DummySecret", "http://localhost:65432/")
+        connection.request(
+            "CreateTable",
+            dict(
+                TableName="TableWithHash",
+                AttributeDefinitions=[dict(AttributeName="hash", AttributeType="S")],
+                KeySchema=[dict(AttributeName="hash", KeyType="HASH")],
+                ProvisionedThroughput=dict(ReadCapacityUnits=1, WriteCapacityUnits=1),
+            )
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -229,7 +247,27 @@ class LocalIntegrationTestCase(unittest.TestCase):
         with self.assertRaises(ResourceNotFoundException):
             self.connection.request(
                 "DescribeTable",
-                {"TableName": "LowVoltage.UnexistingTable"}
+                {"TableName": "UnexistingTable"}
+            )
+
+    def testServerError(self):
+        # DynamoDBLocal is not as robust as the real one. This is useful for our test coverage :)
+        with self.assertRaises(ServerError):
+            self.connection.request(
+                "PutItem",
+                {
+                    "TableName": "TableWithHash",
+                    "Item": {"hash": 42}
+                }
+            )
+
+    def testValidationException(self):
+        with self.assertRaises(ValidationException):
+            self.connection.request(
+                "PutItem",
+                {
+                    "TableName": "TableWithHash",
+                }
             )
 
 
