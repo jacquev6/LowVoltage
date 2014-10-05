@@ -129,7 +129,7 @@ class IntegrationTestsMixin:
         get = (
             self.connection
                 .get_item("LowVoltage.TableWithHash", {"hash": "testGetItem"})
-                .get("a")
+                .attributes_to_get("a")
                 .go()
         )
         self.assertEqual(

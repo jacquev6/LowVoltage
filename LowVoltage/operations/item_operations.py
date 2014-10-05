@@ -2,7 +2,6 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
-import numbers
 import unittest
 
 from LowVoltage.operations.operation import Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
@@ -292,8 +291,12 @@ class GetItem(Operation, ReturnConsumedCapacityMixin):
         self.__consistent_read = value
         return self
 
-    def get(self, name):
-        self.__attributes_to_get.append(name)
+    def attributes_to_get(self, *names):
+        for name in names:
+            if isinstance(name, basestring):
+                self.__attributes_to_get.append(name)
+            else:
+                self.__attributes_to_get.extend(name)
         return self
 
 
@@ -357,13 +360,33 @@ class GetItemTestCase(unittest.TestCase):
             }
         )
 
-    def testGet(self):
+    def testOneAttributesToGet(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).get("a")._build(),
+            GetItem(None, "Table", {"hash": "h"}).attributes_to_get("a")._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
                 "AttributesToGet": ["a"],
+            }
+        )
+
+    def testSeveralAttributesToGet(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": "h"}).attributes_to_get("a", "b")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributesToGet": ["a", "b"],
+            }
+        )
+
+    def testListAttributesToGet(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": "h"}).attributes_to_get(["a", "b"])._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributesToGet": ["a", "b"],
             }
         )
 
