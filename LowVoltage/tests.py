@@ -89,6 +89,28 @@ class IntegrationTestsMixin:
             ]
         )
 
+    def testConditionalCheckFailedException(self):
+        with self.assertRaises(ConditionalCheckFailedException) as catcher:
+            (self.connection
+                .update_item("LowVoltage.TableWithHash", {"hash": "testUpdateItem"})
+                .put("a", 42)
+                .expect_not_null("foo")
+                .return_values_all_new()
+                .go())
+        self.assertIn(
+            catcher.exception.args,
+            [
+                ({  # DynamoDBLocal
+                    "Message": "The conditional check failed",
+                    "__type": "com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException",
+                },),
+                ({  # Real DynamoDB
+                    "message": "The conditional request failed",
+                    "__type": "com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException",
+                },),
+            ]
+        )
+
     def testDeleteItem(self):
         self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testDeleteItem"}).go()
         delete = (
@@ -148,28 +170,6 @@ class IntegrationTestsMixin:
         self.assertEqual(
             update,
             {u'Attributes': {u'a': {u'N': u'42'}, u'hash': {u'S': u'testUpdateItem'}}}
-        )
-
-    def testConditionalCheckFailedException(self):
-        with self.assertRaises(ConditionalCheckFailedException) as catcher:
-            (self.connection
-                .update_item("LowVoltage.TableWithHash", {"hash": "testUpdateItem"})
-                .put("a", 42)
-                .expect_not_null("foo")
-                .return_values_all_new()
-                .go())
-        self.assertIn(
-            catcher.exception.args,
-            [
-                ({  # DynamoDBLocal
-                    "Message": "The conditional check failed",
-                    "__type": "com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException",
-                },),
-                ({  # Real DynamoDB
-                    "message": "The conditional request failed",
-                    "__type": "com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException",
-                },),
-            ]
         )
 
 
