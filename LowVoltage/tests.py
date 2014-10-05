@@ -93,7 +93,7 @@ class IntegrationTestsMixin:
         first_put = (
             self.connection
                 .put_item("LowVoltage.TableWithHash", {"hash": "testPutItem", "a": 42, "b": "foo"})
-                .return_all_old_values()
+                .return_values_all_old()
                 .go()
         )
         self.assertEqual(
@@ -103,7 +103,7 @@ class IntegrationTestsMixin:
         second_put = (
             self.connection
                 .put_item("LowVoltage.TableWithHash", {"hash": "testPutItem", "a": 42, "c": "bar"})
-                .return_all_old_values()
+                .return_values_all_old()
                 .go()
         )
         self.assertEqual(
@@ -116,7 +116,7 @@ class IntegrationTestsMixin:
             self.connection
                 .update_item("LowVoltage.TableWithHash", {"hash": "testUpdateItem"})
                 .put("a", 42)
-                .return_all_new_values()
+                .return_values_all_new()
                 .go()
         )
         self.assertEqual(
@@ -130,7 +130,7 @@ class IntegrationTestsMixin:
                 .update_item("LowVoltage.TableWithHash", {"hash": "testUpdateItem"})
                 .put("a", 42)
                 .expect_not_null("foo")
-                .return_all_new_values()
+                .return_values_all_new()
                 .go())
         self.assertIn(
             catcher.exception.args,

@@ -56,22 +56,22 @@ class ExpectedMixin(object):
         self.__conditional_operator = value
         return self
 
-    def expect_equal(self, name, value):
+    def expect_eq(self, name, value):
         return self._add_expected(name, "EQ", [value])
 
-    def expect_not_equal(self, name, value):
+    def expect_ne(self, name, value):
         return self._add_expected(name, "NE", [value])
 
-    def expect_less_than_or_equal(self, name, value):
+    def expect_le(self, name, value):
         return self._add_expected(name, "LE", [value])
 
-    def expect_less_than(self, name, value):
+    def expect_lt(self, name, value):
         return self._add_expected(name, "LT", [value])
 
-    def expect_greater_than_or_equal(self, name, value):
+    def expect_ge(self, name, value):
         return self._add_expected(name, "GE", [value])
 
-    def expect_greater_than(self, name, value):
+    def expect_gt(self, name, value):
         return self._add_expected(name, "GT", [value])
 
     def expect_not_null(self, name):
@@ -111,10 +111,10 @@ class ReturnOldValuesMixin(object):
         if self.__return_values:
             data["ReturnValues"] = self.__return_values
 
-    def return_all_old_values(self):
+    def return_values_all_old(self):
         return self._set_return_values("ALL_OLD")
 
-    def return_no_values(self):
+    def return_values_none(self):
         return self._set_return_values("NONE")
 
     def _set_return_values(self, value):
@@ -123,13 +123,13 @@ class ReturnOldValuesMixin(object):
 
 
 class ReturnValuesMixin(ReturnOldValuesMixin):
-    def return_all_new_values(self):
+    def return_values_all_new(self):
         return self._set_return_values("ALL_NEW")
 
-    def return_updated_new_values(self):
+    def return_values_updated_new(self):
         return self._set_return_values("UPDATED_NEW")
 
-    def return_updated_old_values(self):
+    def return_values_updated_old(self):
         return self._set_return_values("UPDATED_OLD")
 
 
@@ -141,13 +141,13 @@ class ReturnConsumedCapacityMixin(object):
         if self.__return_consumed_capacity:
             data["ReturnConsumedCapacity"] = self.__return_consumed_capacity
 
-    def return_total_consumed_capacity(self):
+    def return_consumed_capacity_total(self):
         return self._set_return_consumed_capacity("TOTAL")
 
-    def return_indexes_consumed_capacity(self):
+    def return_consumed_capacity_indexes(self):
         return self._set_return_consumed_capacity("INDEXES")
 
-    def return_no_consumed_capacity(self):
+    def return_consumed_capacity_none(self):
         return self._set_return_consumed_capacity("NONE")
 
     def _set_return_consumed_capacity(self, value):
@@ -163,10 +163,10 @@ class ReturnItemCollectionMetricsMixin(object):
         if self.__return_item_collection_metrics:
             data["ReturnItemCollectionMetrics"] = self.__return_item_collection_metrics
 
-    def return_size_item_collection_metrics(self):
+    def return_item_collection_metrics_size(self):
         return self._set_return_item_collection_metrics("SIZE")
 
-    def return_no_item_collection_metrics(self):
+    def return_item_collection_metrics_none(self):
         return self._set_return_item_collection_metrics("NONE")
 
     def _set_return_item_collection_metrics(self, value):
@@ -228,7 +228,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectEqual(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_equal("attr", 42)._build(),
+            PutItem(None, "Table", {"hash": "h"}).expect_eq("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -238,7 +238,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectNotEqual(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_not_equal("attr", 42)._build(),
+            PutItem(None, "Table", {"hash": "h"}).expect_ne("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -248,7 +248,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectLessThanOrEqual(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_less_than_or_equal("attr", 42)._build(),
+            PutItem(None, "Table", {"hash": "h"}).expect_le("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -258,7 +258,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectLessThan(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_less_than("attr", 42)._build(),
+            PutItem(None, "Table", {"hash": "h"}).expect_lt("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -268,7 +268,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThanOrEqual(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_greater_than_or_equal("attr", 42)._build(),
+            PutItem(None, "Table", {"hash": "h"}).expect_ge("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -278,7 +278,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThan(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_greater_than("attr", 42)._build(),
+            PutItem(None, "Table", {"hash": "h"}).expect_gt("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -358,7 +358,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnAllOldValues(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_all_old_values()._build(),
+            PutItem(None, "Table", {"hash": "h"}).return_values_all_old()._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -368,7 +368,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnNoValues(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_no_values()._build(),
+            PutItem(None, "Table", {"hash": "h"}).return_values_none()._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -378,7 +378,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnIndexesConsumedCapacity(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_indexes_consumed_capacity()._build(),
+            PutItem(None, "Table", {"hash": "h"}).return_consumed_capacity_indexes()._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -388,7 +388,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnTotalConsumedCapacity(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_total_consumed_capacity()._build(),
+            PutItem(None, "Table", {"hash": "h"}).return_consumed_capacity_total()._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -398,7 +398,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnNoConsumedCapacity(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_no_consumed_capacity()._build(),
+            PutItem(None, "Table", {"hash": "h"}).return_consumed_capacity_none()._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -408,7 +408,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnSizeItemCollectionMetrics(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_size_item_collection_metrics()._build(),
+            PutItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_size()._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -418,7 +418,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnNoItemCollectionMetrics(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_no_item_collection_metrics()._build(),
+            PutItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_none()._build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -559,7 +559,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectEqual(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_equal("attr", 42)._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).expect_eq("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -569,7 +569,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectNotEqual(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_not_equal("attr", 42)._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).expect_ne("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -579,7 +579,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectLessThanOrEqual(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_less_than_or_equal("attr", 42)._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).expect_le("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -589,7 +589,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectLessThan(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_less_than("attr", 42)._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).expect_lt("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -599,7 +599,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThanOrEqual(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_greater_than_or_equal("attr", 42)._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).expect_ge("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -609,7 +609,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThan(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_greater_than("attr", 42)._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).expect_gt("attr", 42)._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -689,7 +689,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnAllNewValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_all_new_values()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_values_all_new()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -699,7 +699,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnUpdatedNewValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_updated_new_values()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_values_updated_new()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -709,7 +709,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnAllOldValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_all_old_values()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_values_all_old()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -719,7 +719,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnUpdatedOldValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_updated_old_values()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_values_updated_old()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -729,7 +729,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnNoValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_no_values()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_values_none()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -739,7 +739,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnIndexesConsumedCapacity(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_indexes_consumed_capacity()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_consumed_capacity_indexes()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -749,7 +749,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnTotalConsumedCapacity(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_total_consumed_capacity()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_consumed_capacity_total()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -759,7 +759,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnNoConsumedCapacity(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_no_consumed_capacity()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_consumed_capacity_none()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -769,7 +769,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnSizeItemCollectionMetrics(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_size_item_collection_metrics()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_size()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -779,7 +779,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnNoItemCollectionMetrics(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_no_item_collection_metrics()._build(),
+            UpdateItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_none()._build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
