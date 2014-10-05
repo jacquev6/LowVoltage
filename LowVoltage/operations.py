@@ -174,6 +174,259 @@ class ReturnItemCollectionMetricsMixin(object):
         return self
 
 
+class DeleteItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+    def __init__(self, connection, table_name, key):
+        super(DeleteItem, self).__init__("DeleteItem", connection)
+        self.__table_name = table_name
+        self.__key = key
+        ExpectedMixin.__init__(self)
+        ReturnOldValuesMixin.__init__(self)
+        ReturnConsumedCapacityMixin.__init__(self)
+        ReturnItemCollectionMetricsMixin.__init__(self)
+
+    def _build(self):
+        data = {
+            "TableName": self.__table_name,
+            "Key": self._convert_dict(self.__key),
+        }
+        self._build_expected(data)
+        self._build_return_values(data)
+        self._build_return_consumed_capacity(data)
+        self._build_return_item_collection_metrics(data)
+        return data
+
+
+class DeleteItemTestCase(unittest.TestCase):
+    def testKey(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": 42})._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+            }
+        )
+
+    def testConditionalOperatorAnd(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).conditional_operator_and()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ConditionalOperator": "AND",
+            }
+        )
+
+    def testConditionalOperatorOr(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).conditional_operator_or()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ConditionalOperator": "OR",
+            }
+        )
+
+    def testExpectEqual(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_eq("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectNotEqual(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_ne("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "NE", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectLessThanOrEqual(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_le("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "LE", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectLessThan(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_lt("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "LT", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectGreaterThanOrEqual(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_ge("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "GE", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectGreaterThan(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_gt("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "GT", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectNotNull(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_not_null("attr")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "NOT_NULL"}},
+            }
+        )
+
+    def testExpectNull(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_null("attr")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "NULL"}},
+            }
+        )
+
+    def testExpectContains(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_contains("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "CONTAINS", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectNotContains(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_not_contains("attr", 42)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "NOT_CONTAINS", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testExpectBeginsWith(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_begins_with("attr", "prefix")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [{"S": "prefix"}]}},
+            }
+        )
+
+    def testExpectIn(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_in("attr", [42, 43])._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "IN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
+            }
+        )
+
+    def testExpectBetween(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).expect_between("attr", 42, 43)._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "Expected": {"attr": {"ComparisonOperator": "BETWEEN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
+            }
+        )
+
+    def testReturnAllOldValues(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).return_values_all_old()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_OLD",
+            }
+        )
+
+    def testReturnNoValues(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).return_values_none()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "NONE",
+            }
+        )
+
+    def testReturnIndexesConsumedCapacity(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).return_consumed_capacity_indexes()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "INDEXES",
+            }
+        )
+
+    def testReturnTotalConsumedCapacity(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).return_consumed_capacity_total()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def testReturnNoConsumedCapacity(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).return_consumed_capacity_none()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "NONE",
+            }
+        )
+
+    def testReturnSizeItemCollectionMetrics(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_size()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnItemCollectionMetrics": "SIZE",
+            }
+        )
+
+    def testReturnNoItemCollectionMetrics(self):
+        self.assertEqual(
+            DeleteItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_none()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnItemCollectionMetrics": "NONE",
+            }
+        )
+
+
 class PutItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     def __init__(self, connection, table_name, item):
         super(PutItem, self).__init__("PutItem", connection)
@@ -469,16 +722,7 @@ class UpdateItem(Operation, ExpectedMixin, ReturnValuesMixin, ReturnConsumedCapa
 
 
 class UpdateItemTestCase(unittest.TestCase):
-    def testStringKey(self):
-        self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "value"})._build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "value"}},
-            }
-        )
-
-    def testIntKey(self):
+    def testKey(self):
         self.assertEqual(
             UpdateItem(None, "Table", {"hash": 42})._build(),
             {

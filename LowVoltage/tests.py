@@ -12,7 +12,7 @@ import tarfile
 import time
 import unittest
 
-from operations import PutItemTestCase, UpdateItemTestCase
+from operations import DeleteItemTestCase, PutItemTestCase, UpdateItemTestCase
 from connection import ConnectionTestCase
 
 from LowVoltage import Connection, StaticCredentials, ValidationException, ResourceNotFoundException, ServerError, ConditionalCheckFailedException
@@ -87,6 +87,22 @@ class IntegrationTestsMixin:
                     "__type": "com.amazon.coral.validate#ValidationException",
                 },),
             ]
+        )
+
+    def testDeleteItem(self):
+        (self.connection
+            .put_item("LowVoltage.TableWithHash", {"hash": "testDeleteItem"})
+            .return_values_all_old()
+            .go())
+        delete = (
+            self.connection
+                .delete_item("LowVoltage.TableWithHash", {"hash": "testDeleteItem"})
+                .return_values_all_old()
+                .go()
+        )
+        self.assertEqual(
+            delete,
+            {u'Attributes': {u'hash': {u'S': u'testDeleteItem'}}}
         )
 
     def testPutItem(self):
