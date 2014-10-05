@@ -24,3 +24,11 @@ class ValidationException(ClientError):
 
 class ConditionalCheckFailedException(ClientError):
 	pass
+
+
+class ItemCollectionSizeLimitExceededException(ClientError):
+	pass
+
+
+class ProvisionedThroughputExceededException(ClientError):
+	pass

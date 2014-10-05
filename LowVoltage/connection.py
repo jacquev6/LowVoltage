@@ -60,6 +60,10 @@ class Connection(object):
                 raise exceptions.ValidationException(data)
             elif typ.endswith("ConditionalCheckFailedException"):
                 raise exceptions.ConditionalCheckFailedException(data)
+            elif typ.endswith("ItemCollectionSizeLimitExceededException"):
+                raise exceptions.ItemCollectionSizeLimitExceededException(data)
+            elif typ.endswith("ProvisionedThroughputExceededException"):
+                raise exceptions.ProvisionedThroughputExceededException(data)
             else:
                 raise exceptions.ClientError(data)
         elif r.status_code == 500:
@@ -210,6 +214,16 @@ class ConnectionTestCase(unittest.TestCase):
         with self.assertRaises(exceptions.ValidationException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ValidationException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ValidationException", "Message": "tralala"},))
+
+    def testItemCollectionSizeLimitExceededException(self):
+        with self.assertRaises(exceptions.ItemCollectionSizeLimitExceededException) as catcher:
+            self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ItemCollectionSizeLimitExceededException", "Message": "tralala"}'))
+        self.assertEqual(catcher.exception.args, ({"__type": "xxx.ItemCollectionSizeLimitExceededException", "Message": "tralala"},))
+
+    def testProvisionedThroughputExceededException(self):
+        with self.assertRaises(exceptions.ProvisionedThroughputExceededException) as catcher:
+            self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ProvisionedThroughputExceededException", "Message": "tralala"}'))
+        self.assertEqual(catcher.exception.args, ({"__type": "xxx.ProvisionedThroughputExceededException", "Message": "tralala"},))
 
 
 if __name__ == "__main__":  # pragma no branch (Test code)
