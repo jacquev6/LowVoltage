@@ -41,8 +41,8 @@ class PutItem(Operation):
         self.__table_name = table_name
         self.__item = item
         self.__conditional_operator = None
-        self.__return_values = None
         self.__expected = {}
+        self.__return_values = None
 
     def _build(self):
         data = {
@@ -51,19 +51,11 @@ class PutItem(Operation):
         }
         if self.__conditional_operator:
             data["ConditionalOperator"] = self.__conditional_operator
-        if self.__return_values:
-            data["ReturnValues"] = self.__return_values
         if self.__expected:
             data["Expected"] = self.__expected
+        if self.__return_values:
+            data["ReturnValues"] = self.__return_values
         return data
-
-    def return_all_old_values(self):
-        self.__return_values = "ALL_OLD"
-        return self
-
-    def return_no_values(self):
-        self.__return_values = "NONE"
-        return self
 
     def conditional_operator_and(self):
         self.__conditional_operator = "AND"
@@ -125,6 +117,14 @@ class PutItem(Operation):
         self.__expected[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [self._convert_value(low), self._convert_value(high)]}
         return self
 
+    def return_all_old_values(self):
+        self.__return_values = "ALL_OLD"
+        return self
+
+    def return_no_values(self):
+        self.__return_values = "NONE"
+        return self
+
 
 class PutItemTestCase(unittest.TestCase):
     def testItem(self):
@@ -133,26 +133,6 @@ class PutItemTestCase(unittest.TestCase):
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "value"}},
-            }
-        )
-
-    def testReturnAllOldValues(self):
-        self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_all_old_values()._build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "ReturnValues": "ALL_OLD",
-            }
-        )
-
-    def testReturnNoValues(self):
-        self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_no_values()._build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "ReturnValues": "NONE",
             }
         )
 
@@ -306,6 +286,26 @@ class PutItemTestCase(unittest.TestCase):
             }
         )
 
+    def testReturnAllOldValues(self):
+        self.assertEqual(
+            PutItem(None, "Table", {"hash": "h"}).return_all_old_values()._build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_OLD",
+            }
+        )
+
+    def testReturnNoValues(self):
+        self.assertEqual(
+            PutItem(None, "Table", {"hash": "h"}).return_no_values()._build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"S": "h"}},
+                "ReturnValues": "NONE",
+            }
+        )
+
 
 class UpdateItem(Operation):
     def __init__(self, connection, table_name, key):
@@ -314,8 +314,8 @@ class UpdateItem(Operation):
         self.__key = key
         self.__attribute_updates = {}
         self.__conditional_operator = None
-        self.__return_values = None
         self.__expected = {}
+        self.__return_values = None
 
     def _build(self):
         data = {
@@ -326,10 +326,10 @@ class UpdateItem(Operation):
             data["AttributeUpdates"] = self.__attribute_updates
         if self.__conditional_operator:
             data["ConditionalOperator"] = self.__conditional_operator
-        if self.__return_values:
-            data["ReturnValues"] = self.__return_values
         if self.__expected:
             data["Expected"] = self.__expected
+        if self.__return_values:
+            data["ReturnValues"] = self.__return_values
         return data
 
     def put(self, name, value):
@@ -344,26 +344,6 @@ class UpdateItem(Operation):
 
     def add(self, name, value):
         self.__attribute_updates[name] = {"Action": "ADD", "Value": self._convert_value(value)}
-        return self
-
-    def return_all_new_values(self):
-        self.__return_values = "ALL_NEW"
-        return self
-
-    def return_updated_new_values(self):
-        self.__return_values = "UPDATED_NEW"
-        return self
-
-    def return_all_old_values(self):
-        self.__return_values = "ALL_OLD"
-        return self
-
-    def return_updated_old_values(self):
-        self.__return_values = "UPDATED_OLD"
-        return self
-
-    def return_no_values(self):
-        self.__return_values = "NONE"
         return self
 
     def conditional_operator_and(self):
@@ -424,6 +404,26 @@ class UpdateItem(Operation):
 
     def expect_between(self, name, low, high):
         self.__expected[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [self._convert_value(low), self._convert_value(high)]}
+        return self
+
+    def return_all_new_values(self):
+        self.__return_values = "ALL_NEW"
+        return self
+
+    def return_updated_new_values(self):
+        self.__return_values = "UPDATED_NEW"
+        return self
+
+    def return_all_old_values(self):
+        self.__return_values = "ALL_OLD"
+        return self
+
+    def return_updated_old_values(self):
+        self.__return_values = "UPDATED_OLD"
+        return self
+
+    def return_no_values(self):
+        self.__return_values = "NONE"
         return self
 
 
@@ -493,56 +493,6 @@ class UpdateItemTestCase(unittest.TestCase):
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
                 "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"SS": ["42", "43"]}}},
-            }
-        )
-
-    def testReturnAllNewValues(self):
-        self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_all_new_values()._build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "ALL_NEW",
-            }
-        )
-
-    def testReturnUpdatedNewValues(self):
-        self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_updated_new_values()._build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "UPDATED_NEW",
-            }
-        )
-
-    def testReturnAllOldValues(self):
-        self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_all_old_values()._build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "ALL_OLD",
-            }
-        )
-
-    def testReturnUpdatedOldValues(self):
-        self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_updated_old_values()._build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "UPDATED_OLD",
-            }
-        )
-
-    def testReturnNoValues(self):
-        self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_no_values()._build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "NONE",
             }
         )
 
@@ -693,6 +643,56 @@ class UpdateItemTestCase(unittest.TestCase):
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
                 "Expected": {"attr": {"ComparisonOperator": "BETWEEN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
+            }
+        )
+
+    def testReturnAllNewValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_all_new_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_NEW",
+            }
+        )
+
+    def testReturnUpdatedNewValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_updated_new_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "UPDATED_NEW",
+            }
+        )
+
+    def testReturnAllOldValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_all_old_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_OLD",
+            }
+        )
+
+    def testReturnUpdatedOldValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_updated_old_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "UPDATED_OLD",
+            }
+        )
+
+    def testReturnNoValues(self):
+        self.assertEqual(
+            UpdateItem(None, "Table", {"hash": "h"}).return_no_values()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "NONE",
             }
         )
 
