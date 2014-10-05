@@ -35,121 +35,165 @@ class Operation(object):
                 assert False  # pragma no cover
 
 
-class PutItem(Operation):
+class ExpectedMixin(object):
+    def __init__(self):
+        self.__conditional_operator = None
+        self.__expected = {}
+
+    def _build_expected(self, data):
+        if self.__conditional_operator:
+            data["ConditionalOperator"] = self.__conditional_operator
+        if self.__expected:
+            data["Expected"] = self.__expected
+
+    def conditional_operator_and(self):
+        return self._set_conditional_operator("AND")
+
+    def conditional_operator_or(self):
+        return self._set_conditional_operator("OR")
+
+    def _set_conditional_operator(self, value):
+        self.__conditional_operator = value
+        return self
+
+    def expect_equal(self, name, value):
+        return self._add_expected(name, "EQ", [value])
+
+    def expect_not_equal(self, name, value):
+        return self._add_expected(name, "NE", [value])
+
+    def expect_less_than_or_equal(self, name, value):
+        return self._add_expected(name, "LE", [value])
+
+    def expect_less_than(self, name, value):
+        return self._add_expected(name, "LT", [value])
+
+    def expect_greater_than_or_equal(self, name, value):
+        return self._add_expected(name, "GE", [value])
+
+    def expect_greater_than(self, name, value):
+        return self._add_expected(name, "GT", [value])
+
+    def expect_not_null(self, name):
+        return self._add_expected(name, "NOT_NULL")
+
+    def expect_null(self, name):
+        return self._add_expected(name, "NULL")
+
+    def expect_contains(self, name, value):
+        return self._add_expected(name, "CONTAINS", [value])
+
+    def expect_not_contains(self, name, value):
+        return self._add_expected(name, "NOT_CONTAINS", [value])
+
+    def expect_begins_with(self, name, value):
+        return self._add_expected(name, "BEGINS_WITH", [value])
+
+    def expect_in(self, name, values):
+        return self._add_expected(name, "IN", values)
+
+    def expect_between(self, name, low, high):
+        return self._add_expected(name, "BETWEEN", [low, high])
+
+    def _add_expected(self, name, operator, value_list=None):
+        data = {"ComparisonOperator": operator}
+        if value_list:
+            data["AttributeValueList"] = [self._convert_value(value) for value in value_list]
+        self.__expected[name] = data
+        return self
+
+
+class ReturnOldValuesMixin(object):
+    def __init__(self):
+        self.__return_values = None
+
+    def _build_return_values(self, data):
+        if self.__return_values:
+            data["ReturnValues"] = self.__return_values
+
+    def return_all_old_values(self):
+        return self._set_return_values("ALL_OLD")
+
+    def return_no_values(self):
+        return self._set_return_values("NONE")
+
+    def _set_return_values(self, value):
+        self.__return_values = value
+        return self
+
+
+class ReturnValuesMixin(ReturnOldValuesMixin):
+    def return_all_new_values(self):
+        return self._set_return_values("ALL_NEW")
+
+    def return_updated_new_values(self):
+        return self._set_return_values("UPDATED_NEW")
+
+    def return_updated_old_values(self):
+        return self._set_return_values("UPDATED_OLD")
+
+
+class ReturnConsumedCapacityMixin(object):
+    def __init__(self):
+        self.__return_consumed_capacity = None
+
+    def _build_return_consumed_capacity(self, data):
+        if self.__return_consumed_capacity:
+            data["ReturnConsumedCapacity"] = self.__return_consumed_capacity
+
+    def return_total_consumed_capacity(self):
+        return self._set_return_consumed_capacity("TOTAL")
+
+    def return_indexes_consumed_capacity(self):
+        return self._set_return_consumed_capacity("INDEXES")
+
+    def return_no_consumed_capacity(self):
+        return self._set_return_consumed_capacity("NONE")
+
+    def _set_return_consumed_capacity(self, value):
+        self.__return_consumed_capacity = value
+        return self
+
+
+class ReturnItemCollectionMetricsMixin(object):
+    def __init__(self):
+        self.__return_item_collection_metrics = None
+
+    def _build_return_item_collection_metrics(self, data):
+        if self.__return_item_collection_metrics:
+            data["ReturnItemCollectionMetrics"] = self.__return_item_collection_metrics
+
+    def return_size_item_collection_metrics(self):
+        return self._set_return_item_collection_metrics("SIZE")
+
+    def return_no_item_collection_metrics(self):
+        return self._set_return_item_collection_metrics("NONE")
+
+    def _set_return_item_collection_metrics(self, value):
+        self.__return_item_collection_metrics = value
+        return self
+
+
+class PutItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     def __init__(self, connection, table_name, item):
         super(PutItem, self).__init__("PutItem", connection)
         self.__table_name = table_name
         self.__item = item
-        self.__conditional_operator = None
-        self.__expected = {}
-        self.__return_values = None
-        self.__return_consumed_capacity = None
-        self.__return_item_collection_metrics = None
+        ExpectedMixin.__init__(self)
+        ReturnOldValuesMixin.__init__(self)
+        ReturnConsumedCapacityMixin.__init__(self)
+        ReturnItemCollectionMetricsMixin.__init__(self)
 
     def _build(self):
         data = {
             "TableName": self.__table_name,
             "Item": self._convert_dict(self.__item),
         }
-        if self.__conditional_operator:
-            data["ConditionalOperator"] = self.__conditional_operator
-        if self.__expected:
-            data["Expected"] = self.__expected
-        if self.__return_values:
-            data["ReturnValues"] = self.__return_values
-        if self.__return_consumed_capacity:
-            data["ReturnConsumedCapacity"] = self.__return_consumed_capacity
-        if self.__return_item_collection_metrics:
-            data["ReturnItemCollectionMetrics"] = self.__return_item_collection_metrics
+        self._build_expected(data)
+        self._build_return_values(data)
+        self._build_return_consumed_capacity(data)
+        self._build_return_item_collection_metrics(data)
         return data
-
-    def conditional_operator_and(self):
-        self.__conditional_operator = "AND"
-        return self
-
-    def conditional_operator_or(self):
-        self.__conditional_operator = "OR"
-        return self
-
-    def expect_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_not_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "NE", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_less_than_or_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "LE", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_less_than(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "LT", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_greater_than_or_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "GE", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_greater_than(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "GT", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_not_null(self, name):
-        self.__expected[name] = {"ComparisonOperator": "NOT_NULL"}
-        return self
-
-    def expect_null(self, name):
-        self.__expected[name] = {"ComparisonOperator": "NULL"}
-        return self
-
-    def expect_contains(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "CONTAINS", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_not_contains(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "NOT_CONTAINS", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_begins_with(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_in(self, name, values):
-        self.__expected[name] = {"ComparisonOperator": "IN", "AttributeValueList": [self._convert_value(value) for value in values]}
-        return self
-
-    def expect_between(self, name, low, high):
-        self.__expected[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [self._convert_value(low), self._convert_value(high)]}
-        return self
-
-    def return_all_old_values(self):
-        self.__return_values = "ALL_OLD"
-        return self
-
-    def return_no_values(self):
-        self.__return_values = "NONE"
-        return self
-
-    def return_total_consumed_capacity(self):
-        self.__return_consumed_capacity = "TOTAL"
-        return self
-
-    def return_indexes_consumed_capacity(self):
-        self.__return_consumed_capacity = "INDEXES"
-        return self
-
-    def return_no_consumed_capacity(self):
-        self.__return_consumed_capacity = "NONE"
-        return self
-
-    def return_size_item_collection_metrics(self):
-        self.__return_item_collection_metrics = "SIZE"
-        return self
-
-    def return_no_item_collection_metrics(self):
-        self.__return_item_collection_metrics = "NONE"
-        return self
 
 
 class PutItemTestCase(unittest.TestCase):
@@ -383,17 +427,16 @@ class PutItemTestCase(unittest.TestCase):
         )
 
 
-class UpdateItem(Operation):
+class UpdateItem(Operation, ExpectedMixin, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     def __init__(self, connection, table_name, key):
         super(UpdateItem, self).__init__("UpdateItem", connection)
         self.__table_name = table_name
         self.__key = key
         self.__attribute_updates = {}
-        self.__conditional_operator = None
-        self.__expected = {}
-        self.__return_values = None
-        self.__return_consumed_capacity = None
-        self.__return_item_collection_metrics = None
+        ExpectedMixin.__init__(self)
+        ReturnValuesMixin.__init__(self)
+        ReturnConsumedCapacityMixin.__init__(self)
+        ReturnItemCollectionMetricsMixin.__init__(self)
 
     def _build(self):
         data = {
@@ -402,130 +445,26 @@ class UpdateItem(Operation):
         }
         if self.__attribute_updates:
             data["AttributeUpdates"] = self.__attribute_updates
-        if self.__conditional_operator:
-            data["ConditionalOperator"] = self.__conditional_operator
-        if self.__expected:
-            data["Expected"] = self.__expected
-        if self.__return_values:
-            data["ReturnValues"] = self.__return_values
-        if self.__return_consumed_capacity:
-            data["ReturnConsumedCapacity"] = self.__return_consumed_capacity
-        if self.__return_item_collection_metrics:
-            data["ReturnItemCollectionMetrics"] = self.__return_item_collection_metrics
+        self._build_expected(data)
+        self._build_return_values(data)
+        self._build_return_consumed_capacity(data)
+        self._build_return_item_collection_metrics(data)
         return data
 
     def put(self, name, value):
-        self.__attribute_updates[name] = {"Action": "PUT", "Value": self._convert_value(value)}
-        return self
+        return self._add_attribute_update(name, "PUT", value)
 
     def delete(self, name, value=None):
-        self.__attribute_updates[name] = {"Action": "DELETE"}
-        if value is not None:
-            self.__attribute_updates[name]["Value"] = self._convert_value(value)
-        return self
+        return self._add_attribute_update(name, "DELETE", value)
 
     def add(self, name, value):
-        self.__attribute_updates[name] = {"Action": "ADD", "Value": self._convert_value(value)}
-        return self
+        return self._add_attribute_update(name, "ADD", value)
 
-    def conditional_operator_and(self):
-        self.__conditional_operator = "AND"
-        return self
-
-    def conditional_operator_or(self):
-        self.__conditional_operator = "OR"
-        return self
-
-    def expect_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_not_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "NE", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_less_than_or_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "LE", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_less_than(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "LT", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_greater_than_or_equal(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "GE", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_greater_than(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "GT", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_not_null(self, name):
-        self.__expected[name] = {"ComparisonOperator": "NOT_NULL"}
-        return self
-
-    def expect_null(self, name):
-        self.__expected[name] = {"ComparisonOperator": "NULL"}
-        return self
-
-    def expect_contains(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "CONTAINS", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_not_contains(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "NOT_CONTAINS", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_begins_with(self, name, value):
-        self.__expected[name] = {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [self._convert_value(value)]}
-        return self
-
-    def expect_in(self, name, values):
-        self.__expected[name] = {"ComparisonOperator": "IN", "AttributeValueList": [self._convert_value(value) for value in values]}
-        return self
-
-    def expect_between(self, name, low, high):
-        self.__expected[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [self._convert_value(low), self._convert_value(high)]}
-        return self
-
-    def return_all_new_values(self):
-        self.__return_values = "ALL_NEW"
-        return self
-
-    def return_updated_new_values(self):
-        self.__return_values = "UPDATED_NEW"
-        return self
-
-    def return_all_old_values(self):
-        self.__return_values = "ALL_OLD"
-        return self
-
-    def return_updated_old_values(self):
-        self.__return_values = "UPDATED_OLD"
-        return self
-
-    def return_no_values(self):
-        self.__return_values = "NONE"
-        return self
-
-    def return_total_consumed_capacity(self):
-        self.__return_consumed_capacity = "TOTAL"
-        return self
-
-    def return_indexes_consumed_capacity(self):
-        self.__return_consumed_capacity = "INDEXES"
-        return self
-
-    def return_no_consumed_capacity(self):
-        self.__return_consumed_capacity = "NONE"
-        return self
-
-    def return_size_item_collection_metrics(self):
-        self.__return_item_collection_metrics = "SIZE"
-        return self
-
-    def return_no_item_collection_metrics(self):
-        self.__return_item_collection_metrics = "NONE"
+    def _add_attribute_update(self, name, action, value):
+        data = {"Action": action}
+        if value is not None:
+            data["Value"] = self._convert_value(value)
+        self.__attribute_updates[name] = data
         return self
 
 
