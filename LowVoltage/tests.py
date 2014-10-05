@@ -12,7 +12,7 @@ import tarfile
 import time
 import unittest
 
-from operations import DeleteItemTestCase, PutItemTestCase, UpdateItemTestCase
+from operations import DeleteItemTestCase, GetItemTestCase, PutItemTestCase, UpdateItemTestCase
 from connection import ConnectionTestCase
 
 from LowVoltage import Connection, StaticCredentials, ValidationException, ResourceNotFoundException, ServerError, ConditionalCheckFailedException
@@ -90,10 +90,7 @@ class IntegrationTestsMixin:
         )
 
     def testDeleteItem(self):
-        (self.connection
-            .put_item("LowVoltage.TableWithHash", {"hash": "testDeleteItem"})
-            .return_values_all_old()
-            .go())
+        self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testDeleteItem"}).go()
         delete = (
             self.connection
                 .delete_item("LowVoltage.TableWithHash", {"hash": "testDeleteItem"})
@@ -103,6 +100,19 @@ class IntegrationTestsMixin:
         self.assertEqual(
             delete,
             {u'Attributes': {u'hash': {u'S': u'testDeleteItem'}}}
+        )
+
+    def testGetItem(self):
+        self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testGetItem", "a": 42, "b": "foo"}).go()
+        get = (
+            self.connection
+                .get_item("LowVoltage.TableWithHash", {"hash": "testGetItem"})
+                .get("a")
+                .go()
+        )
+        self.assertEqual(
+            get,
+            {u'Item': {u'a': {u'N': u"42"}}}
         )
 
     def testPutItem(self):

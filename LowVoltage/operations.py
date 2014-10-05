@@ -427,6 +427,113 @@ class DeleteItemTestCase(unittest.TestCase):
         )
 
 
+class GetItem(Operation, ReturnConsumedCapacityMixin):
+    def __init__(self, connection, table_name, key):
+        super(GetItem, self).__init__("GetItem", connection)
+        self.__table_name = table_name
+        self.__key = key
+        ReturnConsumedCapacityMixin.__init__(self)
+        self.__consistent_read = None
+        self.__attributes_to_get = []
+
+    def _build(self):
+        data = {
+            "TableName": self.__table_name,
+            "Key": self._convert_dict(self.__key),
+        }
+        self._build_return_consumed_capacity(data)
+        if self.__consistent_read is not None:
+            data["ConsistentRead"] = self.__consistent_read
+        if self.__attributes_to_get:
+            data["AttributesToGet"] = self.__attributes_to_get
+        return data
+
+    def consistent_read_true(self):
+        return self._set_consistent_read(True)
+
+    def consistent_read_false(self):
+        return self._set_consistent_read(False)
+
+    def _set_consistent_read(self, value):
+        self.__consistent_read = value
+        return self
+
+    def get(self, name):
+        self.__attributes_to_get.append(name)
+        return self
+
+
+class GetItemTestCase(unittest.TestCase):
+    def testKey(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": 42})._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+            }
+        )
+
+    def testReturnIndexesConsumedCapacity(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": "h"}).return_consumed_capacity_indexes()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "INDEXES",
+            }
+        )
+
+    def testReturnTotalConsumedCapacity(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": "h"}).return_consumed_capacity_total()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def testReturnNoConsumedCapacity(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": "h"}).return_consumed_capacity_none()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "NONE",
+            }
+        )
+
+    def testConsistentReadTrue(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": "h"}).consistent_read_true()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ConsistentRead": True,
+            }
+        )
+
+    def testConsistentReadFalse(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": "h"}).consistent_read_false()._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ConsistentRead": False,
+            }
+        )
+
+    def testGet(self):
+        self.assertEqual(
+            GetItem(None, "Table", {"hash": "h"}).get("a")._build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "AttributesToGet": ["a"],
+            }
+        )
+
+
 class PutItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     def __init__(self, connection, table_name, item):
         super(PutItem, self).__init__("PutItem", connection)
