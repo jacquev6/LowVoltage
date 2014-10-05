@@ -2,7 +2,6 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
-
 import datetime
 import hashlib
 import hmac
