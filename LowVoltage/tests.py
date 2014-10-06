@@ -13,7 +13,7 @@ import time
 import unittest
 
 from operations import DeleteItemTestCase, GetItemTestCase, PutItemTestCase, UpdateItemTestCase
-from operations import BatchGetItemTestCase
+from operations import BatchGetItemTestCase, BatchWriteItemTestCase
 from connection import ConnectionTestCase
 
 from LowVoltage import Connection, StaticCredentials, ValidationException, ResourceNotFoundException, ServerError, ConditionalCheckFailedException
@@ -125,6 +125,31 @@ class IntegrationTestsMixin:
         self.assertEqual(
             get,
             {u'Responses': {u'LowVoltage.TableWithHash': [{u'a': {u'N': u'42'}}]}, u'UnprocessedKeys': {}}
+        )
+
+    def testBatchWriteItem(self):
+        self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testBatchWriteItem1", "a": 42, "b": "foo"}).go()
+        write = (
+            self.connection
+                .batch_write_item()
+                .table("LowVoltage.TableWithHash")
+                .delete({"hash": "testBatchWriteItem1"})
+                .put({"hash": "testBatchWriteItem2", "a": 43})
+                .go()
+        )
+        self.assertEqual(
+            write,
+            {u'UnprocessedItems': {}}
+        )
+        self.assertEqual(
+            self.connection.get_item("LowVoltage.TableWithHash", {"hash": "testBatchWriteItem1"}).go(),
+            {}
+        )
+        self.assertEqual(
+            self.connection.get_item("LowVoltage.TableWithHash", {"hash": "testBatchWriteItem2"}).go(),
+            {
+                "Item": {"hash": {"S": "testBatchWriteItem2"}, "a": {"N": "43"}}
+            }
         )
 
     def testDeleteItem(self):

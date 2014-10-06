@@ -4,7 +4,7 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation, ReturnConsumedCapacityMixin
+from LowVoltage.operations.operation import Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 
 
 class BatchGetItem(Operation, ReturnConsumedCapacityMixin):
@@ -135,6 +135,119 @@ class BatchGetItemTestCase(unittest.TestCase):
                         "AttributesToGet": ["a", "d", "e"],
                     },
                 }
+            }
+        )
+
+
+class BatchWriteItem(Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+    def __init__(self, connection):
+        super(BatchWriteItem, self).__init__("BatchWriteItem", connection)
+        ReturnConsumedCapacityMixin.__init__(self)
+        ReturnItemCollectionMetricsMixin.__init__(self)
+        self.__request_items = {}
+        self.__last_table = None
+
+    def _build(self):
+        data = {
+        }
+        self._build_return_consumed_capacity(data)
+        self._build_return_item_collection_metrics(data)
+        if self.__request_items:
+            data["RequestItems"] = self.__request_items
+        return data
+
+    def table(self, table_name):
+        if table_name not in self.__request_items:
+            self.__request_items[table_name] = []
+        self.__last_table = self.__request_items[table_name]
+        return self
+
+    def delete(self, *keys):
+        for key in keys:
+            if isinstance(key, dict):
+                key = [key]
+            self.__last_table.extend({"DeleteRequest": {"Key": self._convert_dict(k)}} for k in key)
+        return self
+
+    def put(self, *keys):
+        for key in keys:
+            if isinstance(key, dict):
+                key = [key]
+            self.__last_table.extend({"PutRequest": {"Item": self._convert_dict(k)}} for k in key)
+        return self
+
+
+class BatchWriteItemTestCase(unittest.TestCase):
+    def testEmpty(self):
+        self.assertEqual(
+            BatchWriteItem(None)._build(),
+            {}
+        )
+
+    def testReturnConsumedCapacityTotal(self):
+        self.assertEqual(
+            BatchWriteItem(None).return_consumed_capacity_total()._build(),
+            {
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def testReturnConsumedCapacityIndexes(self):
+        self.assertEqual(
+            BatchWriteItem(None).return_consumed_capacity_indexes()._build(),
+            {
+                "ReturnConsumedCapacity": "INDEXES",
+            }
+        )
+
+    def testReturnConsumedCapacityNone(self):
+        self.assertEqual(
+            BatchWriteItem(None).return_consumed_capacity_none()._build(),
+            {
+                "ReturnConsumedCapacity": "NONE",
+            }
+        )
+
+    def testReturnSizeItemCollectionMetrics(self):
+        self.assertEqual(
+            BatchWriteItem(None).return_item_collection_metrics_size()._build(),
+            {
+                "ReturnItemCollectionMetrics": "SIZE",
+            }
+        )
+
+    def testReturnNoItemCollectionMetrics(self):
+        self.assertEqual(
+            BatchWriteItem(None).return_item_collection_metrics_none()._build(),
+            {
+                "ReturnItemCollectionMetrics": "NONE",
+            }
+        )
+
+
+    def testDelete(self):
+        self.assertEqual(
+            BatchWriteItem(None).table("Table").delete({"hash": "h1"}).table("Table").delete([{"hash": "h2"}])._build(),
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h1"}}}},
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h2"}}}},
+                    ]
+                },
+            }
+        )
+
+    def testPut(self):
+        self.assertEqual(
+            BatchWriteItem(None).table("Table").put({"hash": "h1"}, [{"hash": "h2"}])._build(),
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"PutRequest": {"Item": {"hash": {"S": "h1"}}}},
+                        {"PutRequest": {"Item": {"hash": {"S": "h2"}}}},
+                    ],
+                },
             }
         )
 

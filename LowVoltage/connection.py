@@ -12,7 +12,7 @@ import urlparse
 import requests
 
 from operations import DeleteItem, GetItem, PutItem, UpdateItem
-from operations import BatchGetItem
+from operations import BatchGetItem, BatchWriteItem
 import exceptions
 
 
@@ -73,6 +73,9 @@ class Connection(object):
 
     def batch_get_item(self):
         return BatchGetItem(self)
+
+    def batch_write_item(self):
+        return BatchWriteItem(self)
 
     def delete_item(self, table_name, key):
         return DeleteItem(self, table_name, key)
