@@ -4,3 +4,5 @@
 
 from item_operations import DeleteItem, GetItem, PutItem, UpdateItem
 from item_operations import DeleteItemTestCase, GetItemTestCase, PutItemTestCase, UpdateItemTestCase
+from batch_operations import BatchGetItem
+from batch_operations import BatchGetItemTestCase

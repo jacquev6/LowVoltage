@@ -13,6 +13,7 @@ import time
 import unittest
 
 from operations import DeleteItemTestCase, GetItemTestCase, PutItemTestCase, UpdateItemTestCase
+from operations import BatchGetItemTestCase
 from connection import ConnectionTestCase
 
 from LowVoltage import Connection, StaticCredentials, ValidationException, ResourceNotFoundException, ServerError, ConditionalCheckFailedException
@@ -109,6 +110,21 @@ class IntegrationTestsMixin:
                     "__type": "com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException",
                 },),
             ]
+        )
+
+    def testBatchGetItem(self):
+        self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testBatchGetItem", "a": 42, "b": "foo"}).go()
+        get = (
+            self.connection
+                .batch_get_item()
+                .table("LowVoltage.TableWithHash")
+                .keys({"hash": "testBatchGetItem"})
+                .attributes_to_get("a")
+                .go()
+        )
+        self.assertEqual(
+            get,
+            {u'Responses': {u'LowVoltage.TableWithHash': [{u'a': {u'N': u'42'}}]}, u'UnprocessedKeys': {}}
         )
 
     def testDeleteItem(self):

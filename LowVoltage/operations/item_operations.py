@@ -294,9 +294,8 @@ class GetItem(Operation, ReturnConsumedCapacityMixin):
     def attributes_to_get(self, *names):
         for name in names:
             if isinstance(name, basestring):
-                self.__attributes_to_get.append(name)
-            else:
-                self.__attributes_to_get.extend(name)
+                name = [name]
+            self.__attributes_to_get.extend(name)
         return self
 
 

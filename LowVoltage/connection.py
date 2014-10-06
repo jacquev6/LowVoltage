@@ -12,6 +12,7 @@ import urlparse
 import requests
 
 from operations import DeleteItem, GetItem, PutItem, UpdateItem
+from operations import BatchGetItem
 import exceptions
 
 
@@ -69,6 +70,9 @@ class Connection(object):
             raise exceptions.ServerError(data)
         else:
             raise exceptions.UnknownError(r.status_code, r.text)
+
+    def batch_get_item(self):
+        return BatchGetItem(self)
 
     def delete_item(self, table_name, key):
         return DeleteItem(self, table_name, key)
