@@ -64,6 +64,10 @@ class Connection(object):
                 raise exceptions.ItemCollectionSizeLimitExceededException(data)
             elif typ.endswith("ProvisionedThroughputExceededException"):
                 raise exceptions.ProvisionedThroughputExceededException(data)
+            elif typ.endswith("LimitExceededException"):
+                raise exceptions.LimitExceededException(data)
+            elif typ.endswith("ResourceInUseException"):
+                raise exceptions.ResourceInUseException(data)
             else:
                 raise exceptions.ClientError(data)
         elif r.status_code == 500:
@@ -230,6 +234,16 @@ class ConnectionTestCase(unittest.TestCase):
         with self.assertRaises(exceptions.ProvisionedThroughputExceededException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ProvisionedThroughputExceededException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ProvisionedThroughputExceededException", "Message": "tralala"},))
+
+    def testLimitExceededException(self):
+        with self.assertRaises(exceptions.LimitExceededException) as catcher:
+            self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.LimitExceededException", "Message": "tralala"}'))
+        self.assertEqual(catcher.exception.args, ({"__type": "xxx.LimitExceededException", "Message": "tralala"},))
+
+    def testResourceInUseException(self):
+        with self.assertRaises(exceptions.ResourceInUseException) as catcher:
+            self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ResourceInUseException", "Message": "tralala"}'))
+        self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceInUseException", "Message": "tralala"},))
 
 
 if __name__ == "__main__":  # pragma no branch (Test code)

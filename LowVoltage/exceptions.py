@@ -27,12 +27,20 @@ class ValidationException(ClientError):
 
 
 class ConditionalCheckFailedException(ClientError):
-	pass
+    pass
 
 
 class ItemCollectionSizeLimitExceededException(ClientError):
-	pass
+    pass
 
 
 class ProvisionedThroughputExceededException(ClientError):
-	pass
+    pass
+
+
+class LimitExceededException(ClientError):
+    pass
+
+
+class ResourceInUseException(ClientError):
+    pass
