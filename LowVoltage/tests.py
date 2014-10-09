@@ -293,6 +293,53 @@ class ExplorationTestsMixin:
                 }
             )
 
+    def testValidationErrors(self):
+        with self.assertRaises(ValidationException) as catcher:
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
+                    "Key": {"hash": {"S": "bbb"}},
+                    "ConditionExpression": "foo",
+                }
+            )
+        self.assertIn(
+            catcher.exception.args,
+            [
+                ({  # DynamoDBLocal
+                    "Message": 'Invalid ConditionExpression: Syntax error; token: "<EOF>", near: "foo"',
+                    "__type": "com.amazon.coral.validate#ValidationException",
+                },),
+                ({  # Real DynamoDB
+                    "message": 'Invalid ConditionExpression: Syntax error; token: "<EOF>", near: "foo"',
+                    "__type": "com.amazon.coral.validate#ValidationException",
+                },),
+            ]
+        )
+
+        with self.assertRaises(ValidationException) as catcher:
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
+                    "Key": {"hash": {"S": "bbb"}},
+                    "ConditionExpression": "foo=:foo",
+                }
+            )
+        self.assertIn(
+            catcher.exception.args,
+            [
+                ({  # DynamoDBLocal
+                    "Message": 'Invalid ConditionExpression: An expression attribute value used in expression is not defined; attribute value: :foo',
+                    "__type": "com.amazon.coral.validate#ValidationException",
+                },),
+                ({  # Real DynamoDB
+                    "message": 'Invalid ConditionExpression: An expression attribute value used in expression is not defined; attribute value: :foo',
+                    "__type": "com.amazon.coral.validate#ValidationException",
+                },),
+            ]
+        )
+
 
 class TestsMixin:
     @classmethod
