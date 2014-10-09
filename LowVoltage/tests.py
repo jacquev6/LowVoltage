@@ -369,7 +369,7 @@ class ExplorationTestsMixin:
 
 class TestsMixin:
     @classmethod
-    def createTestTables(cls):
+    def createTestTables(cls):  # pragma no cover (Test code)
         for payload in cls.getTestTables():
             cls.connection.request("CreateTable", payload)
         sleep = True
@@ -384,7 +384,7 @@ class TestsMixin:
                 time.sleep(1)
 
     @classmethod
-    def deleteTestTables(cls):
+    def deleteTestTables(cls):  # pragma no cover (Test code)
         for payload in cls.getTestTables():
             name = payload["TableName"]
             cls.connection.request("DeleteTable", {"TableName": name})
