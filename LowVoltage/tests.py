@@ -366,6 +366,67 @@ class ExplorationTestsMixin:
             ]
         )
 
+    def testConditionExpressionFunctions(self):
+        with self.assertRaises(ConditionalCheckFailedException):
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.ExplorationTests",
+                    "Key": {"hash": {"S": "ccc"}},
+                    "ConditionExpression": "attribute_exists(a)",
+                    "UpdateExpression": "SET a=:new_a",
+                    "ExpressionAttributeValues": {":new_a": {"N": "42"}},
+                }
+            )
+
+        with self.assertRaises(ConditionalCheckFailedException):
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.ExplorationTests",
+                    "Key": {"hash": {"S": "ccc"}},
+                    "ConditionExpression": "contains(b, :b)",
+                    "UpdateExpression": "SET a=:new_a",
+                    "ExpressionAttributeValues": {":new_a": {"N": "42"}, ":b": {"N": "42"}},
+                }
+            )
+
+        with self.assertRaises(ConditionalCheckFailedException):
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.ExplorationTests",
+                    "Key": {"hash": {"S": "ccc"}},
+                    "ConditionExpression": "begins_with(b, :b)",
+                    "UpdateExpression": "SET a=:new_a",
+                    "ExpressionAttributeValues": {":new_a": {"N": "42"}, ":b": {"S": "prefix"}},
+                }
+            )
+
+        with self.assertRaises(ConditionalCheckFailedException):
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.ExplorationTests",
+                    "Key": {"hash": {"S": "ccc"}},
+                    "ConditionExpression": "b IN (:b1, :b2, :b3)",
+                    "UpdateExpression": "SET a=:new_a",
+                    "ExpressionAttributeValues": {":new_a": {"N": "42"}, ":b1": {"N": "42"}, ":b2": {"N": "43"}, ":b3": {"N": "44"}},
+                }
+            )
+
+        with self.assertRaises(ConditionalCheckFailedException):
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.ExplorationTests",
+                    "Key": {"hash": {"S": "ccc"}},
+                    "ConditionExpression": "b BETWEEN :b1 AND :b2",
+                    "UpdateExpression": "SET a=:new_a",
+                    "ExpressionAttributeValues": {":new_a": {"N": "42"}, ":b1": {"N": "42"}, ":b2": {"N": "44"}},
+                }
+            )
+
 
 class TestsMixin:
     @classmethod
