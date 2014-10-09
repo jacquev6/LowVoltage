@@ -14,6 +14,7 @@ import unittest
 
 from operations import DeleteItemTestCase, GetItemTestCase, PutItemTestCase, UpdateItemTestCase
 from operations import BatchGetItemTestCase, BatchWriteItemTestCase
+from operations.expressions import ConditionExpressionsTestCase
 from connection import ConnectionTestCase
 
 from LowVoltage import Connection, StaticCredentials, ValidationException, ResourceNotFoundException, ServerError, ConditionalCheckFailedException
