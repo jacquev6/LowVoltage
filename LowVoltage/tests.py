@@ -12,8 +12,8 @@ import tarfile
 import time
 import unittest
 
-from operations import DeleteItemTestCase, GetItemTestCase, PutItemTestCase, UpdateItemTestCase
-from operations import BatchGetItemTestCase, BatchWriteItemTestCase
+from operations.item_operations import DeleteItemTestCase, GetItemTestCase, PutItemTestCase, UpdateItemTestCase
+from operations.batch_operations import BatchGetItemTestCase, BatchWriteItemTestCase
 from operations.expressions import ConditionExpressionsTestCase
 from connection import ConnectionTestCase
 
