@@ -24,7 +24,7 @@ class IntegrationTestsMixin:
     @classmethod
     def getTestTables(cls):
         yield {
-            "TableName": "LowVoltage.TableWithHash",
+            "TableName": "LowVoltage.IntegrationTests",
             "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
             "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
             "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
@@ -54,7 +54,7 @@ class IntegrationTestsMixin:
         with self.assertRaises(ValidationException) as catcher:
             self.connection.request(
                 "PutItem",
-                {"TableName": "LowVoltage.TableWithHash"}
+                {"TableName": "LowVoltage.IntegrationTests"}
             )
         self.assertIn(
             catcher.exception.args,
@@ -73,7 +73,7 @@ class IntegrationTestsMixin:
     def testConditionalCheckFailedException(self):
         with self.assertRaises(ConditionalCheckFailedException) as catcher:
             (self.connection
-                .update_item("LowVoltage.TableWithHash", {"hash": "testUpdateItem"})
+                .update_item("LowVoltage.IntegrationTests", {"hash": "testUpdateItem"})
                 .put("a", 42)
                 .expect_not_null("foo")
                 .return_values_all_new()
@@ -93,26 +93,26 @@ class IntegrationTestsMixin:
         )
 
     def testBatchGetItem(self):
-        self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testBatchGetItem", "a": 42, "b": "foo"}).go()
+        self.connection.put_item("LowVoltage.IntegrationTests", {"hash": "testBatchGetItem", "a": 42, "b": "foo"}).go()
         get = (
             self.connection
                 .batch_get_item()
-                .table("LowVoltage.TableWithHash")
+                .table("LowVoltage.IntegrationTests")
                 .keys({"hash": "testBatchGetItem"})
                 .attributes_to_get("a")
                 .go()
         )
         self.assertEqual(
             get,
-            {u'Responses': {u'LowVoltage.TableWithHash': [{u'a': {u'N': u'42'}}]}, u'UnprocessedKeys': {}}
+            {u'Responses': {u'LowVoltage.IntegrationTests': [{u'a': {u'N': u'42'}}]}, u'UnprocessedKeys': {}}
         )
 
     def testBatchWriteItem(self):
-        self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testBatchWriteItem1", "a": 42, "b": "foo"}).go()
+        self.connection.put_item("LowVoltage.IntegrationTests", {"hash": "testBatchWriteItem1", "a": 42, "b": "foo"}).go()
         write = (
             self.connection
                 .batch_write_item()
-                .table("LowVoltage.TableWithHash")
+                .table("LowVoltage.IntegrationTests")
                 .delete({"hash": "testBatchWriteItem1"})
                 .put({"hash": "testBatchWriteItem2", "a": 43})
                 .go()
@@ -122,21 +122,21 @@ class IntegrationTestsMixin:
             {u'UnprocessedItems': {}}
         )
         self.assertEqual(
-            self.connection.get_item("LowVoltage.TableWithHash", {"hash": "testBatchWriteItem1"}).go(),
+            self.connection.get_item("LowVoltage.IntegrationTests", {"hash": "testBatchWriteItem1"}).go(),
             {}
         )
         self.assertEqual(
-            self.connection.get_item("LowVoltage.TableWithHash", {"hash": "testBatchWriteItem2"}).go(),
+            self.connection.get_item("LowVoltage.IntegrationTests", {"hash": "testBatchWriteItem2"}).go(),
             {
                 "Item": {"hash": {"S": "testBatchWriteItem2"}, "a": {"N": "43"}}
             }
         )
 
     def testDeleteItem(self):
-        self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testDeleteItem"}).go()
+        self.connection.put_item("LowVoltage.IntegrationTests", {"hash": "testDeleteItem"}).go()
         delete = (
             self.connection
-                .delete_item("LowVoltage.TableWithHash", {"hash": "testDeleteItem"})
+                .delete_item("LowVoltage.IntegrationTests", {"hash": "testDeleteItem"})
                 .return_values_all_old()
                 .go()
         )
@@ -146,10 +146,10 @@ class IntegrationTestsMixin:
         )
 
     def testGetItem(self):
-        self.connection.put_item("LowVoltage.TableWithHash", {"hash": "testGetItem", "a": 42, "b": "foo"}).go()
+        self.connection.put_item("LowVoltage.IntegrationTests", {"hash": "testGetItem", "a": 42, "b": "foo"}).go()
         get = (
             self.connection
-                .get_item("LowVoltage.TableWithHash", {"hash": "testGetItem"})
+                .get_item("LowVoltage.IntegrationTests", {"hash": "testGetItem"})
                 .attributes_to_get("a")
                 .go()
         )
@@ -161,7 +161,7 @@ class IntegrationTestsMixin:
     def testPutItem(self):
         first_put = (
             self.connection
-                .put_item("LowVoltage.TableWithHash", {"hash": "testPutItem", "a": 42, "b": "foo"})
+                .put_item("LowVoltage.IntegrationTests", {"hash": "testPutItem", "a": 42, "b": "foo"})
                 .return_values_all_old()
                 .go()
         )
@@ -171,7 +171,7 @@ class IntegrationTestsMixin:
         )
         second_put = (
             self.connection
-                .put_item("LowVoltage.TableWithHash", {"hash": "testPutItem", "a": 42, "c": "bar"})
+                .put_item("LowVoltage.IntegrationTests", {"hash": "testPutItem", "a": 42, "c": "bar"})
                 .return_values_all_old()
                 .go()
         )
@@ -183,7 +183,7 @@ class IntegrationTestsMixin:
     def testUpdateItem(self):
         update = (
             self.connection
-                .update_item("LowVoltage.TableWithHash", {"hash": "testUpdateItem"})
+                .update_item("LowVoltage.IntegrationTests", {"hash": "testUpdateItem"})
                 .put("a", 42)
                 .return_values_all_new()
                 .go()
@@ -198,7 +198,7 @@ class ExplorationTestsMixin:
     @classmethod
     def getTestTables(self):
         yield {
-            "TableName": "LowVoltage.TableWithHash",
+            "TableName": "LowVoltage.ExplorationTests",
             "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
             "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
             "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
@@ -209,7 +209,7 @@ class ExplorationTestsMixin:
             self.connection.request(
                 "PutItem",
                 {
-                    "TableName": "LowVoltage.TableWithHash",
+                    "TableName": "LowVoltage.ExplorationTests",
                     "Item": {
                         "hash": {"S": "aaa"},
                         "a": {"N": "42"},
@@ -224,7 +224,7 @@ class ExplorationTestsMixin:
             self.connection.request(
                 "UpdateItem",
                 {
-                    "TableName": "LowVoltage.TableWithHash",
+                    "TableName": "LowVoltage.ExplorationTests",
                     "Key": {"hash": {"S": "aaa",}},
                     "ConditionExpression": "(a=:old_a AND b<:max_b) OR (a=:new_a AND b<:max_b)",
                     "UpdateExpression": "SET a=:new_a ADD b :incr_b",
@@ -245,7 +245,7 @@ class ExplorationTestsMixin:
             self.connection.request(
                 "UpdateItem",
                 {
-                    "TableName": "LowVoltage.TableWithHash",
+                    "TableName": "LowVoltage.ExplorationTests",
                     "Key": {"hash": {"S": "aaa",}},
                     "ConditionExpression": "(a=:old_a OR a=:new_a) AND b<:max_b",
                     "UpdateExpression": "SET a=:new_a ADD b :incr_b",
@@ -266,7 +266,7 @@ class ExplorationTestsMixin:
             self.connection.request(
                 "UpdateItem",
                 {
-                    "TableName": "LowVoltage.TableWithHash",
+                    "TableName": "LowVoltage.ExplorationTests",
                     "Key": {"hash": {"S": "aaa",}},
                     "ConditionExpression": "a<b",
                     "UpdateExpression": "SET a=:new_a",
@@ -287,7 +287,7 @@ class ExplorationTestsMixin:
             self.connection.request(
                 "UpdateItem",
                 {
-                    "TableName": "LowVoltage.TableWithHash",
+                    "TableName": "LowVoltage.ExplorationTests",
                     "Key": {"hash": {"S": "aaa",}},
                     "ConditionExpression": "a>b",
                     "UpdateExpression": "REMOVE a",
@@ -299,7 +299,7 @@ class ExplorationTestsMixin:
             self.connection.request(
                 "UpdateItem",
                 {
-                    "TableName": "LowVoltage.TableWithHash",
+                    "TableName": "LowVoltage.ExplorationTests",
                     "Key": {"hash": {"S": "bbb"}},
                     "ConditionExpression": "foo",
                 }
@@ -322,7 +322,7 @@ class ExplorationTestsMixin:
             self.connection.request(
                 "UpdateItem",
                 {
-                    "TableName": "LowVoltage.TableWithHash",
+                    "TableName": "LowVoltage.ExplorationTests",
                     "Key": {"hash": {"S": "bbb"}},
                     "ConditionExpression": "foo=:foo",
                 }
@@ -345,7 +345,7 @@ class ExplorationTestsMixin:
             self.connection.request(
                 "UpdateItem",
                 {
-                    "TableName": "LowVoltage.TableWithHash",
+                    "TableName": "LowVoltage.ExplorationTests",
                     "Key": {"hash": {"S": "aaa",}},
                     "ConditionExpression": "a+:delta<b",
                     "UpdateExpression": "SET a=:new_a",
@@ -447,7 +447,7 @@ class LocalTestsMixin(TestsMixin):
             self.connection.request(
                 "PutItem",
                 {
-                    "TableName": "TableWithHash",
+                    "TableName": "Table",
                     "Item": {"hash": 42}
                 }
             )
