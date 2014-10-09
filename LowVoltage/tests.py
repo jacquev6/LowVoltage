@@ -393,7 +393,7 @@ class TestsMixin:
 try:
     import AwsCredentials
 
-    class RealTestsMixin(TestsMixin):
+    class RealTestsMixin(TestsMixin):  # pragma no cover (Test code)
         @classmethod
         def setUpClass(cls):
             cls.connection = Connection(AwsCredentials.region, StaticCredentials(AwsCredentials.key, AwsCredentials.secret))
@@ -404,26 +404,26 @@ try:
             cls.deleteTestTables()
 
 
-    class RealIntegrationTestCase(IntegrationTestsMixin, RealTestsMixin, unittest.TestCase):
+    class RealIntegrationTestCase(IntegrationTestsMixin, RealTestsMixin, unittest.TestCase):  # pragma no cover (Test code)
         pass
 
 
-    class RealExplorationTestCase(ExplorationTestsMixin, RealTestsMixin, unittest.TestCase):
+    class RealExplorationTestCase(ExplorationTestsMixin, RealTestsMixin, unittest.TestCase):  # pragma no cover (Test code)
         pass
 
-except ImportError:  # pragma no cover
-    pass  # pragma no cover
+except ImportError:  # pragma no cover (Test code)
+    pass  # pragma no cover (Test code)
 
 
 class LocalTestsMixin(TestsMixin):
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls):  # pragma no cover (Test code)
         if not os.path.exists(".dynamodblocal/DynamoDBLocal.jar"):
-            archive = requests.get("http://dynamodb-local.s3-website-us-west-2.amazonaws.com/dynamodb_local_latest").content  # pragma no cover
-            tarfile.open(fileobj=io.BytesIO(archive)).extractall(".dynamodblocal")  # pragma no cover
+            archive = requests.get("http://dynamodb-local.s3-website-us-west-2.amazonaws.com/dynamodb_local_latest").content
+            tarfile.open(fileobj=io.BytesIO(archive)).extractall(".dynamodblocal")
             # Fix permissions, needed at least when running with Cygwin's Python
-            for f in glob.glob(".dynamodblocal/DynamoDBLocal_lib/*"):  # pragma no cover
-                os.chmod(f, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)  # pragma no cover
+            for f in glob.glob(".dynamodblocal/DynamoDBLocal_lib/*"):
+                os.chmod(f, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)
 
         cls.dynamodblocal = subprocess.Popen(
             ["java", "-Djava.library.path=./DynamoDBLocal_lib", "-jar", "DynamoDBLocal.jar", "-inMemory", "-port", "65432"],
@@ -438,7 +438,7 @@ class LocalTestsMixin(TestsMixin):
         cls.createTestTables()
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls):  # pragma no cover (Test code)
         cls.dynamodblocal.kill()
 
     def testServerError(self):
