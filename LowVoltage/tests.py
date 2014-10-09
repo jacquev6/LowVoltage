@@ -340,6 +340,31 @@ class ExplorationTestsMixin:
             ]
         )
 
+        with self.assertRaises(ValidationException) as catcher:
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
+                    "Key": {"hash": {"S": "aaa",}},
+                    "ConditionExpression": "a+:delta<b",
+                    "UpdateExpression": "SET a=:new_a",
+                    "ExpressionAttributeValues": {":new_a": {"N": "45"}, ":delta": {"N": "3"}},
+                }
+            )
+        self.assertIn(
+            catcher.exception.args,
+            [
+                ({  # DynamoDBLocal
+                    "Message": 'Invalid ConditionExpression: Syntax error; token: "+", near: "a+:delta"',
+                    "__type": "com.amazon.coral.validate#ValidationException",
+                },),
+                ({  # Real DynamoDB
+                    "message": 'Invalid ConditionExpression: Syntax error; token: "+", near: "a+:delta"',
+                    "__type": "com.amazon.coral.validate#ValidationException",
+                },),
+            ]
+        )
+
 
 class TestsMixin:
     @classmethod
