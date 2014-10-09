@@ -193,6 +193,107 @@ class IntegrationTestsMixin:
         )
 
 
+class ExplorationTestsMixin:
+    @classmethod
+    def getTestTables(self):
+        yield {
+            "TableName": "LowVoltage.TableWithHash",
+            "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
+            "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
+            "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+        }
+
+    def testExpressionsOnInt(self):
+        self.assertEqual(
+            self.connection.request(
+                "PutItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
+                    "Item": {
+                        "hash": {"S": "aaa"},
+                        "a": {"N": "42"},
+                        "b": {"N": "57"},
+                    },
+                }
+            ),
+            {}
+        )
+
+        self.assertEqual(
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
+                    "Key": {"hash": {"S": "aaa",}},
+                    "ConditionExpression": "(a=:old_a AND b<:max_b) OR (a=:new_a AND b<:max_b)",
+                    "UpdateExpression": "SET a=:new_a ADD b :incr_b",
+                    "ExpressionAttributeValues": {":old_a": {"N": "42"}, ":new_a": {"N": "43"}, ":max_b": {"N": "60"}, ":incr_b": {"N": "2"}},
+                    "ReturnValues": "ALL_NEW",
+                }
+            ),
+            {
+                "Attributes": {
+                    "hash": {"S": "aaa"},
+                    "a": {"N": "43"},
+                    "b": {"N": "59"},
+                },
+            }
+        )
+
+        self.assertEqual(
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
+                    "Key": {"hash": {"S": "aaa",}},
+                    "ConditionExpression": "(a=:old_a OR a=:new_a) AND b<:max_b",
+                    "UpdateExpression": "SET a=:new_a ADD b :incr_b",
+                    "ExpressionAttributeValues": {":old_a": {"N": "42"}, ":new_a": {"N": "43"}, ":max_b": {"N": "60"}, ":incr_b": {"N": "2"}},
+                    "ReturnValues": "ALL_NEW",
+                }
+            ),
+            {
+                "Attributes": {
+                    "hash": {"S": "aaa"},
+                    "a": {"N": "43"},
+                    "b": {"N": "61"},
+                },
+            }
+        )
+
+        self.assertEqual(
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
+                    "Key": {"hash": {"S": "aaa",}},
+                    "ConditionExpression": "a<b",
+                    "UpdateExpression": "SET a=:new_a",
+                    "ExpressionAttributeValues": {":new_a": {"N": "44"}},
+                    "ReturnValues": "ALL_NEW",
+                }
+            ),
+            {
+                "Attributes": {
+                    "hash": {"S": "aaa"},
+                    "a": {"N": "44"},
+                    "b": {"N": "61"},
+                },
+            }
+        )
+
+        with self.assertRaises(ConditionalCheckFailedException):
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.TableWithHash",
+                    "Key": {"hash": {"S": "aaa",}},
+                    "ConditionExpression": "a>b",
+                    "UpdateExpression": "REMOVE a",
+                }
+            )
+
+
 class TestsMixin:
     @classmethod
     def createTestTables(cls):
@@ -231,6 +332,10 @@ try:
 
 
     class RealIntegrationTestCase(IntegrationTestsMixin, RealTestsMixin, unittest.TestCase):
+        pass
+
+
+    class RealExplorationTestCase(ExplorationTestsMixin, RealTestsMixin, unittest.TestCase):
         pass
 
 except ImportError:  # pragma no cover
@@ -283,6 +388,10 @@ class LocalTestsMixin(TestsMixin):
 
 
 class LocalIntegrationTestCase(IntegrationTestsMixin, LocalTestsMixin, unittest.TestCase):
+    pass
+
+
+class LocalExplorationTestCase(ExplorationTestsMixin, LocalTestsMixin, unittest.TestCase):
     pass
 
 
