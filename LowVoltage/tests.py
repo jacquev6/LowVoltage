@@ -21,28 +21,7 @@ from LowVoltage import Connection, StaticCredentials, ValidationException, Resou
 
 class IntegrationTestsMixin:
     @classmethod
-    def createTestTables(cls):  # pragma no cover (Covered by optional integ tests)
-        for payload in cls.__getTestTables():
-            cls.connection.request("CreateTable", payload)
-        sleep = True
-        while sleep:
-            sleep = False
-            for payload in cls.__getTestTables():
-                name = payload["TableName"]
-                status = cls.connection.request("DescribeTable", {"TableName": name})["Table"]["TableStatus"]
-                if status == "CREATING":
-                    sleep = True
-            if sleep:
-                time.sleep(1)
-
-    @classmethod
-    def deleteTestTables(cls):  # pragma no cover (Covered by optional integ tests)
-        for payload in cls.__getTestTables():
-            name = payload["TableName"]
-            cls.connection.request("DeleteTable", {"TableName": name})
-
-    @classmethod
-    def __getTestTables(cls):
+    def getTestTables(cls):
         yield {
             "TableName": "LowVoltage.TableWithHash",
             "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
@@ -102,7 +81,7 @@ class IntegrationTestsMixin:
             catcher.exception.args,
             [
                 ({  # DynamoDBLocal
-                    "Message": "The conditional check failed",
+                    "Message": "The conditional request failed",
                     "__type": "com.amazonaws.dynamodb.v20120810#ConditionalCheckFailedException",
                 },),
                 ({  # Real DynamoDB
@@ -214,10 +193,33 @@ class IntegrationTestsMixin:
         )
 
 
+class TestsMixin:
+    @classmethod
+    def createTestTables(cls):
+        for payload in cls.getTestTables():
+            cls.connection.request("CreateTable", payload)
+        sleep = True
+        while sleep:
+            sleep = False
+            for payload in cls.getTestTables():
+                name = payload["TableName"]
+                status = cls.connection.request("DescribeTable", {"TableName": name})["Table"]["TableStatus"]
+                if status == "CREATING":
+                    sleep = True
+            if sleep:
+                time.sleep(1)
+
+    @classmethod
+    def deleteTestTables(cls):
+        for payload in cls.getTestTables():
+            name = payload["TableName"]
+            cls.connection.request("DeleteTable", {"TableName": name})
+
+
 try:
     import AwsCredentials
 
-    class RealIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):  # pragma no cover (Covered by optional integ tests)
+    class RealTestsMixin(TestsMixin):
         @classmethod
         def setUpClass(cls):
             cls.connection = Connection(AwsCredentials.region, StaticCredentials(AwsCredentials.key, AwsCredentials.secret))
@@ -227,11 +229,15 @@ try:
         def tearDownClass(cls):
             cls.deleteTestTables()
 
+
+    class RealIntegrationTestCase(IntegrationTestsMixin, RealTestsMixin, unittest.TestCase):
+        pass
+
 except ImportError:  # pragma no cover
     pass  # pragma no cover
 
 
-class LocalIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
+class LocalTestsMixin(TestsMixin):
     @classmethod
     def setUpClass(cls):
         if not os.path.exists(".dynamodblocal/DynamoDBLocal.jar"):
@@ -274,6 +280,10 @@ class LocalIntegrationTestCase(IntegrationTestsMixin, unittest.TestCase):
                 "__type": "com.amazonaws.dynamodb.v20120810#InternalFailure",
             },)
         )
+
+
+class LocalIntegrationTestCase(IntegrationTestsMixin, LocalTestsMixin, unittest.TestCase):
+    pass
 
 
 if __name__ == "__main__":  # pragma no branch (Test code)
