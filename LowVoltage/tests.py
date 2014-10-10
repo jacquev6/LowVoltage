@@ -427,6 +427,19 @@ class ExplorationTestsMixin:
                 }
             )
 
+        with self.assertRaises(ConditionalCheckFailedException):
+            self.connection.request(
+                "UpdateItem",
+                {
+                    "TableName": "LowVoltage.ExplorationTests",
+                    "Key": {"hash": {"S": "ccc"}},
+                    "ConditionExpression": "#n1=:v",
+                    "UpdateExpression": "SET #n2=:v",
+                    "ExpressionAttributeValues": {":v": {"N": "42"}},
+                    "ExpressionAttributeNames": {"#n1": "aaa", "#n2": "bbb"},
+                }
+            )
+
 
 class TestsMixin:
     @classmethod
