@@ -4,8 +4,16 @@
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
 import setuptools
+import setuptools.command.test
 
 version = "0.1.0"
+
+
+class TestCommand(setuptools.command.test.test):
+    def run_tests(self, *args, **kwds):
+        import LowVoltage.tests.dynamodb_local
+        with LowVoltage.tests.dynamodb_local.DynamoDbLocal():
+            setuptools.command.test.test.run_tests(self, *args, **kwds)
 
 
 if __name__ == "__main__":
@@ -35,5 +43,7 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.4",
             "Environment :: Web Environment",
         ],
-        use_2to3=True
+        test_suite="LowVoltage.tests.all",
+        use_2to3=True,
+        cmdclass={"test": TestCommand},
     )

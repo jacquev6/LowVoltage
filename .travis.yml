@@ -8,6 +8,6 @@ install:
   - pip install -r requirements.txt
   - pip install coveralls
 script:
-  - coverage run "--include=LowVoltage/*" -m LowVoltage.tests --verbose
+  - coverage run "--include=LowVoltage/*" setups.py test
 after_success:
   - coveralls
