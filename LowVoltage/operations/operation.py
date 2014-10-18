@@ -7,12 +7,12 @@ import unittest
 
 
 class Operation(object):
-    def __init__(self, operation, connection):
+    def __init__(self, operation):
         self.__operation = operation
-        self.__connection = connection
 
-    def go(self):
-        return self.__connection.request(self.__operation, self._build())
+    @property
+    def name(self):
+        return self.__operation
 
     def _convert_dict(self, attributes):
         return {

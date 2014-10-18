@@ -15,7 +15,7 @@ import unittest
 from operations.item_operations import DeleteItemTestCase, GetItemTestCase, PutItemTestCase, UpdateItemTestCase
 from operations.batch_operations import BatchGetItemTestCase, BatchWriteItemTestCase
 from operations.expressions import ConditionExpressionsTestCase
-from connection import ConnectionTestCase
+from connection import ConnectionTestCase, ConnectionIntegrationTestMixin
 
 from LowVoltage import Connection, StaticCredentials, ValidationException, ResourceNotFoundException, ServerError, ConditionalCheckFailedException
 
@@ -515,6 +515,8 @@ class LocalTestsMixin(TestsMixin):
     def tearDownClass(cls):  # pragma no cover (Test code)
         cls.dynamodblocal.kill()
 
+
+class LocalIntegrationTestCase(IntegrationTestsMixin, LocalTestsMixin, unittest.TestCase):
     def testServerError(self):
         # DynamoDBLocal is not as robust as the real one. This is useful for our test coverage :)
         with self.assertRaises(ServerError) as catcher:
@@ -534,11 +536,11 @@ class LocalTestsMixin(TestsMixin):
         )
 
 
-class LocalIntegrationTestCase(IntegrationTestsMixin, LocalTestsMixin, unittest.TestCase):
+class LocalExplorationTestCase(ExplorationTestsMixin, LocalTestsMixin, unittest.TestCase):
     pass
 
 
-class LocalExplorationTestCase(ExplorationTestsMixin, LocalTestsMixin, unittest.TestCase):
+class LocalConnectionIntegrationTestCase(ConnectionIntegrationTestMixin, LocalTestsMixin, unittest.TestCase):
     pass
 
 

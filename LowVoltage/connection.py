@@ -11,9 +11,8 @@ import urlparse
 
 import requests
 
-from operations import DeleteItem, GetItem, PutItem, UpdateItem
-from operations import BatchGetItem, BatchWriteItem
-import exceptions
+from LowVoltage.operations.operation import Operation as _Operation
+import LowVoltage.exceptions as _exn
 
 
 class StaticCredentials(object):
@@ -35,14 +34,32 @@ class Connection(object):
         self.__host = urlparse.urlparse(self.__endpoint).hostname
         self.__session = requests.Session()
 
-    def request(self, operation, payload):
-        headers, payload = self._sign(datetime.datetime.utcnow(), operation, payload)
+    def request(self, operation, payload=None):
+        operation, payload, handle = self._normalize(operation, payload)
+
+        headers = self._sign(datetime.datetime.utcnow(), operation, payload)
 
         r = self.__session.post(self.__endpoint, data=payload, headers=headers)
         if r.status_code == 200:
-            return r.json()
+            return handle(r)
         else:
             self._raise(r)
+
+    def _normalize(self, operation, payload):
+        if isinstance(operation, basestring):
+            if isinstance(payload, basestring):
+                return operation, payload, lambda r: r.text
+            elif isinstance(payload, dict):
+                return operation, json.dumps(payload), lambda r: r.json()
+            else:
+                raise TypeError("When 'operation' is a string, 'payload' should be a string or a dict")
+        elif isinstance(operation, _Operation):
+            if payload is None:
+                return operation.name, json.dumps(operation.build()), lambda r: operation.Result(**r.json())
+            else:
+                raise TypeError("When 'operation' is an Operation, 'payload' should be None")
+        else:
+            raise TypeError("'operation' should be an Operation or a string")
 
     def _raise(self, r):
         try:
@@ -53,48 +70,34 @@ class Connection(object):
             typ = None
         if r.status_code == 400:
             if typ is None:
-                raise exceptions.ClientError(data)
+                raise _exn.ClientError(data)
             elif typ.endswith("ResourceNotFoundException"):
-                raise exceptions.ResourceNotFoundException(data)
+                raise _exn.ResourceNotFoundException(data)
             elif typ.endswith("ValidationException"):
-                raise exceptions.ValidationException(data)
+                raise _exn.ValidationException(data)
             elif typ.endswith("ConditionalCheckFailedException"):
-                raise exceptions.ConditionalCheckFailedException(data)
+                raise _exn.ConditionalCheckFailedException(data)
             elif typ.endswith("ItemCollectionSizeLimitExceededException"):
-                raise exceptions.ItemCollectionSizeLimitExceededException(data)
+                raise _exn.ItemCollectionSizeLimitExceededException(data)
             elif typ.endswith("ProvisionedThroughputExceededException"):
-                raise exceptions.ProvisionedThroughputExceededException(data)
+                raise _exn.ProvisionedThroughputExceededException(data)
             elif typ.endswith("LimitExceededException"):
-                raise exceptions.LimitExceededException(data)
+                raise _exn.LimitExceededException(data)
             elif typ.endswith("ResourceInUseException"):
-                raise exceptions.ResourceInUseException(data)
+                raise _exn.ResourceInUseException(data)
             else:
-                raise exceptions.ClientError(data)
+                raise _exn.ClientError(data)
         elif r.status_code == 500:
-            raise exceptions.ServerError(data)
+            raise _exn.ServerError(data)
         else:
-            raise exceptions.UnknownError(r.status_code, r.text)
-
-    def batch_get_item(self):
-        return BatchGetItem(self)
-
-    def batch_write_item(self):
-        return BatchWriteItem(self)
-
-    def delete_item(self, table_name, key):
-        return DeleteItem(self, table_name, key)
-
-    def get_item(self, table_name, key):
-        return GetItem(self, table_name, key)
-
-    def put_item(self, table_name, item):
-        return PutItem(self, table_name, item)
-
-    def update_item(self, table_name, key):
-        return UpdateItem(self, table_name, key)
+            raise _exn.UnknownError(r.status_code, r.text)
 
     def _sign(self, now, operation, payload):
         # http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
+        assert isinstance(now, datetime.datetime)
+        assert isinstance(operation, basestring)
+        assert isinstance(payload, basestring)
+
         timestamp = now.strftime("%Y%m%dT%H%M%SZ")
         datestamp = now.strftime("%Y%m%d")
 
@@ -104,8 +107,6 @@ class Connection(object):
             "X-Amz-Target": "DynamoDB_20120810.{}".format(operation),
             "Host": self.__host,
         }
-
-        payload = json.dumps(payload)
 
         header_names = ";".join(key.lower() for key in sorted(headers.keys()))
         request = "POST\n/\n\n{}\n{}\n{}".format(
@@ -150,7 +151,7 @@ class Connection(object):
             hmac.new(key, to_sign.encode("utf-8"), hashlib.sha256).hexdigest(),
         )
 
-        return headers, payload
+        return headers
 
 
 class ConnectionTestCase(unittest.TestCase):
@@ -167,83 +168,126 @@ class ConnectionTestCase(unittest.TestCase):
 
     def testSign(self):
         self.assertEqual(
-            self.connection._sign(datetime.datetime(2014, 10, 4, 6, 33, 2), "Operation", {"Payload": "Value"}),
-            (
-                {
-                    "Host": "localhost",
-                    "Content-Type": "application/x-amz-json-1.0",
-                    "Authorization": "AWS4-HMAC-SHA256 Credential=DummyKey/20141004/us-west-2/dynamodb/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=f47b4025d95692c1623d01bd7db6d53e68f7a8a28264c1ab3393477f0dae520a",
-                    "X-Amz-Date": "20141004T063302Z",
-                    "X-Amz-Target": "DynamoDB_20120810.Operation",
-                },
-                '{"Payload": "Value"}'
-            )
+            self.connection._sign(datetime.datetime(2014, 10, 4, 6, 33, 2), "Operation", '{"Payload": "Value"}'),
+            {
+                "Host": "localhost",
+                "Content-Type": "application/x-amz-json-1.0",
+                "Authorization": "AWS4-HMAC-SHA256 Credential=DummyKey/20141004/us-west-2/dynamodb/aws4_request, SignedHeaders=content-type;host;x-amz-date;x-amz-target, Signature=f47b4025d95692c1623d01bd7db6d53e68f7a8a28264c1ab3393477f0dae520a",
+                "X-Amz-Date": "20141004T063302Z",
+                "X-Amz-Target": "DynamoDB_20120810.Operation",
+            }
         )
 
+    def testBadOperation(self):
+        with self.assertRaises(TypeError) as catcher:
+            self.connection.request(42, {})
+        self.assertEqual(catcher.exception.args, ("'operation' should be an Operation or a string",))
+
+    def testBadPayload(self):
+        with self.assertRaises(TypeError) as catcher:
+            self.connection.request("Operation", 42)
+        self.assertEqual(catcher.exception.args, ("When 'operation' is a string, 'payload' should be a string or a dict",))
+
+    def testPayloadWithOperation(self):
+        import LowVoltage.operations
+
+        with self.assertRaises(TypeError) as catcher:
+            self.connection.request(LowVoltage.operations.ListTables(), "")
+        self.assertEqual(catcher.exception.args, ("When 'operation' is an Operation, 'payload' should be None",))
+
     def testUnknownError(self):
-        with self.assertRaises(exceptions.UnknownError) as catcher:
+        with self.assertRaises(_exn.UnknownError) as catcher:
             self.connection._raise(self.FakeResponse(999, "{}"))
         self.assertEqual(catcher.exception.args, (999, "{}"))
 
     def testUnknownErrorWithoutJson(self):
-        with self.assertRaises(exceptions.UnknownError) as catcher:
+        with self.assertRaises(_exn.UnknownError) as catcher:
             self.connection._raise(self.FakeResponse(999, "not json"))
         self.assertEqual(catcher.exception.args, (999, "not json"))
 
     def testServerError(self):
-        with self.assertRaises(exceptions.ServerError) as catcher:
+        with self.assertRaises(_exn.ServerError) as catcher:
             self.connection._raise(self.FakeResponse(500, '{"foo": "bar"}'))
         self.assertEqual(catcher.exception.args, ({"foo": "bar"},))
 
     def testServerErrorWithoutJson(self):
-        with self.assertRaises(exceptions.ServerError) as catcher:
+        with self.assertRaises(_exn.ServerError) as catcher:
             self.connection._raise(self.FakeResponse(500, "not json"))
         self.assertEqual(catcher.exception.args, ("not json",))
 
     def testClientErrorWithoutType(self):
-        with self.assertRaises(exceptions.ClientError) as catcher:
+        with self.assertRaises(_exn.ClientError) as catcher:
             self.connection._raise(self.FakeResponse(400, "{}"))
         self.assertEqual(catcher.exception.args, ({},))
 
     def testClientErrorWithUnknownType(self):
-        with self.assertRaises(exceptions.ClientError) as catcher:
+        with self.assertRaises(_exn.ClientError) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.UnhandledException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.UnhandledException", "Message": "tralala"},))
 
     def testClientErrorWithoutJson(self):
-        with self.assertRaises(exceptions.ClientError) as catcher:
+        with self.assertRaises(_exn.ClientError) as catcher:
             self.connection._raise(self.FakeResponse(400, "not json"))
         self.assertEqual(catcher.exception.args, ("not json",))
 
     def testResourceNotFoundException(self):
-        with self.assertRaises(exceptions.ResourceNotFoundException) as catcher:
+        with self.assertRaises(_exn.ResourceNotFoundException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ResourceNotFoundException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceNotFoundException", "Message": "tralala"},))
 
     def testValidationException(self):
-        with self.assertRaises(exceptions.ValidationException) as catcher:
+        with self.assertRaises(_exn.ValidationException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ValidationException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ValidationException", "Message": "tralala"},))
 
+    def testConditionalCheckFailedException(self):
+        with self.assertRaises(_exn.ConditionalCheckFailedException) as catcher:
+            self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ConditionalCheckFailedException", "Message": "tralala"}'))
+        self.assertEqual(catcher.exception.args, ({"__type": "xxx.ConditionalCheckFailedException", "Message": "tralala"},))
+
     def testItemCollectionSizeLimitExceededException(self):
-        with self.assertRaises(exceptions.ItemCollectionSizeLimitExceededException) as catcher:
+        with self.assertRaises(_exn.ItemCollectionSizeLimitExceededException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ItemCollectionSizeLimitExceededException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ItemCollectionSizeLimitExceededException", "Message": "tralala"},))
 
     def testProvisionedThroughputExceededException(self):
-        with self.assertRaises(exceptions.ProvisionedThroughputExceededException) as catcher:
+        with self.assertRaises(_exn.ProvisionedThroughputExceededException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ProvisionedThroughputExceededException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ProvisionedThroughputExceededException", "Message": "tralala"},))
 
     def testLimitExceededException(self):
-        with self.assertRaises(exceptions.LimitExceededException) as catcher:
+        with self.assertRaises(_exn.LimitExceededException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.LimitExceededException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.LimitExceededException", "Message": "tralala"},))
 
     def testResourceInUseException(self):
-        with self.assertRaises(exceptions.ResourceInUseException) as catcher:
+        with self.assertRaises(_exn.ResourceInUseException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ResourceInUseException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceInUseException", "Message": "tralala"},))
+
+
+class ConnectionIntegrationTestMixin:
+    @classmethod
+    def getTestTables(cls):
+        return []
+
+    def testStringPayload(self):
+        self.assertEqual(self.connection.request("ListTables", "{}"), '{"TableNames":[]}')
+
+    def testDictPayload(self):
+        self.assertEqual(self.connection.request("ListTables", {}), {"TableNames": []})
+
+    def testOperationPayload(self):
+        import LowVoltage.operations
+
+        r = self.connection.request(LowVoltage.operations.ListTables())
+        self.assertIsInstance(r, LowVoltage.operations.ListTables.Result)
+        self.assertEqual(r.table_names, [])
+        self.assertEqual(r.last_evaluated_table_name, None)
+
+    def testError(self):
+        with self.assertRaises(_exn.ClientError):
+            self.connection.request("UnexistingOperation", {})
 
 
 if __name__ == "__main__":  # pragma no branch (Test code)
