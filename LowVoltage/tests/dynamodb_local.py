@@ -45,7 +45,6 @@ class DynamoDbLocal(object):  # pragma no cover (Test code)
 class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        print cls.__name__
         cls.connection = LowVoltage.Connection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
 
