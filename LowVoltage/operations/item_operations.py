@@ -8,8 +8,8 @@ from LowVoltage.operations.operation import Operation, ExpectedMixin, ReturnOldV
 
 
 class DeleteItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
-    def __init__(self, connection, table_name, key):
-        super(DeleteItem, self).__init__("DeleteItem", connection)
+    def __init__(self, table_name, key):
+        super(DeleteItem, self).__init__("DeleteItem")
         self.__table_name = table_name
         self.__key = key
         ExpectedMixin.__init__(self)
@@ -17,7 +17,7 @@ class DeleteItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedC
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
 
-    def _build(self):
+    def build(self):
         data = {
             "TableName": self.__table_name,
             "Key": self._convert_dict(self.__key),
@@ -29,10 +29,10 @@ class DeleteItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedC
         return data
 
 
-class DeleteItemTestCase(unittest.TestCase):
+class DeleteItemUnitTests(unittest.TestCase):
     def testKey(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": 42})._build(),
+            DeleteItem("Table", {"hash": 42}).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -41,7 +41,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testConditionalOperatorAnd(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).conditional_operator_and()._build(),
+            DeleteItem("Table", {"hash": "h"}).conditional_operator_and().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -51,7 +51,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testConditionalOperatorOr(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).conditional_operator_or()._build(),
+            DeleteItem("Table", {"hash": "h"}).conditional_operator_or().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -61,7 +61,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectEqual(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_eq("attr", 42)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_eq("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -71,7 +71,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectNotEqual(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_ne("attr", 42)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_ne("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -81,7 +81,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectLessThanOrEqual(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_le("attr", 42)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_le("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -91,7 +91,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectLessThan(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_lt("attr", 42)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_lt("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -101,7 +101,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThanOrEqual(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_ge("attr", 42)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_ge("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -111,7 +111,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThan(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_gt("attr", 42)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_gt("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -121,7 +121,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectNotNull(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_not_null("attr")._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_not_null("attr").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -131,7 +131,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectNull(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_null("attr")._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_null("attr").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -141,7 +141,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectContains(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_contains("attr", 42)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_contains("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -151,7 +151,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectNotContains(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_not_contains("attr", 42)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_not_contains("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -161,7 +161,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectBeginsWith(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_begins_with("attr", "prefix")._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_begins_with("attr", "prefix").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -171,7 +171,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectIn(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_in("attr", [42, 43])._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_in("attr", [42, 43]).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -181,7 +181,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testExpectBetween(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).expect_between("attr", 42, 43)._build(),
+            DeleteItem("Table", {"hash": "h"}).expect_between("attr", 42, 43).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -191,7 +191,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testReturnAllOldValues(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).return_values_all_old()._build(),
+            DeleteItem("Table", {"hash": "h"}).return_values_all_old().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -201,7 +201,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testReturnNoValues(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).return_values_none()._build(),
+            DeleteItem("Table", {"hash": "h"}).return_values_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -211,7 +211,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testReturnIndexesConsumedCapacity(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).return_consumed_capacity_indexes()._build(),
+            DeleteItem("Table", {"hash": "h"}).return_consumed_capacity_indexes().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -221,7 +221,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testReturnTotalConsumedCapacity(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).return_consumed_capacity_total()._build(),
+            DeleteItem("Table", {"hash": "h"}).return_consumed_capacity_total().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -231,7 +231,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testReturnNoConsumedCapacity(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).return_consumed_capacity_none()._build(),
+            DeleteItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -241,7 +241,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testReturnSizeItemCollectionMetrics(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_size()._build(),
+            DeleteItem("Table", {"hash": "h"}).return_item_collection_metrics_size().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -251,7 +251,7 @@ class DeleteItemTestCase(unittest.TestCase):
 
     def testReturnNoItemCollectionMetrics(self):
         self.assertEqual(
-            DeleteItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_none()._build(),
+            DeleteItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -261,15 +261,15 @@ class DeleteItemTestCase(unittest.TestCase):
 
 
 class GetItem(Operation, ReturnConsumedCapacityMixin):
-    def __init__(self, connection, table_name, key):
-        super(GetItem, self).__init__("GetItem", connection)
+    def __init__(self, table_name, key):
+        super(GetItem, self).__init__("GetItem")
         self.__table_name = table_name
         self.__key = key
         ReturnConsumedCapacityMixin.__init__(self)
         self.__consistent_read = None
         self.__attributes_to_get = []
 
-    def _build(self):
+    def build(self):
         data = {
             "TableName": self.__table_name,
             "Key": self._convert_dict(self.__key),
@@ -299,10 +299,10 @@ class GetItem(Operation, ReturnConsumedCapacityMixin):
         return self
 
 
-class GetItemTestCase(unittest.TestCase):
+class GetItemUnitTests(unittest.TestCase):
     def testKey(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": 42})._build(),
+            GetItem("Table", {"hash": 42}).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -311,7 +311,7 @@ class GetItemTestCase(unittest.TestCase):
 
     def testReturnIndexesConsumedCapacity(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).return_consumed_capacity_indexes()._build(),
+            GetItem("Table", {"hash": "h"}).return_consumed_capacity_indexes().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -321,7 +321,7 @@ class GetItemTestCase(unittest.TestCase):
 
     def testReturnTotalConsumedCapacity(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).return_consumed_capacity_total()._build(),
+            GetItem("Table", {"hash": "h"}).return_consumed_capacity_total().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -331,7 +331,7 @@ class GetItemTestCase(unittest.TestCase):
 
     def testReturnNoConsumedCapacity(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).return_consumed_capacity_none()._build(),
+            GetItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -341,7 +341,7 @@ class GetItemTestCase(unittest.TestCase):
 
     def testConsistentReadTrue(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).consistent_read_true()._build(),
+            GetItem("Table", {"hash": "h"}).consistent_read_true().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -351,7 +351,7 @@ class GetItemTestCase(unittest.TestCase):
 
     def testConsistentReadFalse(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).consistent_read_false()._build(),
+            GetItem("Table", {"hash": "h"}).consistent_read_false().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -361,7 +361,7 @@ class GetItemTestCase(unittest.TestCase):
 
     def testOneAttributesToGet(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).attributes_to_get("a")._build(),
+            GetItem("Table", {"hash": "h"}).attributes_to_get("a").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -371,7 +371,7 @@ class GetItemTestCase(unittest.TestCase):
 
     def testSeveralAttributesToGet(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).attributes_to_get("a", "b")._build(),
+            GetItem("Table", {"hash": "h"}).attributes_to_get("a", "b").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -381,7 +381,7 @@ class GetItemTestCase(unittest.TestCase):
 
     def testListAttributesToGet(self):
         self.assertEqual(
-            GetItem(None, "Table", {"hash": "h"}).attributes_to_get(["a", "b"])._build(),
+            GetItem("Table", {"hash": "h"}).attributes_to_get(["a", "b"]).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -391,8 +391,8 @@ class GetItemTestCase(unittest.TestCase):
 
 
 class PutItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
-    def __init__(self, connection, table_name, item):
-        super(PutItem, self).__init__("PutItem", connection)
+    def __init__(self, table_name, item):
+        super(PutItem, self).__init__("PutItem")
         self.__table_name = table_name
         self.__item = item
         ExpectedMixin.__init__(self)
@@ -400,7 +400,7 @@ class PutItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapa
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
 
-    def _build(self):
+    def build(self):
         data = {
             "TableName": self.__table_name,
             "Item": self._convert_dict(self.__item),
@@ -412,10 +412,10 @@ class PutItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapa
         return data
 
 
-class PutItemTestCase(unittest.TestCase):
+class PutItemUnitTests(unittest.TestCase):
     def testItem(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "value"})._build(),
+            PutItem("Table", {"hash": "value"}).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "value"}},
@@ -424,7 +424,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testConditionalOperatorAnd(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).conditional_operator_and()._build(),
+            PutItem("Table", {"hash": "h"}).conditional_operator_and().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -434,7 +434,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testConditionalOperatorOr(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).conditional_operator_or()._build(),
+            PutItem("Table", {"hash": "h"}).conditional_operator_or().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -444,7 +444,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectEqual(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_eq("attr", 42)._build(),
+            PutItem("Table", {"hash": "h"}).expect_eq("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -454,7 +454,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectNotEqual(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_ne("attr", 42)._build(),
+            PutItem("Table", {"hash": "h"}).expect_ne("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -464,7 +464,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectLessThanOrEqual(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_le("attr", 42)._build(),
+            PutItem("Table", {"hash": "h"}).expect_le("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -474,7 +474,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectLessThan(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_lt("attr", 42)._build(),
+            PutItem("Table", {"hash": "h"}).expect_lt("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -484,7 +484,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThanOrEqual(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_ge("attr", 42)._build(),
+            PutItem("Table", {"hash": "h"}).expect_ge("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -494,7 +494,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThan(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_gt("attr", 42)._build(),
+            PutItem("Table", {"hash": "h"}).expect_gt("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -504,7 +504,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectNotNull(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_not_null("attr")._build(),
+            PutItem("Table", {"hash": "h"}).expect_not_null("attr").build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -514,7 +514,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectNull(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_null("attr")._build(),
+            PutItem("Table", {"hash": "h"}).expect_null("attr").build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -524,7 +524,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectContains(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_contains("attr", 42)._build(),
+            PutItem("Table", {"hash": "h"}).expect_contains("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -534,7 +534,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectNotContains(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_not_contains("attr", 42)._build(),
+            PutItem("Table", {"hash": "h"}).expect_not_contains("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -544,7 +544,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectBeginsWith(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_begins_with("attr", "prefix")._build(),
+            PutItem("Table", {"hash": "h"}).expect_begins_with("attr", "prefix").build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -554,7 +554,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectIn(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_in("attr", [42, 43])._build(),
+            PutItem("Table", {"hash": "h"}).expect_in("attr", [42, 43]).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -564,7 +564,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testExpectBetween(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).expect_between("attr", 42, 43)._build(),
+            PutItem("Table", {"hash": "h"}).expect_between("attr", 42, 43).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -574,7 +574,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnAllOldValues(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_values_all_old()._build(),
+            PutItem("Table", {"hash": "h"}).return_values_all_old().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -584,7 +584,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnNoValues(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_values_none()._build(),
+            PutItem("Table", {"hash": "h"}).return_values_none().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -594,7 +594,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnIndexesConsumedCapacity(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_consumed_capacity_indexes()._build(),
+            PutItem("Table", {"hash": "h"}).return_consumed_capacity_indexes().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -604,7 +604,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnTotalConsumedCapacity(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_consumed_capacity_total()._build(),
+            PutItem("Table", {"hash": "h"}).return_consumed_capacity_total().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -614,7 +614,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnNoConsumedCapacity(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_consumed_capacity_none()._build(),
+            PutItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -624,7 +624,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnSizeItemCollectionMetrics(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_size()._build(),
+            PutItem("Table", {"hash": "h"}).return_item_collection_metrics_size().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -634,7 +634,7 @@ class PutItemTestCase(unittest.TestCase):
 
     def testReturnNoItemCollectionMetrics(self):
         self.assertEqual(
-            PutItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_none()._build(),
+            PutItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -644,8 +644,8 @@ class PutItemTestCase(unittest.TestCase):
 
 
 class UpdateItem(Operation, ExpectedMixin, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
-    def __init__(self, connection, table_name, key):
-        super(UpdateItem, self).__init__("UpdateItem", connection)
+    def __init__(self, table_name, key):
+        super(UpdateItem, self).__init__("UpdateItem")
         self.__table_name = table_name
         self.__key = key
         self.__attribute_updates = {}
@@ -654,7 +654,7 @@ class UpdateItem(Operation, ExpectedMixin, ReturnValuesMixin, ReturnConsumedCapa
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
 
-    def _build(self):
+    def build(self):
         data = {
             "TableName": self.__table_name,
             "Key": self._convert_dict(self.__key),
@@ -684,10 +684,10 @@ class UpdateItem(Operation, ExpectedMixin, ReturnValuesMixin, ReturnConsumedCapa
         return self
 
 
-class UpdateItemTestCase(unittest.TestCase):
+class UpdateItemUnitTests(unittest.TestCase):
     def testKey(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": 42})._build(),
+            UpdateItem("Table", {"hash": 42}).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -696,7 +696,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testPutInt(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).put("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).put("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -706,7 +706,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testDelete(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).delete("attr")._build(),
+            UpdateItem("Table", {"hash": "h"}).delete("attr").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -716,7 +716,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testAddInt(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).add("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).add("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -726,7 +726,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testDeleteSetOfInts(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).delete("attr", [42, 43])._build(),
+            UpdateItem("Table", {"hash": "h"}).delete("attr", [42, 43]).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -736,7 +736,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testAddSetOfStrings(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).add("attr", ["42", "43"])._build(),
+            UpdateItem("Table", {"hash": "h"}).add("attr", ["42", "43"]).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -746,7 +746,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testConditionalOperatorAnd(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).conditional_operator_and()._build(),
+            UpdateItem("Table", {"hash": "h"}).conditional_operator_and().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -756,7 +756,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testConditionalOperatorOr(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).conditional_operator_or()._build(),
+            UpdateItem("Table", {"hash": "h"}).conditional_operator_or().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -766,7 +766,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectEqual(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_eq("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_eq("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -776,7 +776,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectNotEqual(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_ne("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_ne("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -786,7 +786,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectLessThanOrEqual(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_le("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_le("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -796,7 +796,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectLessThan(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_lt("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_lt("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -806,7 +806,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThanOrEqual(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_ge("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_ge("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -816,7 +816,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectGreaterThan(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_gt("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_gt("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -826,7 +826,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectNotNull(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_not_null("attr")._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_not_null("attr").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -836,7 +836,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectNull(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_null("attr")._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_null("attr").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -846,7 +846,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectContains(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_contains("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_contains("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -856,7 +856,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectNotContains(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_not_contains("attr", 42)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_not_contains("attr", 42).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -866,7 +866,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectBeginsWith(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_begins_with("attr", "prefix")._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_begins_with("attr", "prefix").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -876,7 +876,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectIn(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_in("attr", [42, 43])._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_in("attr", [42, 43]).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -886,7 +886,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testExpectBetween(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).expect_between("attr", 42, 43)._build(),
+            UpdateItem("Table", {"hash": "h"}).expect_between("attr", 42, 43).build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -896,7 +896,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnAllNewValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_values_all_new()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_values_all_new().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -906,7 +906,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnUpdatedNewValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_values_updated_new()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_values_updated_new().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -916,7 +916,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnAllOldValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_values_all_old()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_values_all_old().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -926,7 +926,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnUpdatedOldValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_values_updated_old()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_values_updated_old().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -936,7 +936,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnNoValues(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_values_none()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_values_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -946,7 +946,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnIndexesConsumedCapacity(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_consumed_capacity_indexes()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_consumed_capacity_indexes().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -956,7 +956,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnTotalConsumedCapacity(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_consumed_capacity_total()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_consumed_capacity_total().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -966,7 +966,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnNoConsumedCapacity(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_consumed_capacity_none()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -976,7 +976,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnSizeItemCollectionMetrics(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_size()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_item_collection_metrics_size().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -986,7 +986,7 @@ class UpdateItemTestCase(unittest.TestCase):
 
     def testReturnNoItemCollectionMetrics(self):
         self.assertEqual(
-            UpdateItem(None, "Table", {"hash": "h"}).return_item_collection_metrics_none()._build(),
+            UpdateItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -995,5 +995,5 @@ class UpdateItemTestCase(unittest.TestCase):
         )
 
 
-if __name__ == "__main__":  # pragma no branch (Test code)
+if __name__ == "__main__":
     unittest.main()  # pragma no cover (Test code)

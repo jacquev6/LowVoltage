@@ -19,6 +19,7 @@ if __name__ == "__main__":
         packages=[
             "LowVoltage",
             "LowVoltage.operations",
+            "LowVoltage.tests",
         ],
         classifiers=[
             "Development Status :: 3 - Alpha",

@@ -13,6 +13,7 @@ import requests
 
 from LowVoltage.operations.operation import Operation as _Operation
 import LowVoltage.exceptions as _exn
+import LowVoltage.tests.dynamodb_local
 
 
 class StaticCredentials(object):
@@ -154,7 +155,7 @@ class Connection(object):
         return headers
 
 
-class ConnectionTestCase(unittest.TestCase):
+class ConnectionUnitTests(unittest.TestCase):
     class FakeResponse(object):
         def __init__(self, status_code, text):
             self.status_code = status_code
@@ -189,10 +190,8 @@ class ConnectionTestCase(unittest.TestCase):
         self.assertEqual(catcher.exception.args, ("When 'operation' is a string, 'payload' should be a string or a dict",))
 
     def testPayloadWithOperation(self):
-        import LowVoltage.operations
-
         with self.assertRaises(TypeError) as catcher:
-            self.connection.request(LowVoltage.operations.ListTables(), "")
+            self.connection.request(_Operation("Foo"), "")
         self.assertEqual(catcher.exception.args, ("When 'operation' is an Operation, 'payload' should be None",))
 
     def testUnknownError(self):
@@ -266,29 +265,30 @@ class ConnectionTestCase(unittest.TestCase):
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceInUseException", "Message": "tralala"},))
 
 
-class ConnectionIntegrationTestMixin:
-    @classmethod
-    def getTestTables(cls):
-        return []
-
+class ConnectionIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def testStringPayload(self):
         self.assertEqual(self.connection.request("ListTables", "{}"), '{"TableNames":[]}')
 
     def testDictPayload(self):
         self.assertEqual(self.connection.request("ListTables", {}), {"TableNames": []})
 
-    def testOperationPayload(self):
-        import LowVoltage.operations
+    def testOperation(self):
+        class TestOperation(_Operation):
+            class Result(object):
+                def __init__(self, **kwds):
+                    self.kwds = kwds
 
-        r = self.connection.request(LowVoltage.operations.ListTables())
-        self.assertIsInstance(r, LowVoltage.operations.ListTables.Result)
-        self.assertEqual(r.table_names, [])
-        self.assertEqual(r.last_evaluated_table_name, None)
+            def build(self):
+                return {}
+
+        r = self.connection.request(TestOperation("ListTables"))
+        self.assertIsInstance(r, TestOperation.Result)
+        self.assertEqual(r.kwds, {"TableNames": []})
 
     def testError(self):
         with self.assertRaises(_exn.ClientError):
             self.connection.request("UnexistingOperation", {})
 
 
-if __name__ == "__main__":  # pragma no branch (Test code)
-    unittest.main()  # pragma no cover (Test code)
+if __name__ == "__main__":
+    LowVoltage.tests.dynamodb_local.main()  # pragma no cover (Test code)

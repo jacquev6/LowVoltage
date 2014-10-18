@@ -163,7 +163,7 @@ class BeginsWith(_Boolean):
         return "begins_with({}, {})".format(self.__left.atom(), self.__right.atom())
 
 
-class ConditionExpressionsTestCase(unittest.TestCase):
+class ConditionExpressionUnitTests(unittest.TestCase):
     def testAtomsComparison(self):
         self.assertEqual((Attr("a") == Attr("b")).bool(), "a=b")
         self.assertEqual((Attr("a") == Val("b")).bool(), "a=:b")
@@ -250,5 +250,5 @@ class ConditionExpressionsTestCase(unittest.TestCase):
             BeginsWith(Attr("a"), "b")
 
 
-if __name__ == "__main__":  # pragma no branch (Test code)
+if __name__ == "__main__":
     unittest.main()  # pragma no cover (Test code)

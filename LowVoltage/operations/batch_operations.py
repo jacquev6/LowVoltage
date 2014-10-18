@@ -8,13 +8,13 @@ from LowVoltage.operations.operation import Operation, ReturnConsumedCapacityMix
 
 
 class BatchGetItem(Operation, ReturnConsumedCapacityMixin):
-    def __init__(self, connection):
-        super(BatchGetItem, self).__init__("BatchGetItem", connection)
+    def __init__(self):
+        super(BatchGetItem, self).__init__("BatchGetItem")
         ReturnConsumedCapacityMixin.__init__(self)
         self.__request_items = {}
         self.__last_table = None
 
-    def _build(self):
+    def build(self):
         data = {
         }
         self._build_return_consumed_capacity(data)
@@ -55,16 +55,16 @@ class BatchGetItem(Operation, ReturnConsumedCapacityMixin):
         return self
 
 
-class BatchGetItemTestCase(unittest.TestCase):
+class BatchGetItemUnitTests(unittest.TestCase):
     def testEmpty(self):
         self.assertEqual(
-            BatchGetItem(None)._build(),
+            BatchGetItem().build(),
             {}
         )
 
     def testReturnConsumedCapacityTotal(self):
         self.assertEqual(
-            BatchGetItem(None).return_consumed_capacity_total()._build(),
+            BatchGetItem().return_consumed_capacity_total().build(),
             {
                 "ReturnConsumedCapacity": "TOTAL",
             }
@@ -72,7 +72,7 @@ class BatchGetItemTestCase(unittest.TestCase):
 
     def testReturnConsumedCapacityIndexes(self):
         self.assertEqual(
-            BatchGetItem(None).return_consumed_capacity_indexes()._build(),
+            BatchGetItem().return_consumed_capacity_indexes().build(),
             {
                 "ReturnConsumedCapacity": "INDEXES",
             }
@@ -80,7 +80,7 @@ class BatchGetItemTestCase(unittest.TestCase):
 
     def testReturnConsumedCapacityNone(self):
         self.assertEqual(
-            BatchGetItem(None).return_consumed_capacity_none()._build(),
+            BatchGetItem().return_consumed_capacity_none().build(),
             {
                 "ReturnConsumedCapacity": "NONE",
             }
@@ -88,7 +88,7 @@ class BatchGetItemTestCase(unittest.TestCase):
 
     def testKeys(self):
         self.assertEqual(
-            BatchGetItem(None).table("Table2").keys({"hash": "h21"}).table("Table1").keys({"hash": "h11"}, {"hash": "h12"}).table("Table2").keys([{"hash": "h22"}, {"hash": "h23"}])._build(),
+            BatchGetItem().table("Table2").keys({"hash": "h21"}).table("Table1").keys({"hash": "h11"}, {"hash": "h12"}).table("Table2").keys([{"hash": "h22"}, {"hash": "h23"}]).build(),
             {
                 "RequestItems": {
                     "Table1": {
@@ -110,7 +110,7 @@ class BatchGetItemTestCase(unittest.TestCase):
 
     def testConsistentRead(self):
         self.assertEqual(
-            BatchGetItem(None).table("Table1").consistent_read_true().table("Table2").consistent_read_false()._build(),
+            BatchGetItem().table("Table1").consistent_read_true().table("Table2").consistent_read_false().build(),
             {
                 "RequestItems": {
                     "Table1": {
@@ -125,7 +125,7 @@ class BatchGetItemTestCase(unittest.TestCase):
 
     def testAttributesToGet(self):
         self.assertEqual(
-            BatchGetItem(None).table("Table2").attributes_to_get("a").table("Table1").attributes_to_get("b", "c").table("Table2").attributes_to_get(["d", "e"])._build(),
+            BatchGetItem().table("Table2").attributes_to_get("a").table("Table1").attributes_to_get("b", "c").table("Table2").attributes_to_get(["d", "e"]).build(),
             {
                 "RequestItems": {
                     "Table1": {
@@ -140,14 +140,14 @@ class BatchGetItemTestCase(unittest.TestCase):
 
 
 class BatchWriteItem(Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
-    def __init__(self, connection):
-        super(BatchWriteItem, self).__init__("BatchWriteItem", connection)
+    def __init__(self):
+        super(BatchWriteItem, self).__init__("BatchWriteItem")
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
         self.__request_items = {}
         self.__last_table = None
 
-    def _build(self):
+    def build(self):
         data = {
         }
         self._build_return_consumed_capacity(data)
@@ -177,16 +177,16 @@ class BatchWriteItem(Operation, ReturnConsumedCapacityMixin, ReturnItemCollectio
         return self
 
 
-class BatchWriteItemTestCase(unittest.TestCase):
+class BatchWriteItemUnitTests(unittest.TestCase):
     def testEmpty(self):
         self.assertEqual(
-            BatchWriteItem(None)._build(),
+            BatchWriteItem().build(),
             {}
         )
 
     def testReturnConsumedCapacityTotal(self):
         self.assertEqual(
-            BatchWriteItem(None).return_consumed_capacity_total()._build(),
+            BatchWriteItem().return_consumed_capacity_total().build(),
             {
                 "ReturnConsumedCapacity": "TOTAL",
             }
@@ -194,7 +194,7 @@ class BatchWriteItemTestCase(unittest.TestCase):
 
     def testReturnConsumedCapacityIndexes(self):
         self.assertEqual(
-            BatchWriteItem(None).return_consumed_capacity_indexes()._build(),
+            BatchWriteItem().return_consumed_capacity_indexes().build(),
             {
                 "ReturnConsumedCapacity": "INDEXES",
             }
@@ -202,7 +202,7 @@ class BatchWriteItemTestCase(unittest.TestCase):
 
     def testReturnConsumedCapacityNone(self):
         self.assertEqual(
-            BatchWriteItem(None).return_consumed_capacity_none()._build(),
+            BatchWriteItem().return_consumed_capacity_none().build(),
             {
                 "ReturnConsumedCapacity": "NONE",
             }
@@ -210,7 +210,7 @@ class BatchWriteItemTestCase(unittest.TestCase):
 
     def testReturnSizeItemCollectionMetrics(self):
         self.assertEqual(
-            BatchWriteItem(None).return_item_collection_metrics_size()._build(),
+            BatchWriteItem().return_item_collection_metrics_size().build(),
             {
                 "ReturnItemCollectionMetrics": "SIZE",
             }
@@ -218,7 +218,7 @@ class BatchWriteItemTestCase(unittest.TestCase):
 
     def testReturnNoItemCollectionMetrics(self):
         self.assertEqual(
-            BatchWriteItem(None).return_item_collection_metrics_none()._build(),
+            BatchWriteItem().return_item_collection_metrics_none().build(),
             {
                 "ReturnItemCollectionMetrics": "NONE",
             }
@@ -227,7 +227,7 @@ class BatchWriteItemTestCase(unittest.TestCase):
 
     def testDelete(self):
         self.assertEqual(
-            BatchWriteItem(None).table("Table").delete({"hash": "h1"}).table("Table").delete([{"hash": "h2"}])._build(),
+            BatchWriteItem().table("Table").delete({"hash": "h1"}).table("Table").delete([{"hash": "h2"}]).build(),
             {
                 "RequestItems": {
                     "Table": [
@@ -240,7 +240,7 @@ class BatchWriteItemTestCase(unittest.TestCase):
 
     def testPut(self):
         self.assertEqual(
-            BatchWriteItem(None).table("Table").put({"hash": "h1"}, [{"hash": "h2"}])._build(),
+            BatchWriteItem().table("Table").put({"hash": "h1"}, [{"hash": "h2"}]).build(),
             {
                 "RequestItems": {
                     "Table": [
@@ -252,5 +252,5 @@ class BatchWriteItemTestCase(unittest.TestCase):
         )
 
 
-if __name__ == "__main__":  # pragma no branch (Test code)
+if __name__ == "__main__":
     unittest.main()  # pragma no cover (Test code)
