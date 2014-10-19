@@ -5,14 +5,166 @@
 import unittest
 
 from LowVoltage.operations.operation import Operation as _Operation
-import LowVoltage.types as _typ
+import LowVoltage.return_types as _rtyp
+import LowVoltage.attribute_types as _atyp
 import LowVoltage.tests.dynamodb_local
+
+
+class CreateTable(_Operation):
+    class Result(object):
+        def __init__(self, TableDescription=None):
+            self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
+
+    def __init__(self, table_name):
+        super(CreateTable, self).__init__("CreateTable")
+        self.__table_name = table_name
+        self.__hash_key = None
+        self.__range_key = None
+        self.__attribute_types = {}
+        self.__read_throughput = None
+        self.__write_throughput = None
+
+    def hash_key(self, name, typ=None):
+        self.__hash_key = name
+        if typ is not None:
+            self.attribute(name, typ)
+        return self
+
+    def range_key(self, name, typ=None):
+        self.__range_key = name
+        if typ is not None:
+            self.attribute(name, typ)
+        return self
+
+    def attribute(self, name, typ):
+        self.__attribute_types[name] = typ
+        return self
+
+    def read_throughput(self, units):
+        self.__read_throughput = units
+        return self
+
+    def write_throughput(self, units):
+        self.__write_throughput = units
+        return self
+
+    def build(self):
+        data = {"TableName": self.__table_name}
+        schema = []
+        if self.__hash_key:
+            schema.append({"AttributeName": self.__hash_key, "KeyType": "HASH"})
+        if self.__range_key:
+            schema.append({"AttributeName": self.__range_key, "KeyType": "RANGE"})
+        if schema:
+            data["KeySchema"] = schema
+        if self.__attribute_types:
+            data["AttributeDefinitions"] = [
+                {"AttributeName": name, "AttributeType": typ}
+                for name, typ in self.__attribute_types.iteritems()
+            ]
+        throughput = {}
+        if self.__read_throughput:
+            throughput["ReadCapacityUnits"] = self.__read_throughput
+        if self.__write_throughput:
+            throughput["WriteCapacityUnits"] = self.__write_throughput
+        if throughput:
+            data["ProvisionedThroughput"] = throughput
+        return data
+
+
+class CreateTableUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(CreateTable("Foo").name, "CreateTable")
+
+    def testNoArguments(self):
+        self.assertEqual(CreateTable("Foo").build(), {"TableName": "Foo"})
+
+    def testHashKey(self):
+        self.assertEqual(
+            CreateTable("Foo").hash_key("h").build(),
+            {
+                "TableName": "Foo",
+                "KeySchema": [{"AttributeName": "h", "KeyType": "HASH"}],
+            }
+        )
+
+    def testHashKeyWithType(self):
+        self.assertEqual(
+            CreateTable("Foo").hash_key("h", _atyp.STRING).build(),
+            {
+                "TableName": "Foo",
+                "AttributeDefinitions": [{"AttributeName": "h", "AttributeType": "S"}],
+                "KeySchema": [{"AttributeName": "h", "KeyType": "HASH"}],
+            }
+        )
+
+    def testAttribute(self):
+        self.assertEqual(
+            CreateTable("Foo").attribute("h", _atyp.STRING).build(),
+            {
+                "TableName": "Foo",
+                "AttributeDefinitions": [{"AttributeName": "h", "AttributeType": "S"}],
+            }
+        )
+
+    def testRangeKey(self):
+        self.assertEqual(
+            CreateTable("Foo").range_key("r").build(),
+            {
+                "TableName": "Foo",
+                "KeySchema": [{"AttributeName": "r", "KeyType": "RANGE"}],
+            }
+        )
+
+    def testRangeKeyWithType(self):
+        self.assertEqual(
+            CreateTable("Foo").range_key("r", _atyp.STRING).build(),
+            {
+                "TableName": "Foo",
+                "AttributeDefinitions": [{"AttributeName": "r", "AttributeType": "S"}],
+                "KeySchema": [{"AttributeName": "r", "KeyType": "RANGE"}],
+            }
+        )
+
+    def testReadThroughput(self):
+        self.assertEqual(
+            CreateTable("Foo").read_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "ProvisionedThroughput": {"ReadCapacityUnits": 42},
+            }
+        )
+
+    def testWriteThroughput(self):
+        self.assertEqual(
+            CreateTable("Foo").write_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "ProvisionedThroughput": {"WriteCapacityUnits": 42},
+            }
+        )
+
+
+class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def tearDown(self):
+        self.connection.request(DeleteTable("Aaa"))
+
+    def testSimplestTable(self):
+        r = self.connection.request(
+            CreateTable("Aaa")
+            .hash_key("h", _atyp.STRING)
+            .read_throughput(1)
+            .write_throughput(1)
+        )
+
+        # @todo Assert all members
+        self.assertEqual(r.table_description.table_name, "Aaa")
 
 
 class DeleteTable(_Operation):
     class Result(object):
         def __init__(self, TableDescription=None):
-            self.table_description = None if TableDescription is None else _typ.TableDescription(**TableDescription)
+            self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
 
     def __init__(self, table_name):
         super(DeleteTable, self).__init__("DeleteTable")
@@ -53,7 +205,7 @@ class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 class DescribeTable(_Operation):
     class Result(object):
         def __init__(self, Table=None):
-            self.table = None if Table is None else _typ.TableDescription(**Table)
+            self.table = None if Table is None else _rtyp.TableDescription(**Table)
 
     def __init__(self, table_name):
         super(DescribeTable, self).__init__("DescribeTable")
