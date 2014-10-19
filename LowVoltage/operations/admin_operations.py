@@ -37,7 +37,7 @@ class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             {
                 "TableName": "Aaa",
                 "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
+                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
                 "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
             }
         )
@@ -47,7 +47,7 @@ class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.assertEqual(r.table_description.item_count, 0)
         self.assertEqual(r.table_description.table_name, "Aaa")
         self.assertEqual(r.table_description.table_size_bytes, 0)
-        self.assertEqual(r.table_description.table_status, "ACTIVE")  # @todo Should be "DELETING"?
+        self.assertEqual(r.table_description.table_status, "ACTIVE")  # Should be "DELETING"?
 
 
 class ListTables(_Operation):
@@ -104,7 +104,7 @@ class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             {
                 "TableName": "Aaa",
                 "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
+                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
                 "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
             }
         )
@@ -113,7 +113,7 @@ class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             {
                 "TableName": "Bbb",
                 "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
+                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
                 "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
             }
         )
@@ -122,7 +122,7 @@ class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             {
                 "TableName": "Ccc",
                 "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
+                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
                 "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
             }
         )
