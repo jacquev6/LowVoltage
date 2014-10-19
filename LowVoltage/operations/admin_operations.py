@@ -10,6 +10,7 @@ import LowVoltage.attribute_types as _atyp
 import LowVoltage.tests.dynamodb_local
 
 
+# @todo Support LSI and GSI
 class CreateTable(_Operation):
     class Result(object):
         def __init__(self, TableDescription=None):
@@ -151,10 +152,7 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
     def testSimplestTable(self):
         r = self.connection.request(
-            CreateTable("Aaa")
-            .hash_key("h", _atyp.STRING)
-            .read_throughput(1)
-            .write_throughput(1)
+            CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
         )
 
         # @todo Assert all members
@@ -183,19 +181,15 @@ class DeleteTableUnitTests(unittest.TestCase):
 
 
 class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
-    def test(self):
+    def setUp(self):
         self.connection.request(
-            "CreateTable",
-            {
-                "TableName": "Aaa",
-                "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
-                "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
-            }
+            CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
         )
 
+    def test(self):
         r = self.connection.request(DeleteTable("Aaa"))
-        # r.table_description.creation_date_time
+
+        # @todo Assert all members
         self.assertEqual(r.table_description.item_count, 0)
         self.assertEqual(r.table_description.table_name, "Aaa")
         self.assertEqual(r.table_description.table_size_bytes, 0)
@@ -226,25 +220,20 @@ class DescribeTableUnitTests(unittest.TestCase):
 class DescribeTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            "CreateTable",
-            {
-                "TableName": "Aaa",
-                "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
-                "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
-            }
+            CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
         )
+
+    def tearDown(self):
+        self.connection.request(DeleteTable("Aaa"))
 
     def test(self):
         r = self.connection.request(DescribeTable("Aaa"))
-        # r.table.creation_date_time
+
+        # @todo Assert all members
         self.assertEqual(r.table.item_count, 0)
         self.assertEqual(r.table.table_name, "Aaa")
         self.assertEqual(r.table.table_size_bytes, 0)
         self.assertEqual(r.table.table_status, "ACTIVE")
-
-    def tearDown(self):
-        self.connection.request(DeleteTable("Aaa"))
 
 
 class ListTables(_Operation):
@@ -290,47 +279,32 @@ class ListTablesUnitTests(unittest.TestCase):
 
 
 class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
-    def testNoArguments(self):
-        r = self.connection.request(ListTables())
-        self.assertEqual(r.table_names, [])
-        self.assertEqual(r.last_evaluated_table_name, None)
+    def setUp(self):
+        self.connection.request(
+            CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
+        )
+        self.connection.request(
+            CreateTable("Bbb").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
+        )
+        self.connection.request(
+            CreateTable("Ccc").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
+        )
+
+    def tearDown(self):
+        self.connection.request(DeleteTable("Aaa"))
+        self.connection.request(DeleteTable("Bbb"))
+        self.connection.request(DeleteTable("Ccc"))
 
     def testAllArguments(self):
-        self.connection.request(
-            "CreateTable",
-            {
-                "TableName": "Aaa",
-                "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
-                "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
-            }
-        )
-        self.connection.request(
-            "CreateTable",
-            {
-                "TableName": "Bbb",
-                "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
-                "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
-            }
-        )
-        self.connection.request(
-            "CreateTable",
-            {
-                "TableName": "Ccc",
-                "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
-                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
-                "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
-            }
-        )
-
         r = self.connection.request(ListTables().exclusive_start_table_name("Aaa").limit(1))
         self.assertEqual(r.table_names, ["Bbb"])
         self.assertEqual(r.last_evaluated_table_name, "Bbb")
 
-        self.connection.request(DeleteTable("Aaa"))
-        self.connection.request(DeleteTable("Bbb"))
-        self.connection.request(DeleteTable("Ccc"))
+    def testNoArguments(self):
+        r = self.connection.request(ListTables())
+        self.assertEqual(r.table_names, ["Aaa", "Bbb", "Ccc"])
+        self.assertEqual(r.last_evaluated_table_name, None)
+
 
 
 if __name__ == "__main__":
