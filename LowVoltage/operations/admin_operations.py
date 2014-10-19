@@ -306,6 +306,81 @@ class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.assertEqual(r.last_evaluated_table_name, None)
 
 
+# @todo Support LSI and GSI
+class UpdateTable(_Operation):
+    class Result(object):
+        def __init__(self, TableDescription=None):
+            self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
+
+    def __init__(self, table_name):
+        super(UpdateTable, self).__init__("UpdateTable")
+        self.__table_name = table_name
+        self.__read_throughput = None
+        self.__write_throughput = None
+
+    def read_throughput(self, units):
+        self.__read_throughput = units
+        return self
+
+    def write_throughput(self, units):
+        self.__write_throughput = units
+        return self
+
+    def build(self):
+        data = {"TableName": self.__table_name}
+        throughput = {}
+        if self.__read_throughput:
+            throughput["ReadCapacityUnits"] = self.__read_throughput
+        if self.__write_throughput:
+            throughput["WriteCapacityUnits"] = self.__write_throughput
+        if throughput:
+            data["ProvisionedThroughput"] = throughput
+        return data
+
+
+class UpdateTableUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(UpdateTable("Foo").name, "UpdateTable")
+
+    def testNoArguments(self):
+        self.assertEqual(UpdateTable("Foo").build(), {"TableName": "Foo"})
+
+    def testReadThroughput(self):
+        self.assertEqual(
+            UpdateTable("Foo").read_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "ProvisionedThroughput": {"ReadCapacityUnits": 42},
+            }
+        )
+
+    def testWriteThroughput(self):
+        self.assertEqual(
+            UpdateTable("Foo").write_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "ProvisionedThroughput": {"WriteCapacityUnits": 42},
+            }
+        )
+
+
+class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def setUp(self):
+        self.connection.request(
+            CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
+        )
+
+    def tearDown(self):
+        self.connection.request(DeleteTable("Aaa"))
+
+    def testThroughput(self):
+        r = self.connection.request(
+            UpdateTable("Aaa").read_throughput(2).write_throughput(2)
+        )
+
+        # @todo Assert all members
+        self.assertEqual(r.table_description.table_name, "Aaa")
+
 
 if __name__ == "__main__":
     LowVoltage.tests.dynamodb_local.main()  # pragma no cover (Test code)
