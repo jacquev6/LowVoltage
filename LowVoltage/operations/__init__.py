@@ -4,4 +4,4 @@
 
 from item_operations import DeleteItem, GetItem, PutItem, UpdateItem
 from batch_operations import BatchGetItem, BatchWriteItem
-from admin_operations import ListTables
+from admin_operations import DeleteTable, DescribeTable, ListTables

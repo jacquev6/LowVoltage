@@ -50,6 +50,51 @@ class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.assertEqual(r.table_description.table_status, "ACTIVE")  # Should be "DELETING"?
 
 
+class DescribeTable(_Operation):
+    class Result(object):
+        def __init__(self, Table=None):
+            self.table = None if Table is None else _typ.TableDescription(**Table)
+
+    def __init__(self, table_name):
+        super(DescribeTable, self).__init__("DescribeTable")
+        self.__table_name = table_name
+
+    def build(self):
+        return {"TableName": self.__table_name}
+
+
+class DescribeTableUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(DescribeTable("Foo").name, "DescribeTable")
+
+    def testBuild(self):
+        self.assertEqual(DescribeTable("Foo").build(), {"TableName": "Foo"})
+
+
+class DescribeTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def setUp(self):
+        self.connection.request(
+            "CreateTable",
+            {
+                "TableName": "Aaa",
+                "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
+                "KeySchema":[{"AttributeName": "hash", "KeyType": "HASH"}],
+                "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+            }
+        )
+
+    def test(self):
+        r = self.connection.request(DescribeTable("Aaa"))
+        # r.table.creation_date_time
+        self.assertEqual(r.table.item_count, 0)
+        self.assertEqual(r.table.table_name, "Aaa")
+        self.assertEqual(r.table.table_size_bytes, 0)
+        self.assertEqual(r.table.table_status, "ACTIVE")
+
+    def tearDown(self):
+        self.connection.request(DeleteTable("Aaa"))
+
+
 class ListTables(_Operation):
     class Result(object):
         def __init__(self, TableNames=None, LastEvaluatedTableName=None):
