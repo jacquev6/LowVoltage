@@ -4,13 +4,14 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation
+from LowVoltage.operations.operation import Operation as _Operation
+import LowVoltage.types as _typ
 import LowVoltage.tests.dynamodb_local
 
 
-class ListTables(Operation):
+class ListTables(_Operation):
     class Result(object):
-        def __init__(self, TableNames, LastEvaluatedTableName=None):
+        def __init__(self, TableNames=None, LastEvaluatedTableName=None):
             self.table_names = TableNames
             self.last_evaluated_table_name = LastEvaluatedTableName
 
@@ -89,9 +90,50 @@ class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.assertEqual(r.table_names, ["Bbb"])
         self.assertEqual(r.last_evaluated_table_name, "Bbb")
 
-        self.connection.request("DeleteTable", {"TableName": "Aaa"})
-        self.connection.request("DeleteTable", {"TableName": "Bbb"})
-        self.connection.request("DeleteTable", {"TableName": "Ccc"})
+        self.connection.request(DeleteTable("Aaa"))
+        self.connection.request(DeleteTable("Bbb"))
+        self.connection.request(DeleteTable("Ccc"))
+
+
+class DeleteTable(_Operation):
+    class Result(object):
+        def __init__(self, TableDescription=None):
+            self.table_description = None if TableDescription is None else _typ.TableDescription(**TableDescription)
+
+    def __init__(self, table_name):
+        super(DeleteTable, self).__init__("DeleteTable")
+        self.__table_name = table_name
+
+    def build(self):
+        return {"TableName": self.__table_name}
+
+
+class DeleteTableUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(DeleteTable("Foo").name, "DeleteTable")
+
+    def testBuild(self):
+        self.assertEqual(DeleteTable("Foo").build(), {"TableName": "Foo"})
+
+
+class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def test(self):
+        self.connection.request(
+            "CreateTable",
+            {
+                "TableName": "Aaa",
+                "AttributeDefinitions": [{"AttributeName": "hash", "AttributeType": "S"}],
+                "KeySchema":[{"AttributeName":"hash", "KeyType":"HASH"}],
+                "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1},
+            }
+        )
+
+        r = self.connection.request(DeleteTable("Aaa"))
+        # r.table_description.creation_date_time
+        self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(r.table_description.table_name, "Aaa")
+        self.assertEqual(r.table_description.table_size_bytes, 0)
+        self.assertEqual(r.table_description.table_status, "ACTIVE")  # @todo Should be "DELETING"?
 
 
 if __name__ == "__main__":
