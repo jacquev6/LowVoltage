@@ -10,7 +10,6 @@ import LowVoltage.attribute_types as _atyp
 import LowVoltage.tests.dynamodb_local
 
 
-# @todo Support LSI
 class CreateTable(_Operation):
     class Result(object):
         def __init__(self, TableDescription=None):
@@ -25,15 +24,14 @@ class CreateTable(_Operation):
         self.__read_throughput = None
         self.__write_throughput = None
         self.__gsis = {}
+        self.__lsis = {}
 
-    class _GSI(_OperationProxy):
+    class _Index(_OperationProxy):
         def __init__(self, table, name):
-            super(CreateTable._GSI, self).__init__(table)
+            super(CreateTable._Index, self).__init__(table)
             self.__name = name
             self.__hash_key = None
             self.__range_key = None
-            self.__read_throughput = None
-            self.__write_throughput = None
             self.__projection = None
 
         def table(self):
@@ -49,14 +47,6 @@ class CreateTable(_Operation):
             self.__range_key = name
             if typ is not None:
                 self._operation.attribute(name, typ)
-            return self
-
-        def read_throughput(self, units):
-            self.__read_throughput = units
-            return self
-
-        def write_throughput(self, units):
-            self.__write_throughput = units
             return self
 
         def project_all(self):
@@ -85,6 +75,28 @@ class CreateTable(_Operation):
                 schema.append({"AttributeName": self.__range_key, "KeyType": "RANGE"})
             if schema:
                 data["KeySchema"] = schema
+            if isinstance(self.__projection, basestring):
+                data["Projection"] = {"ProjectionType": self.__projection}
+            elif self.__projection:
+                data["Projection"] = {"ProjectionType": "INCLUDE", "NonKeyAttributes": self.__projection}
+            return data
+
+    class _IndexWithThroughput(_Index):
+        def __init__(self, table, name):
+            super(CreateTable._IndexWithThroughput, self).__init__(table, name)
+            self.__read_throughput = None
+            self.__write_throughput = None
+
+        def read_throughput(self, units):
+            self.__read_throughput = units
+            return self
+
+        def write_throughput(self, units):
+            self.__write_throughput = units
+            return self
+
+        def _build(self):
+            data = super(CreateTable._IndexWithThroughput, self)._build()
             throughput = {}
             if self.__read_throughput:
                 throughput["ReadCapacityUnits"] = self.__read_throughput
@@ -92,10 +104,6 @@ class CreateTable(_Operation):
                 throughput["WriteCapacityUnits"] = self.__write_throughput
             if throughput:
                 data["ProvisionedThroughput"] = throughput
-            if isinstance(self.__projection, basestring):
-                data["Projection"] = {"ProjectionType": self.__projection}
-            elif self.__projection:
-                data["Projection"] = {"ProjectionType": "INCLUDE", "NonKeyAttributes": self.__projection}
             return data
 
     def hash_key(self, name, typ=None):
@@ -124,8 +132,13 @@ class CreateTable(_Operation):
 
     def global_secondary_index(self, name):
         if name not in self.__gsis:
-            self.__gsis[name] = self._GSI(self, name)
+            self.__gsis[name] = self._IndexWithThroughput(self, name)
         return self.__gsis[name]
+
+    def local_secondary_index(self, name):
+        if name not in self.__lsis:
+            self.__lsis[name] = self._IndexWithThroughput(self, name)
+        return self.__lsis[name]
 
     def build(self):
         data = {"TableName": self.__table_name}
@@ -150,6 +163,8 @@ class CreateTable(_Operation):
             data["ProvisionedThroughput"] = throughput
         if self.__gsis:
             data["GlobalSecondaryIndexes"] = [i._build() for i in self.__gsis.itervalues()]
+        if self.__lsis:
+            data["LocalSecondaryIndexes"] = [i._build() for i in self.__lsis.itervalues()]
         return data
 
 
@@ -231,6 +246,15 @@ class CreateTableUnitTests(unittest.TestCase):
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [{"IndexName": "foo"}],
+            }
+        )
+
+    def testLocalSecondaryIndex(self):
+        self.assertEqual(
+            CreateTable("Foo").local_secondary_index("foo").build(),
+            {
+                "TableName": "Foo",
+                "LocalSecondaryIndexes": [{"IndexName": "foo"}],
             }
         )
 
@@ -371,6 +395,22 @@ class CreateTableUnitTests(unittest.TestCase):
             }
         )
 
+    def testBackToLsiAfterBackToTable(self):
+        self.assertEqual(
+            CreateTable("Foo")
+                .local_secondary_index("foo")
+                .table().read_throughput(42)
+                .local_secondary_index("foo").project_all()
+                .build(),
+            {
+                "TableName": "Foo",
+                "LocalSecondaryIndexes": [
+                    {"IndexName": "foo", "Projection": {"ProjectionType": "ALL"}}
+                ],
+                "ProvisionedThroughput": {"ReadCapacityUnits": 42},
+            }
+        )
+
 
 class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def tearDown(self):
@@ -396,6 +436,15 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         # @todo Assert all members
         self.assertEqual(r.table_description.table_name, "Aaa")
 
+    def testSimpleLocalSecondaryIndex(self):
+        r = self.connection.request(
+            CreateTable("Aaa").hash_key("h", _atyp.STRING).range_key("r", _atyp.STRING).read_throughput(1).write_throughput(1)
+                .local_secondary_index("the_lsi").hash_key("h").range_key("rr", _atyp.STRING).project_all()
+        )
+
+        # @todo Assert all members
+        self.assertEqual(r.table_description.table_name, "Aaa")
+
     def testGlobalSecondaryIndexWithProjection(self):
         r = self.connection.request(
             CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
@@ -407,7 +456,6 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         # @todo Assert all members
         self.assertEqual(r.table_description.table_name, "Aaa")
-
 
 
 class DeleteTable(_Operation):
