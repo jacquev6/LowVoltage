@@ -35,6 +35,14 @@ class Operation(object):
                 assert False  # pragma no cover
 
 
+class OperationProxy(object):
+    def __init__(self, operation):
+        self._operation = operation
+
+    def __getattr__(self, name):
+        return getattr(self._operation, name)
+
+
 class ExpectedMixin(object):
     def __init__(self):
         self.__conditional_operator = None

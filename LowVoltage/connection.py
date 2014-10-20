@@ -11,7 +11,7 @@ import urlparse
 
 import requests
 
-from LowVoltage.operations.operation import Operation as _Operation
+from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
 import LowVoltage.exceptions as _exn
 import LowVoltage.tests.dynamodb_local
 
@@ -54,7 +54,7 @@ class Connection(object):
                 return operation, json.dumps(payload), lambda r: r.json()
             else:
                 raise TypeError("When 'operation' is a string, 'payload' should be a string or a dict")
-        elif isinstance(operation, _Operation):
+        elif isinstance(operation, (_Operation, _OperationProxy)):
             if payload is None:
                 return operation.name, json.dumps(operation.build()), lambda r: operation.Result(**r.json())
             else:

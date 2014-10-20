@@ -4,13 +4,13 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation as _Operation
+from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
 import LowVoltage.return_types as _rtyp
 import LowVoltage.attribute_types as _atyp
 import LowVoltage.tests.dynamodb_local
 
 
-# @todo Support LSI and GSI
+# @todo Support LSI
 class CreateTable(_Operation):
     class Result(object):
         def __init__(self, TableDescription=None):
@@ -24,6 +24,79 @@ class CreateTable(_Operation):
         self.__attribute_types = {}
         self.__read_throughput = None
         self.__write_throughput = None
+        self.__gsis = {}
+
+    class _GSI(_OperationProxy):
+        def __init__(self, table, name):
+            super(CreateTable._GSI, self).__init__(table)
+            self.__name = name
+            self.__hash_key = None
+            self.__range_key = None
+            self.__read_throughput = None
+            self.__write_throughput = None
+            self.__projection = None
+
+        def table(self):
+            return self._operation
+
+        def hash_key(self, name, typ=None):
+            self.__hash_key = name
+            if typ is not None:
+                self._operation.attribute(name, typ)
+            return self
+
+        def range_key(self, name, typ=None):
+            self.__range_key = name
+            if typ is not None:
+                self._operation.attribute(name, typ)
+            return self
+
+        def read_throughput(self, units):
+            self.__read_throughput = units
+            return self
+
+        def write_throughput(self, units):
+            self.__write_throughput = units
+            return self
+
+        def project_all(self):
+            self.__projection = "ALL"
+            return self
+
+        def project_keys_only(self):
+            self.__projection = "KEYS_ONLY"
+            return self
+
+        def project(self, *attrs):
+            if not isinstance(self.__projection, list):
+                self.__projection = []
+            for attr in attrs:
+                if isinstance(attr, basestring):
+                    attr = [attr]
+                self.__projection.extend(attr)
+            return self
+
+        def _build(self):
+            data = {"IndexName": self.__name}
+            schema = []
+            if self.__hash_key:
+                schema.append({"AttributeName": self.__hash_key, "KeyType": "HASH"})
+            if self.__range_key:
+                schema.append({"AttributeName": self.__range_key, "KeyType": "RANGE"})
+            if schema:
+                data["KeySchema"] = schema
+            throughput = {}
+            if self.__read_throughput:
+                throughput["ReadCapacityUnits"] = self.__read_throughput
+            if self.__write_throughput:
+                throughput["WriteCapacityUnits"] = self.__write_throughput
+            if throughput:
+                data["ProvisionedThroughput"] = throughput
+            if isinstance(self.__projection, basestring):
+                data["Projection"] = {"ProjectionType": self.__projection}
+            elif self.__projection:
+                data["Projection"] = {"ProjectionType": "INCLUDE", "NonKeyAttributes": self.__projection}
+            return data
 
     def hash_key(self, name, typ=None):
         self.__hash_key = name
@@ -49,6 +122,11 @@ class CreateTable(_Operation):
         self.__write_throughput = units
         return self
 
+    def global_secondary_index(self, name):
+        if name not in self.__gsis:
+            self.__gsis[name] = self._GSI(self, name)
+        return self.__gsis[name]
+
     def build(self):
         data = {"TableName": self.__table_name}
         schema = []
@@ -70,6 +148,8 @@ class CreateTable(_Operation):
             throughput["WriteCapacityUnits"] = self.__write_throughput
         if throughput:
             data["ProvisionedThroughput"] = throughput
+        if self.__gsis:
+            data["GlobalSecondaryIndexes"] = [i._build() for i in self.__gsis.itervalues()]
         return data
 
 
@@ -145,6 +225,152 @@ class CreateTableUnitTests(unittest.TestCase):
             }
         )
 
+    def testGlobalSecondaryIndex(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [{"IndexName": "foo"}],
+            }
+        )
+
+    def testGlobalSecondaryIndexHashKey(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").hash_key("hh").build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "KeySchema": [{"AttributeName": "hh", "KeyType": "HASH"}]},
+                ],
+            }
+        )
+
+    def testGlobalSecondaryIndexRangeKey(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").range_key("rr").build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "KeySchema": [{"AttributeName": "rr", "KeyType": "RANGE"}]},
+                ],
+            }
+        )
+
+    def testGlobalSecondaryIndexHashKeyWithType(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").hash_key("hh", _atyp.STRING).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "KeySchema": [{"AttributeName": "hh", "KeyType": "HASH"}]},
+                ],
+                "AttributeDefinitions": [{"AttributeName": "hh", "AttributeType": "S"}],
+            }
+        )
+
+    def testGlobalSecondaryIndexRangeKeyWithType(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").range_key("rr", _atyp.STRING).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "KeySchema": [{"AttributeName": "rr", "KeyType": "RANGE"}]},
+                ],
+                "AttributeDefinitions": [{"AttributeName": "rr", "AttributeType": "S"}],
+            }
+        )
+
+    def testGlobalSecondaryIndexWriteThrouput(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").write_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "ProvisionedThroughput": {"WriteCapacityUnits": 42}},
+                ],
+            }
+        )
+
+    def testGlobalSecondaryIndexReadThroughput(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").read_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "ProvisionedThroughput": {"ReadCapacityUnits": 42}},
+                ],
+            }
+        )
+
+    def testGlobalSecondaryIndexProjectAll(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").project_all().build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "Projection": {"ProjectionType": "ALL"}},
+                ],
+            }
+        )
+
+    def testGlobalSecondaryIndexProjectKeysOnly(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").project_keys_only().build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "Projection": {"ProjectionType": "KEYS_ONLY"}},
+                ],
+            }
+        )
+
+    def testGlobalSecondaryIndexProjectInclude(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").project("toto", "titi").project(["tutu"]).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "Projection": {"ProjectionType": "INCLUDE", "NonKeyAttributes": ["toto", "titi", "tutu"]}},
+                ],
+            }
+        )
+
+    def testBackToTableAfterGsi(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").table().read_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [{"IndexName": "foo"}],
+                "ProvisionedThroughput": {"ReadCapacityUnits": 42},
+            }
+        )
+
+    def testImplicitBackToTableAfterGsi(self):
+        self.assertEqual(
+            CreateTable("Foo").global_secondary_index("foo").attribute("bar", _atyp.NUMBER).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [{"IndexName": "foo"}],
+                "AttributeDefinitions": [{"AttributeName": "bar", "AttributeType": "N"}],
+            }
+        )
+
+    def testBackToGsiAfterBackToTable(self):
+        self.assertEqual(
+            CreateTable("Foo")
+                .global_secondary_index("foo")
+                .table().read_throughput(42)
+                .global_secondary_index("foo").write_throughput(12)
+                .build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexes": [
+                    {"IndexName": "foo", "ProvisionedThroughput": {"WriteCapacityUnits": 12}}
+                ],
+                "ProvisionedThroughput": {"ReadCapacityUnits": 42},
+            }
+        )
+
 
 class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def tearDown(self):
@@ -157,6 +383,31 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         # @todo Assert all members
         self.assertEqual(r.table_description.table_name, "Aaa")
+
+    def testSimpleGlobalSecondaryIndex(self):
+        r = self.connection.request(
+            CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
+                .global_secondary_index("the_gsi")
+                .hash_key("hh", _atyp.STRING)
+                .project_all()
+                .read_throughput(2).write_throughput(2)
+        )
+
+        # @todo Assert all members
+        self.assertEqual(r.table_description.table_name, "Aaa")
+
+    def testGlobalSecondaryIndexWithProjection(self):
+        r = self.connection.request(
+            CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
+                .global_secondary_index("the_gsi")
+                .hash_key("hh", _atyp.STRING)
+                .project("toto", "titi")
+                .read_throughput(2).write_throughput(2)
+        )
+
+        # @todo Assert all members
+        self.assertEqual(r.table_description.table_name, "Aaa")
+
 
 
 class DeleteTable(_Operation):
