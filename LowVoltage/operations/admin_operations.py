@@ -605,7 +605,6 @@ class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.assertEqual(r.last_evaluated_table_name, None)
 
 
-# @todo Support LSI and GSI
 class UpdateTable(_Operation):
     class Result(object):
         def __init__(self, TableDescription=None):
@@ -616,6 +615,36 @@ class UpdateTable(_Operation):
         self.__table_name = table_name
         self.__read_throughput = None
         self.__write_throughput = None
+        self.__gsis = {}
+
+    class _IndexWithThroughput(_OperationProxy):
+        def __init__(self, table, name):
+            super(UpdateTable._IndexWithThroughput, self).__init__(table)
+            self.__name = name
+            self.__read_throughput = None
+            self.__write_throughput = None
+
+        def table(self):
+            return self._operation
+
+        def read_throughput(self, units):
+            self.__read_throughput = units
+            return self
+
+        def write_throughput(self, units):
+            self.__write_throughput = units
+            return self
+
+        def _build(self):
+            data = {"IndexName": self.__name}
+            throughput = {}
+            if self.__read_throughput:
+                throughput["ReadCapacityUnits"] = self.__read_throughput
+            if self.__write_throughput:
+                throughput["WriteCapacityUnits"] = self.__write_throughput
+            if throughput:
+                data["ProvisionedThroughput"] = throughput
+            return data
 
     def read_throughput(self, units):
         self.__read_throughput = units
@@ -624,6 +653,11 @@ class UpdateTable(_Operation):
     def write_throughput(self, units):
         self.__write_throughput = units
         return self
+
+    def global_secondary_index(self, name):
+        if name not in self.__gsis:
+            self.__gsis[name] = self._IndexWithThroughput(self, name)
+        return self.__gsis[name]
 
     def build(self):
         data = {"TableName": self.__table_name}
@@ -634,6 +668,8 @@ class UpdateTable(_Operation):
             throughput["WriteCapacityUnits"] = self.__write_throughput
         if throughput:
             data["ProvisionedThroughput"] = throughput
+        if self.__gsis:
+            data["GlobalSecondaryIndexUpdates"] = [{"Update": i._build()} for i in self.__gsis.itervalues()]
         return data
 
 
@@ -662,11 +698,60 @@ class UpdateTableUnitTests(unittest.TestCase):
             }
         )
 
+    def testGsi(self):
+        self.assertEqual(
+            UpdateTable("Foo").global_secondary_index("the_gsi").build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexUpdates": [
+                    {"Update": {"IndexName": "the_gsi"}},
+                ],
+            }
+        )
+
+    def testGsiReadThroughput(self):
+        self.assertEqual(
+            UpdateTable("Foo").global_secondary_index("the_gsi").read_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexUpdates": [
+                    {"Update": {"IndexName": "the_gsi", "ProvisionedThroughput": {"ReadCapacityUnits": 42}}},
+                ],
+            }
+        )
+
+    def testGsiWriteThroughput(self):
+        self.assertEqual(
+            UpdateTable("Foo").global_secondary_index("the_gsi").write_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexUpdates": [
+                    {"Update": {"IndexName": "the_gsi", "ProvisionedThroughput": {"WriteCapacityUnits": 42}}},
+                ],
+            }
+        )
+
+    def testBackToGsiAfterBackToTable(self):
+        self.assertEqual(
+            UpdateTable("Foo").global_secondary_index("the_gsi").table().read_throughput(12).global_secondary_index("the_gsi").read_throughput(42).build(),
+            {
+                "TableName": "Foo",
+                "GlobalSecondaryIndexUpdates": [
+                    {"Update": {"IndexName": "the_gsi", "ProvisionedThroughput": {"ReadCapacityUnits": 42}}},
+                ],
+                "ProvisionedThroughput": {"ReadCapacityUnits": 12},
+            }
+        )
+
 
 class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
             CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
+                .global_secondary_index("the_gsi")
+                .hash_key("hh", _atyp.STRING)
+                .project_all()
+                .read_throughput(2).write_throughput(2)
         )
 
     def tearDown(self):
@@ -675,6 +760,14 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def testThroughput(self):
         r = self.connection.request(
             UpdateTable("Aaa").read_throughput(2).write_throughput(2)
+        )
+
+        # @todo Assert all members
+        self.assertEqual(r.table_description.table_name, "Aaa")
+
+    def testGsiThroughput(self):
+        r = self.connection.request(
+            UpdateTable("Aaa").global_secondary_index("the_gsi").read_throughput(4).write_throughput(4)
         )
 
         # @todo Assert all members
