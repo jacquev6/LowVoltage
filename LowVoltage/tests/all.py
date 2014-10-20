@@ -6,7 +6,7 @@ from LowVoltage.connection import ConnectionUnitTests, ConnectionIntegTests
 from LowVoltage.operations.expressions import ConditionExpressionUnitTests
 
 from LowVoltage.operations.admin_operations import (
-    CreateTableUnitTests, CreateTableIntegTests,
+    CreateTableUnitTests, CreateTableIntegTests, CreateTableErrorTests,
     DeleteTableUnitTests, DeleteTableIntegTests,
     DescribeTableUnitTests, DescribeTableIntegTests,
     ListTablesUnitTests, ListTablesIntegTests,

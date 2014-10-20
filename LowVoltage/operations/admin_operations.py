@@ -8,6 +8,7 @@ from LowVoltage.operations.operation import Operation as _Operation, OperationPr
 import LowVoltage.return_types as _rtyp
 import LowVoltage.attribute_types as _atyp
 import LowVoltage.tests.dynamodb_local
+import LowVoltage.exceptions as _exn
 
 
 class CreateTable(_Operation):
@@ -456,6 +457,49 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         # @todo Assert all members
         self.assertEqual(r.table_description.table_name, "Aaa")
+
+
+class CreateTableErrorTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def testDefineUnusedAttribute(self):
+        with self.assertRaises(_exn.ValidationException) as catcher:
+            self.connection.request(
+                CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
+                    .attribute("x", _atyp.STRING)
+            )
+        self.assertEqual(
+            catcher.exception.args,
+            ({
+                "__type": "com.amazon.coral.validate#ValidationException",
+                "Message": "The number of attributes in key schema must match the number of attributesdefined in attribute definitions.",
+            },)
+        )
+
+    def testDontDefineKeyAttribute(self):
+        with self.assertRaises(_exn.ValidationException) as catcher:
+            self.connection.request(
+                CreateTable("Aaa").hash_key("h").read_throughput(1).write_throughput(1)
+                    .attribute("x", _atyp.STRING)
+            )
+        self.assertEqual(
+            catcher.exception.args,
+            ({
+                "__type": "com.amazon.coral.validate#ValidationException",
+                "Message": "Hash Key not specified in Attribute Definitions.  Type unknown.",
+            },)
+        )
+
+    def testDontDefineAnyAttribute(self):
+        with self.assertRaises(_exn.ValidationException) as catcher:
+            self.connection.request(
+                CreateTable("Aaa").hash_key("h").read_throughput(1).write_throughput(1)
+            )
+        self.assertEqual(
+            catcher.exception.args,
+            ({
+                "__type": "com.amazon.coral.validate#ValidationException",
+                "Message": "No Attribute Schema Defined",
+            },)
+        )
 
 
 class DeleteTable(_Operation):
