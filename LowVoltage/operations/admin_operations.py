@@ -13,7 +13,7 @@ import LowVoltage.exceptions as _exn
 
 class CreateTable(_Operation):
     class Result(object):
-        def __init__(self, TableDescription=None):
+        def __init__(self, TableDescription=None, **dummy):
             self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
 
     def __init__(self, table_name):
@@ -422,8 +422,22 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             CreateTable("Aaa").hash_key("h", _atyp.STRING).read_throughput(1).write_throughput(1)
         )
 
-        # @todo Assert all members
+        self.assertEqual(len(r.table_description.attribute_definitions), 1)
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
+        # @todo self.assertEqual(r.table_description.creation_date_time, )
+        self.assertEqual(r.table_description.global_secondary_indexes, None)
+        self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(len(r.table_description.key_schema), 1)
+        self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes, None)
+        self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
+        self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 1)
         self.assertEqual(r.table_description.table_name, "Aaa")
+        self.assertEqual(r.table_description.table_size_bytes, 0)
+        self.assertEqual(r.table_description.table_status, "ACTIVE")
 
     def testSimpleGlobalSecondaryIndex(self):
         r = self.connection.request(
@@ -434,8 +448,36 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
                 .read_throughput(2).write_throughput(2)
         )
 
-        # @todo Assert all members
+        self.assertEqual(len(r.table_description.attribute_definitions), 2)
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
+        # @todo self.assertEqual(r.table_description.creation_date_time, )
+        self.assertEqual(len(r.table_description.global_secondary_indexes), 1)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
+        self.assertEqual(len(r.table_description.global_secondary_indexes[0].key_schema), 1)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "ALL")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 2)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 2)
+        self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(len(r.table_description.key_schema), 1)
+        self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes, None)
+        self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
+        self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 1)
         self.assertEqual(r.table_description.table_name, "Aaa")
+        self.assertEqual(r.table_description.table_size_bytes, 0)
+        self.assertEqual(r.table_description.table_status, "ACTIVE")
 
     def testSimpleLocalSecondaryIndex(self):
         r = self.connection.request(
@@ -443,8 +485,39 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
                 .local_secondary_index("the_lsi").hash_key("h").range_key("rr", _atyp.STRING).project_all()
         )
 
-        # @todo Assert all members
+        self.assertEqual(len(r.table_description.attribute_definitions), 3)
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "r")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
+        self.assertEqual(r.table_description.attribute_definitions[2].attribute_name, "rr")
+        self.assertEqual(r.table_description.attribute_definitions[2].attribute_type, "S")
+        # @todo self.assertEqual(r.table_description.creation_date_time, )
+        self.assertEqual(r.table_description.global_secondary_indexes, None)
+        self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(len(r.table_description.key_schema), 2)
+        self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.key_schema[1].attribute_name, "r")
+        self.assertEqual(r.table_description.key_schema[1].key_type, "RANGE")
+        self.assertEqual(len(r.table_description.local_secondary_indexes), 1)
+        self.assertEqual(r.table_description.local_secondary_indexes[0].index_name, "the_lsi")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].index_size_bytes, 0)
+        self.assertEqual(r.table_description.local_secondary_indexes[0].index_status, None)
+        self.assertEqual(r.table_description.local_secondary_indexes[0].item_count, 0)
+        self.assertEqual(len(r.table_description.local_secondary_indexes[0].key_schema), 2)
+        self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[1].attribute_name, "rr")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[1].key_type, "RANGE")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].projection.projection_type, "ALL")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].projection.non_key_attributes, None)
+        self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
+        self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 1)
         self.assertEqual(r.table_description.table_name, "Aaa")
+        self.assertEqual(r.table_description.table_size_bytes, 0)
+        self.assertEqual(r.table_description.table_status, "ACTIVE")
 
     def testGlobalSecondaryIndexWithProjection(self):
         r = self.connection.request(
@@ -455,8 +528,36 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
                 .read_throughput(2).write_throughput(2)
         )
 
-        # @todo Assert all members
+        self.assertEqual(len(r.table_description.attribute_definitions), 2)
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
+        # @todo self.assertEqual(r.table_description.creation_date_time, )
+        self.assertEqual(len(r.table_description.global_secondary_indexes), 1)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
+        self.assertEqual(len(r.table_description.global_secondary_indexes[0].key_schema), 1)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "INCLUDE")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes, ["toto", "titi"])
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 2)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 2)
+        self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(len(r.table_description.key_schema), 1)
+        self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes, None)
+        self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
+        self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 1)
         self.assertEqual(r.table_description.table_name, "Aaa")
+        self.assertEqual(r.table_description.table_size_bytes, 0)
+        self.assertEqual(r.table_description.table_status, "ACTIVE")
 
 
 class CreateTableErrorTests(LowVoltage.tests.dynamodb_local.TestCase):
@@ -504,7 +605,7 @@ class CreateTableErrorTests(LowVoltage.tests.dynamodb_local.TestCase):
 
 class DeleteTable(_Operation):
     class Result(object):
-        def __init__(self, TableDescription=None):
+        def __init__(self, TableDescription=None, **dummy):
             self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
 
     def __init__(self, table_name):
@@ -532,16 +633,27 @@ class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def test(self):
         r = self.connection.request(DeleteTable("Aaa"))
 
-        # @todo Assert all members
+        self.assertEqual(len(r.table_description.attribute_definitions), 1)
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
+        # @todo self.assertEqual(r.table_description.creation_date_time, )
+        self.assertEqual(r.table_description.global_secondary_indexes, None)
         self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(len(r.table_description.key_schema), 1)
+        self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes, None)
+        self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
+        self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 1)
         self.assertEqual(r.table_description.table_name, "Aaa")
         self.assertEqual(r.table_description.table_size_bytes, 0)
-        self.assertEqual(r.table_description.table_status, "ACTIVE")  # Should be "DELETING"?
+        self.assertEqual(r.table_description.table_status, "ACTIVE")
 
 
 class DescribeTable(_Operation):
     class Result(object):
-        def __init__(self, Table=None):
+        def __init__(self, Table=None, **dummy):
             self.table = None if Table is None else _rtyp.TableDescription(**Table)
 
     def __init__(self, table_name):
@@ -572,8 +684,19 @@ class DescribeTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def test(self):
         r = self.connection.request(DescribeTable("Aaa"))
 
-        # @todo Assert all members
+        self.assertEqual(len(r.table.attribute_definitions), 1)
+        self.assertEqual(r.table.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table.attribute_definitions[0].attribute_type, "S")
+        # @todo self.assertEqual(r.table.creation_date_time, )
+        self.assertEqual(r.table.global_secondary_indexes, None)
         self.assertEqual(r.table.item_count, 0)
+        self.assertEqual(len(r.table.key_schema), 1)
+        self.assertEqual(r.table.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table.local_secondary_indexes, None)
+        self.assertEqual(r.table.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table.provisioned_throughput.read_capacity_units, 1)
+        self.assertEqual(r.table.provisioned_throughput.write_capacity_units, 1)
         self.assertEqual(r.table.table_name, "Aaa")
         self.assertEqual(r.table.table_size_bytes, 0)
         self.assertEqual(r.table.table_status, "ACTIVE")
@@ -581,7 +704,7 @@ class DescribeTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
 class ListTables(_Operation):
     class Result(object):
-        def __init__(self, TableNames=None, LastEvaluatedTableName=None):
+        def __init__(self, TableNames=None, LastEvaluatedTableName=None, **dummy):
             self.table_names = TableNames
             self.last_evaluated_table_name = LastEvaluatedTableName
 
@@ -651,7 +774,7 @@ class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
 class UpdateTable(_Operation):
     class Result(object):
-        def __init__(self, TableDescription=None):
+        def __init__(self, TableDescription=None, **dummy):
             self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
 
     def __init__(self, table_name):
@@ -806,16 +929,72 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             UpdateTable("Aaa").read_throughput(2).write_throughput(2)
         )
 
-        # @todo Assert all members
+        self.assertEqual(len(r.table_description.attribute_definitions), 2)
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
+        # @todo self.assertEqual(r.table_description.creation_date_time, )
+        self.assertEqual(len(r.table_description.global_secondary_indexes), 1)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
+        self.assertEqual(len(r.table_description.global_secondary_indexes[0].key_schema), 1)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "ALL")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 2)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 2)
+        self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(len(r.table_description.key_schema), 1)
+        self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes, None)
+        self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 2)
+        self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
         self.assertEqual(r.table_description.table_name, "Aaa")
+        self.assertEqual(r.table_description.table_size_bytes, 0)
+        self.assertEqual(r.table_description.table_status, "ACTIVE")
 
     def testGsiThroughput(self):
         r = self.connection.request(
             UpdateTable("Aaa").global_secondary_index("the_gsi").read_throughput(4).write_throughput(4)
         )
 
-        # @todo Assert all members
+        self.assertEqual(len(r.table_description.attribute_definitions), 2)
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
+        self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
+        # @todo self.assertEqual(r.table_description.creation_date_time, )
+        self.assertEqual(len(r.table_description.global_secondary_indexes), 1)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
+        self.assertEqual(len(r.table_description.global_secondary_indexes[0].key_schema), 1)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "ALL")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 4)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 4)
+        self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(len(r.table_description.key_schema), 1)
+        self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes, None)
+        self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
+        self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 1)
         self.assertEqual(r.table_description.table_name, "Aaa")
+        self.assertEqual(r.table_description.table_size_bytes, 0)
+        self.assertEqual(r.table_description.table_status, "ACTIVE")
 
 
 if __name__ == "__main__":
