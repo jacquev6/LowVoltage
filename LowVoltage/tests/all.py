@@ -24,3 +24,5 @@ from LowVoltage.operations.batch_operations import (
 )
 
 from LowVoltage.tests.exploration import *
+
+from LowVoltage.tests.cover import *

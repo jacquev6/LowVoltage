@@ -69,8 +69,8 @@ class Projection_:
         ProjectionType=None,
         **dummy
     ):
-        self.projection_type = ProjectionType
         self.non_key_attributes = NonKeyAttributes
+        self.projection_type = ProjectionType
 
 
 class ProvisionedThroughputDescription:
