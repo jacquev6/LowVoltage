@@ -182,6 +182,8 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
 
 class GetItem(_Operation, ReturnConsumedCapacityMixin):
+    # @todo ProjectionExpression
+
     class Result(object):
         def __init__(
             self,
@@ -197,7 +199,6 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
         self.__key = key
         ReturnConsumedCapacityMixin.__init__(self)
         self.__consistent_read = None
-        self.__attributes_to_get = []
 
     def build(self):
         data = {
@@ -207,8 +208,6 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
         self._build_return_consumed_capacity(data)
         if self.__consistent_read is not None:
             data["ConsistentRead"] = self.__consistent_read
-        if self.__attributes_to_get:
-            data["AttributesToGet"] = self.__attributes_to_get
         return data
 
     def consistent_read_true(self):
@@ -219,13 +218,6 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
 
     def _set_consistent_read(self, value):
         self.__consistent_read = value
-        return self
-
-    def attributes_to_get(self, *names):
-        for name in names:
-            if isinstance(name, basestring):
-                name = [name]
-            self.__attributes_to_get.extend(name)
         return self
 
 
@@ -289,36 +281,6 @@ class GetItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testOneAttributesToGet(self):
-        self.assertEqual(
-            GetItem("Table", {"hash": "h"}).attributes_to_get("a").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributesToGet": ["a"],
-            }
-        )
-
-    def testSeveralAttributesToGet(self):
-        self.assertEqual(
-            GetItem("Table", {"hash": "h"}).attributes_to_get("a", "b").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributesToGet": ["a", "b"],
-            }
-        )
-
-    def testListAttributesToGet(self):
-        self.assertEqual(
-            GetItem("Table", {"hash": "h"}).attributes_to_get(["a", "b"]).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributesToGet": ["a", "b"],
-            }
-        )
-
 
 class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
@@ -336,14 +298,6 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         with cover("r", r) as r:
             self.assertEqual(r.item, {"h": "get", "a": "yyy"})
-
-    def testGetSpecificAttributes(self):
-        self.connection.request(PutItem("Aaa", {"h": "attrs", "a": "yyy", "b": "zzz"}))
-
-        r = self.connection.request(GetItem("Aaa", {"h": "attrs"}).attributes_to_get("a"))
-
-        with cover("r", r) as r:
-            self.assertEqual(r.item, {"a": "yyy"})
 
 
 class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
