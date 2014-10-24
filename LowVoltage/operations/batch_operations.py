@@ -4,11 +4,12 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from LowVoltage.operations.operation import Operation as _Operation
+from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 
 
-class BatchGetItem(Operation, ReturnConsumedCapacityMixin):
+class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
     def __init__(self):
         super(BatchGetItem, self).__init__("BatchGetItem")
         ReturnConsumedCapacityMixin.__init__(self)
@@ -140,7 +141,7 @@ class BatchGetItemUnitTests(unittest.TestCase):
         )
 
 
-class BatchWriteItem(Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     def __init__(self):
         super(BatchWriteItem, self).__init__("BatchWriteItem")
         ReturnConsumedCapacityMixin.__init__(self)

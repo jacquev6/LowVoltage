@@ -4,7 +4,7 @@
 
 import unittest
 
-from LowVoltage.operations.operation import ReturnOldValuesMixin, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
@@ -13,6 +13,36 @@ import LowVoltage.return_types as _rtyp
 import LowVoltage.attribute_types as _atyp
 import LowVoltage.exceptions as _exn
 from LowVoltage.tests.cover import cover
+
+
+class ReturnOldValuesMixin(object):
+    def __init__(self):
+        self.__return_values = None
+
+    def _build_return_values(self, data):
+        if self.__return_values:
+            data["ReturnValues"] = self.__return_values
+
+    def return_values_all_old(self):
+        return self._set_return_values("ALL_OLD")
+
+    def return_values_none(self):
+        return self._set_return_values("NONE")
+
+    def _set_return_values(self, value):
+        self.__return_values = value
+        return self
+
+
+class ReturnValuesMixin(ReturnOldValuesMixin):
+    def return_values_all_new(self):
+        return self._set_return_values("ALL_NEW")
+
+    def return_values_updated_new(self):
+        return self._set_return_values("UPDATED_NEW")
+
+    def return_values_updated_old(self):
+        return self._set_return_values("UPDATED_OLD")
 
 
 class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
