@@ -20,8 +20,8 @@ from LowVoltage.operations.item_operations import (
     UpdateItemUnitTests, UpdateItemIntegTests,
 )
 from LowVoltage.operations.batch_operations import (
-    BatchGetItemUnitTests,
-    BatchWriteItemUnitTests,
+    BatchGetItemUnitTests, BatchGetItemIntegTests,
+    BatchWriteItemUnitTests, BatchWriteItemIntegTests,
 )
 
 from LowVoltage.tests.exploration import *

@@ -4,8 +4,8 @@
 
 import unittest
 
-from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
+from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
 import LowVoltage.operations.admin_operations
@@ -729,4 +729,4 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()  # pragma no cover (Test code)
+    LowVoltage.tests.dynamodb_local.main()  # pragma no cover (Test code)
