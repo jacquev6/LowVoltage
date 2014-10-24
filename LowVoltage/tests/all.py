@@ -14,7 +14,7 @@ from LowVoltage.operations.admin_operations import (
     UpdateTableUnitTests, UpdateTableIntegTests,
 )
 from LowVoltage.operations.item_operations import (
-    DeleteItemUnitTests,
+    DeleteItemUnitTests, DeleteItemIntegTests,
     GetItemUnitTests, GetItemIntegTests,
     PutItemUnitTests, PutItemIntegTests,
     UpdateItemUnitTests, UpdateItemIntegTests,

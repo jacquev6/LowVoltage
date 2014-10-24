@@ -4,7 +4,7 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from LowVoltage.operations.operation import ReturnOldValuesMixin, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
@@ -15,12 +15,20 @@ import LowVoltage.exceptions as _exn
 from LowVoltage.tests.cover import cover
 
 
-class DeleteItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+    class Result(object):
+        def __init__(
+            self,
+            Attributes=None,
+            **dummy
+        ):
+            self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
+            # @todo ConsumedCapacity and ItemCollectionMetrics
+
     def __init__(self, table_name, key):
         super(DeleteItem, self).__init__("DeleteItem")
         self.__table_name = table_name
         self.__key = key
-        ExpectedMixin.__init__(self)
         ReturnOldValuesMixin.__init__(self)
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
@@ -30,7 +38,6 @@ class DeleteItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedC
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        self._build_expected(data)
         self._build_return_values(data)
         self._build_return_consumed_capacity(data)
         self._build_return_item_collection_metrics(data)
@@ -44,156 +51,6 @@ class DeleteItemUnitTests(unittest.TestCase):
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
-            }
-        )
-
-    def testConditionalOperatorAnd(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).conditional_operator_and().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ConditionalOperator": "AND",
-            }
-        )
-
-    def testConditionalOperatorOr(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).conditional_operator_or().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ConditionalOperator": "OR",
-            }
-        )
-
-    def testExpectEqual(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_eq("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotEqual(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_ne("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectLessThanOrEqual(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_le("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "LE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectLessThan(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_lt("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "LT", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectGreaterThanOrEqual(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_ge("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "GE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectGreaterThan(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_gt("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "GT", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotNull(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_not_null("attr").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NOT_NULL"}},
-            }
-        )
-
-    def testExpectNull(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_null("attr").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NULL"}},
-            }
-        )
-
-    def testExpectContains(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_contains("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "CONTAINS", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotContains(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_not_contains("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NOT_CONTAINS", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectBeginsWith(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_begins_with("attr", "prefix").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [{"S": "prefix"}]}},
-            }
-        )
-
-    def testExpectIn(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_in("attr", [42, 43]).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "IN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
-            }
-        )
-
-    def testExpectBetween(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).expect_between("attr", 42, 43).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "BETWEEN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
             }
         )
 
@@ -268,7 +125,33 @@ class DeleteItemUnitTests(unittest.TestCase):
         )
 
 
-class GetItem(Operation, ReturnConsumedCapacityMixin):
+class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def setUp(self):
+        self.connection.request(
+            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+        )
+
+    def tearDown(self):
+        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+
+    def testSimpleDelete(self):
+        self.connection.request(PutItem("Aaa", {"h": "simple", "a": "yyy"}))
+
+        r = self.connection.request(DeleteItem("Aaa", {"h": "simple"}))
+
+        with cover("r", r) as r:
+            self.assertEqual(r.attributes, None)
+
+    def testReturnOldValues(self):
+        self.connection.request(PutItem("Aaa", {"h": "get", "a": "yyy"}))
+
+        r = self.connection.request(DeleteItem("Aaa", {"h": "get"}).return_values_all_old())
+
+        with cover("r", r) as r:
+            self.assertEqual(r.attributes, {"h": "get", "a": "yyy"})
+
+
+class GetItem(_Operation, ReturnConsumedCapacityMixin):
     class Result(object):
         def __init__(
             self,
@@ -417,13 +300,9 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
 
     def testSimpleGet(self):
-        self.connection.request(
-            PutItem("Aaa", {"h": "get", "a": "yyy"})
-        )
+        self.connection.request(PutItem("Aaa", {"h": "get", "a": "yyy"}))
 
-        r = self.connection.request(
-            GetItem("Aaa", {"h": "get"})
-        )
+        r = self.connection.request(GetItem("Aaa", {"h": "get"}))
 
         with cover("r", r) as r:
             self.assertEqual(r.item, {"h": "get", "a": "yyy"})
