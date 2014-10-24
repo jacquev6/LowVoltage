@@ -70,7 +70,7 @@ class CoverList(_Cover):
 
 
 def cover(prefix, anything):
-    if isinstance(anything, (bool, numbers.Integral, basestring, type(None))):
+    if isinstance(anything, (bool, numbers.Integral, basestring, type(None), dict)):
         return anything
     elif isinstance(anything, list):
         return CoverList(prefix, anything)

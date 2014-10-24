@@ -5,6 +5,7 @@
 import unittest
 
 from LowVoltage.operations.operation import Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 
 
 class BatchGetItem(Operation, ReturnConsumedCapacityMixin):
@@ -34,7 +35,7 @@ class BatchGetItem(Operation, ReturnConsumedCapacityMixin):
         for key in keys:
             if isinstance(key, dict):
                 key = [key]
-            self.__last_table["Keys"].extend(self._convert_dict(k) for k in key)
+            self.__last_table["Keys"].extend(_convert_dict_to_db(k) for k in key)
         return self
 
     def consistent_read_true(self):
@@ -166,14 +167,14 @@ class BatchWriteItem(Operation, ReturnConsumedCapacityMixin, ReturnItemCollectio
         for key in keys:
             if isinstance(key, dict):
                 key = [key]
-            self.__last_table.extend({"DeleteRequest": {"Key": self._convert_dict(k)}} for k in key)
+            self.__last_table.extend({"DeleteRequest": {"Key": _convert_dict_to_db(k)}} for k in key)
         return self
 
     def put(self, *keys):
         for key in keys:
             if isinstance(key, dict):
                 key = [key]
-            self.__last_table.extend({"PutRequest": {"Item": self._convert_dict(k)}} for k in key)
+            self.__last_table.extend({"PutRequest": {"Item": _convert_dict_to_db(k)}} for k in key)
         return self
 
 

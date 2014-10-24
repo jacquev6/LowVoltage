@@ -2,8 +2,7 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
-import numbers
-import unittest
+from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 
 
 class Operation(object):
@@ -13,26 +12,6 @@ class Operation(object):
     @property
     def name(self):
         return self.__operation
-
-    def _convert_dict(self, attributes):
-        return {
-            key: self._convert_value(val)
-            for key, val in attributes.iteritems()
-        }
-
-    def _convert_value(self, value):
-        if isinstance(value, basestring):
-            return {"S": value}
-        elif isinstance(value, numbers.Integral):
-            return {"N": str(value)}
-        else:
-            assert len(value) > 0
-            if isinstance(value[0], basestring):
-                return {"SS": value}
-            elif isinstance(value[0], numbers.Integral):
-                return {"NS": [str(n) for n in value]}
-            else:
-                assert False  # pragma no cover
 
 
 class OperationProxy(object):
@@ -106,7 +85,7 @@ class ExpectedMixin(object):
     def _add_expected(self, name, operator, value_list=None):
         data = {"ComparisonOperator": operator}
         if value_list:
-            data["AttributeValueList"] = [self._convert_value(value) for value in value_list]
+            data["AttributeValueList"] = [_convert_value_to_db(value) for value in value_list]
         self.__expected[name] = data
         return self
 

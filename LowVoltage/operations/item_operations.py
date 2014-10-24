@@ -5,6 +5,14 @@
 import unittest
 
 from LowVoltage.operations.operation import Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
+from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
+import LowVoltage.tests.dynamodb_local
+import LowVoltage.operations.admin_operations
+import LowVoltage.return_types as _rtyp
+import LowVoltage.attribute_types as _atyp
+import LowVoltage.exceptions as _exn
+from LowVoltage.tests.cover import cover
 
 
 class DeleteItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
@@ -20,7 +28,7 @@ class DeleteItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedC
     def build(self):
         data = {
             "TableName": self.__table_name,
-            "Key": self._convert_dict(self.__key),
+            "Key": _convert_dict_to_db(self.__key),
         }
         self._build_expected(data)
         self._build_return_values(data)
@@ -261,6 +269,15 @@ class DeleteItemUnitTests(unittest.TestCase):
 
 
 class GetItem(Operation, ReturnConsumedCapacityMixin):
+    class Result(object):
+        def __init__(
+            self,
+            Item=None,
+            **dummy
+        ):
+            self.item = None if Item is None else _convert_db_to_dict(Item)
+            # @todo ConsumedCapacity
+
     def __init__(self, table_name, key):
         super(GetItem, self).__init__("GetItem")
         self.__table_name = table_name
@@ -272,7 +289,7 @@ class GetItem(Operation, ReturnConsumedCapacityMixin):
     def build(self):
         data = {
             "TableName": self.__table_name,
-            "Key": self._convert_dict(self.__key),
+            "Key": _convert_dict_to_db(self.__key),
         }
         self._build_return_consumed_capacity(data)
         if self.__consistent_read is not None:
@@ -390,12 +407,42 @@ class GetItemUnitTests(unittest.TestCase):
         )
 
 
-class PutItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def setUp(self):
+        self.connection.request(
+            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+        )
+
+    def tearDown(self):
+        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+
+    def testSimpleGet(self):
+        self.connection.request(
+            PutItem("Aaa", {"h": "get", "a": "yyy"})
+        )
+
+        r = self.connection.request(
+            GetItem("Aaa", {"h": "get"})
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(r.item, {"h": "get", "a": "yyy"})
+
+
+class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+    class Result(object):
+        def __init__(
+            self,
+            Attributes=None,
+            **dummy
+        ):
+            self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
+            # @todo ConsumedCapacity and ItemCollectionMetrics
+
     def __init__(self, table_name, item):
         super(PutItem, self).__init__("PutItem")
         self.__table_name = table_name
         self.__item = item
-        ExpectedMixin.__init__(self)
         ReturnOldValuesMixin.__init__(self)
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
@@ -403,9 +450,8 @@ class PutItem(Operation, ExpectedMixin, ReturnOldValuesMixin, ReturnConsumedCapa
     def build(self):
         data = {
             "TableName": self.__table_name,
-            "Item": self._convert_dict(self.__item),
+            "Item": _convert_dict_to_db(self.__item),
         }
-        self._build_expected(data)
         self._build_return_values(data)
         self._build_return_consumed_capacity(data)
         self._build_return_item_collection_metrics(data)
@@ -419,156 +465,6 @@ class PutItemUnitTests(unittest.TestCase):
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "value"}},
-            }
-        )
-
-    def testConditionalOperatorAnd(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).conditional_operator_and().build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "ConditionalOperator": "AND",
-            }
-        )
-
-    def testConditionalOperatorOr(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).conditional_operator_or().build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "ConditionalOperator": "OR",
-            }
-        )
-
-    def testExpectEqual(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_eq("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotEqual(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_ne("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectLessThanOrEqual(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_le("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "LE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectLessThan(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_lt("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "LT", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectGreaterThanOrEqual(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_ge("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "GE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectGreaterThan(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_gt("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "GT", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotNull(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_not_null("attr").build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NOT_NULL"}},
-            }
-        )
-
-    def testExpectNull(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_null("attr").build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NULL"}},
-            }
-        )
-
-    def testExpectContains(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_contains("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "CONTAINS", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotContains(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_not_contains("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NOT_CONTAINS", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectBeginsWith(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_begins_with("attr", "prefix").build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [{"S": "prefix"}]}},
-            }
-        )
-
-    def testExpectIn(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_in("attr", [42, 43]).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "IN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
-            }
-        )
-
-    def testExpectBetween(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).expect_between("attr", 42, 43).build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "BETWEEN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
             }
         )
 
@@ -643,13 +539,82 @@ class PutItemUnitTests(unittest.TestCase):
         )
 
 
-class UpdateItem(Operation, ExpectedMixin, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def setUp(self):
+        self.connection.request(
+            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+        )
+
+    def tearDown(self):
+        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+
+    def testSimplePut(self):
+        r = self.connection.request(PutItem("Aaa", {"h": "simple"}))
+
+        with cover("r", r) as r:
+            self.assertEqual(r.attributes, None)
+
+        self.assertEqual(self.connection.request(GetItem("Aaa", {"h": "simple"})).item, {"h": "simple"})
+
+    def testPutAllTypes(self):
+        # @todo B and BS
+        self.connection.request(PutItem("Aaa", {
+            "h": "all",
+            "s": "foo",
+            "b1": True,
+            "b2": False,
+            "n": 42,
+            "null": None,
+            "ns": set([42, 43]),
+            "ss": set(["foo", "bar"]),
+            "l": [True, 42],
+            "m": {"a": True, "b": 42},
+        }))
+
+        self.assertEqual(
+            self.connection.request(GetItem("Aaa", {"h": "all"})).item,
+            {
+                "h": "all",
+                "s": "foo",
+                "b1": True,
+                "b2": False,
+                "n": 42,
+                "null": None,
+                "ns": set([42, 43]),
+                "ss": set(["foo", "bar"]),
+                "l": [True, 42],
+                "m": {"a": True, "b": 42},
+            }
+        )
+
+
+    def testReturnOldValues(self):
+        self.connection.request(PutItem("Aaa", {"h": "return", "a": "yyy"}))
+
+        r = self.connection.request(
+            PutItem("Aaa", {"h": "return", "b": "xxx"}).return_values_all_old()
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(r.attributes, {"h": "return", "a": "yyy"})
+
+
+class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+    class Result(object):
+        def __init__(
+            self,
+            Attributes=None,
+            **dummy
+        ):
+            self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
+            # @todo ConsumedCapacity and ItemCollectionMetrics
+
     def __init__(self, table_name, key):
         super(UpdateItem, self).__init__("UpdateItem")
         self.__table_name = table_name
         self.__key = key
-        self.__attribute_updates = {}
-        ExpectedMixin.__init__(self)
+        self.__set = {}
+        self.__values = {}
         ReturnValuesMixin.__init__(self)
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
@@ -657,30 +622,26 @@ class UpdateItem(Operation, ExpectedMixin, ReturnValuesMixin, ReturnConsumedCapa
     def build(self):
         data = {
             "TableName": self.__table_name,
-            "Key": self._convert_dict(self.__key),
+            "Key": _convert_dict_to_db(self.__key),
         }
-        if self.__attribute_updates:
-            data["AttributeUpdates"] = self.__attribute_updates
-        self._build_expected(data)
         self._build_return_values(data)
         self._build_return_consumed_capacity(data)
         self._build_return_item_collection_metrics(data)
+        update = []
+        if self.__set:
+            update.append("SET {}".format(", ".join("{}=:{}".format(n, v) for n, v in self.__set.iteritems())))
+        if update:
+            data["UpdateExpression"] = " ".join(update)
+        if self.__values:
+            data["ExpressionAttributeValues"] = {":" + n: _convert_value_to_db(v) for n, v in self.__values.iteritems()}
         return data
 
-    def put(self, name, value):
-        return self._add_attribute_update(name, "PUT", value)
+    def set(self, attribute_name, value_name):
+        self.__set[attribute_name] = value_name
+        return self
 
-    def delete(self, name, value=None):
-        return self._add_attribute_update(name, "DELETE", value)
-
-    def add(self, name, value):
-        return self._add_attribute_update(name, "ADD", value)
-
-    def _add_attribute_update(self, name, action, value):
-        data = {"Action": action}
-        if value is not None:
-            data["Value"] = self._convert_value(value)
-        self.__attribute_updates[name] = data
+    def value(self, name, value):
+        self.__values[name] = value
         return self
 
 
@@ -694,203 +655,43 @@ class UpdateItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testPutInt(self):
+    def testSet(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).put("attr", 42).build(),
+            UpdateItem("Table", {"hash": 42}).set("a", "v").build(),
             {
                 "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "PUT", "Value": {"N": "42"}}},
+                "Key": {"hash": {"N": "42"}},
+                "UpdateExpression": "SET a=:v",
             }
         )
 
-    def testDelete(self):
+    def testSeveralSets(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).delete("attr").build(),
+            UpdateItem("Table", {"hash": 42}).set("a", "v").set("b", "w").build(),
             {
                 "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "DELETE"}},
+                "Key": {"hash": {"N": "42"}},
+                "UpdateExpression": "SET a=:v, b=:w",
             }
         )
 
-    def testAddInt(self):
+    def testValue(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).add("attr", 42).build(),
+            UpdateItem("Table", {"hash": 42}).value("v", "value").build(),
             {
                 "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"N": "42"}}},
+                "Key": {"hash": {"N": "42"}},
+                "ExpressionAttributeValues": {":v": {"S": "value"}},
             }
         )
 
-    def testDeleteSetOfInts(self):
+    def testSeveralValues(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).delete("attr", [42, 43]).build(),
+            UpdateItem("Table", {"hash": 42}).value("v", "value").value("w", "walue").build(),
             {
                 "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "DELETE", "Value": {"NS": ["42", "43"]}}},
-            }
-        )
-
-    def testAddSetOfStrings(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).add("attr", ["42", "43"]).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "AttributeUpdates": {"attr": {"Action": "ADD", "Value": {"SS": ["42", "43"]}}},
-            }
-        )
-
-    def testConditionalOperatorAnd(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).conditional_operator_and().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ConditionalOperator": "AND",
-            }
-        )
-
-    def testConditionalOperatorOr(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).conditional_operator_or().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ConditionalOperator": "OR",
-            }
-        )
-
-    def testExpectEqual(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_eq("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotEqual(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_ne("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectLessThanOrEqual(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_le("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "LE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectLessThan(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_lt("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "LT", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectGreaterThanOrEqual(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_ge("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "GE", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectGreaterThan(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_gt("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "GT", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotNull(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_not_null("attr").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NOT_NULL"}},
-            }
-        )
-
-    def testExpectNull(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_null("attr").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NULL"}},
-            }
-        )
-
-    def testExpectContains(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_contains("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "CONTAINS", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectNotContains(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_not_contains("attr", 42).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "NOT_CONTAINS", "AttributeValueList": [{"N": "42"}]}},
-            }
-        )
-
-    def testExpectBeginsWith(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_begins_with("attr", "prefix").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [{"S": "prefix"}]}},
-            }
-        )
-
-    def testExpectIn(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_in("attr", [42, 43]).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "IN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
-            }
-        )
-
-    def testExpectBetween(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).expect_between("attr", 42, 43).build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "Expected": {"attr": {"ComparisonOperator": "BETWEEN", "AttributeValueList": [{"N": "42"}, {"N": "43"}]}},
+                "Key": {"hash": {"N": "42"}},
+                "ExpressionAttributeValues": {":v": {"S": "value"}, ":w": {"S": "walue"}},
             }
         )
 
@@ -992,6 +793,29 @@ class UpdateItemUnitTests(unittest.TestCase):
                 "Key": {"hash": {"S": "h"}},
                 "ReturnItemCollectionMetrics": "NONE",
             }
+        )
+
+
+class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def setUp(self):
+        self.connection.request(
+            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+        )
+
+    def tearDown(self):
+        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+
+    def testSet(self):
+        r = self.connection.request(
+            UpdateItem("Aaa", {"h": "simple"}).set("a", "v").set("b", "w").value("v", "aaa").value("w", "bbb")
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(r.attributes, None)
+
+        self.assertEqual(
+            self.connection.request(GetItem("Aaa", {"h": "simple"})).item,
+            {"h": "simple", "a": "aaa", "b": "bbb"}
         )
 
 

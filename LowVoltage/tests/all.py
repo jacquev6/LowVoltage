@@ -4,6 +4,7 @@
 
 from LowVoltage.connection import ConnectionUnitTests, ConnectionIntegTests
 from LowVoltage.operations.expressions import ConditionExpressionUnitTests
+from LowVoltage.operations.conversion import ConversionUnitTests
 
 from LowVoltage.operations.admin_operations import (
     CreateTableUnitTests, CreateTableIntegTests, CreateTableErrorTests,
@@ -14,9 +15,9 @@ from LowVoltage.operations.admin_operations import (
 )
 from LowVoltage.operations.item_operations import (
     DeleteItemUnitTests,
-    GetItemUnitTests,
-    PutItemUnitTests,
-    UpdateItemUnitTests,
+    GetItemUnitTests, GetItemIntegTests,
+    PutItemUnitTests, PutItemIntegTests,
+    UpdateItemUnitTests, UpdateItemIntegTests,
 )
 from LowVoltage.operations.batch_operations import (
     BatchGetItemUnitTests,

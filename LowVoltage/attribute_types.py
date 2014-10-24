@@ -2,9 +2,9 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
-BINARY = "B"
+# @todo BINARY = "B"
 BOOLEAN = "BOOL"
-BINARY_SET = "BS"
+# @todo BINARY_SET = "BS"
 LIST = "L"
 MAP = "M"
 NUMBER = "N"
