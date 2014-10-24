@@ -183,6 +183,21 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             )
             self.assertEqual(r.unprocessed_keys, {})
 
+    def testBatchGetSpecificAttributes(self):
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "a": "xxx"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "a": "yyy"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "3", "a": "zzz"}))
+
+        r = self.connection.request(BatchGetItem().table("Aaa").keys({"h": "1"}, {"h": "2"}, {"h": "3"}).attributes_to_get("a"))
+
+        with cover("r", r) as r:
+            self.assertEqual(r.responses.keys(), ["Aaa"])
+            self.assertEqual(
+                sorted(r.responses["Aaa"], key=lambda i: i["a"]),
+                [{"a": "xxx"}, {"a": "yyy"}, {"a": "zzz"}]
+            )
+            self.assertEqual(r.unprocessed_keys, {})
+
 
 class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     class Result(object):

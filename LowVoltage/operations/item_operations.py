@@ -337,6 +337,14 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         with cover("r", r) as r:
             self.assertEqual(r.item, {"h": "get", "a": "yyy"})
 
+    def testGetSpecificAttributes(self):
+        self.connection.request(PutItem("Aaa", {"h": "attrs", "a": "yyy", "b": "zzz"}))
+
+        r = self.connection.request(GetItem("Aaa", {"h": "attrs"}).attributes_to_get("a"))
+
+        with cover("r", r) as r:
+            self.assertEqual(r.item, {"a": "yyy"})
+
 
 class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     class Result(object):
