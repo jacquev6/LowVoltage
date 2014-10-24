@@ -575,13 +575,20 @@ class UpdateItemUnitTests(unittest.TestCase):
         )
 
     def testSeveralSets(self):
-        self.assertEqual(
+        self.assertIn(
             UpdateItem("Table", {"hash": 42}).set("a", "v").set("b", "w").build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"N": "42"}},
-                "UpdateExpression": "SET a=:v, b=:w",
-            }
+            [
+                {
+                    "TableName": "Table",
+                    "Key": {"hash": {"N": "42"}},
+                    "UpdateExpression": "SET a=:v, b=:w",
+                },
+                {
+                    "TableName": "Table",
+                    "Key": {"hash": {"N": "42"}},
+                    "UpdateExpression": "SET b=:w, a=:v",
+                }
+            ]
         )
 
     def testValue(self):

@@ -12,6 +12,10 @@ from LowVoltage.tests.cover import cover
 import LowVoltage.exceptions as _exn
 
 
+def _fix_order_for_tests(d):
+    d.attribute_definitions = sorted(d.attribute_definitions, key=lambda d: d.attribute_name)
+
+
 class CreateTable(_Operation):
     class Result(object):
         def __init__(
@@ -427,6 +431,8 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
                 .provisioned_throughput(3, 4)
         )
 
+        _fix_order_for_tests(r.table_description)
+
         with cover("r", r) as r:
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
@@ -463,6 +469,8 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             CreateTable("Aaa").hash_key("h", _atyp.STRING).range_key("r", _atyp.STRING).provisioned_throughput(1, 2)
                 .local_secondary_index("the_lsi").hash_key("h").range_key("rr", _atyp.STRING).project_all()
         )
+
+        _fix_order_for_tests(r.table_description)
 
         with cover("r", r) as r:
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
@@ -504,6 +512,8 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
                 .project("toto", "titi")
                 .provisioned_throughput(3, 4)
         )
+
+        _fix_order_for_tests(r.table_description)
 
         with cover("r", r) as r:
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
@@ -904,6 +914,8 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             UpdateTable("Aaa").provisioned_throughput(2, 4)
         )
 
+        _fix_order_for_tests(r.table_description)
+
         with cover("r", r) as r:
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
@@ -939,6 +951,8 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         r = self.connection.request(
             UpdateTable("Aaa").global_secondary_index("the_gsi").provisioned_throughput(6, 8)
         )
+
+        _fix_order_for_tests(r.table_description)
 
         with cover("r", r) as r:
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")

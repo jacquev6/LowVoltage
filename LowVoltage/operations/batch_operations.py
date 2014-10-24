@@ -178,7 +178,7 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         with cover("r", r) as r:
             self.assertEqual(r.responses.keys(), ["Aaa"])
             self.assertEqual(
-                sorted(r.responses["Aaa"]),
+                sorted(r.responses["Aaa"], key=lambda i: i["h"]),
                 [{"h": "1", "a": "xxx"}, {"h": "2", "a": "yyy"}, {"h": "3", "a": "zzz"}]
             )
             self.assertEqual(r.unprocessed_keys, {})
