@@ -213,6 +213,7 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
         self.__key = key
         ReturnConsumedCapacityMixin.__init__(self)
         self.__consistent_read = None
+        self.__projections = []
 
     def build(self):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_RequestParameters
@@ -230,6 +231,8 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
         self._build_return_consumed_capacity(data)
         if self.__consistent_read is not None:
             data["ConsistentRead"] = self.__consistent_read
+        if self.__projections:
+            data["ProjectionExpression"] = ", ".join(self.__projections)
         return data
 
     def consistent_read_true(self):
@@ -240,6 +243,13 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
 
     def _set_consistent_read(self, value):
         self.__consistent_read = value
+        return self
+
+    def project(self, *names):
+        for name in names:
+            if isinstance(name, basestring):
+                name = [name]
+            self.__projections.extend(name)
         return self
 
 
@@ -303,6 +313,16 @@ class GetItemUnitTests(unittest.TestCase):
             }
         )
 
+    def testProjection(self):
+        self.assertEqual(
+            GetItem("Table", {"hash": "h"}).project("abc", ["def", "ghi"]).build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ProjectionExpression": "abc, def, ghi",
+            }
+        )
+
 
 class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
@@ -320,6 +340,14 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         with cover("r", r) as r:
             self.assertEqual(r.item, {"h": "get", "a": "yyy"})
+
+    def testGetWithProjections(self):
+        self.connection.request(PutItem("Aaa", {"h": "attrs", "a": "yyy", "b": {"c": ["d1", "d2", "d3"]}, "e": 42, "f": "nope"}))
+
+        r = self.connection.request(GetItem("Aaa", {"h": "attrs"}).project("b.c[1]", "e"))
+
+        with cover("r", r) as r:
+            self.assertEqual(r.item, {"b": {"c": ["d2"]}, "e": 42})
 
 
 class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
