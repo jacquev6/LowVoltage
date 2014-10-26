@@ -5,8 +5,14 @@
 import unittest
 
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
-from LowVoltage.operations.return_mixins import ReturnValuesMixin, ReturnOldValuesMixin
-from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from LowVoltage.operations.return_mixins import (
+    ReturnValuesMixin, ReturnOldValuesMixin,
+    ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
+)
+from LowVoltage.operations.expression_mixins import (
+    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin,
+    ConditionExpressionMixin,
+)
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
 import LowVoltage.operations.admin_operations
@@ -405,7 +411,10 @@ class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.attributes, {"h": "return", "a": "yyy"})
 
 
-class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+class UpdateItem(_Operation,
+    ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
+    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
+):
     class Result(object):
         def __init__(
             self,
@@ -423,12 +432,12 @@ class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, Ret
         self.__table_name = table_name
         self.__key = key
         self.__set = {}
-        self.__expression_attribute_values = {}
-        self.__expression_attribute_names = {}
-        self.__condition_expression = None
         ReturnValuesMixin.__init__(self)
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
+        ExpressionAttributeNamesMixin.__init__(self)
+        ExpressionAttributeValuesMixin.__init__(self)
+        ConditionExpressionMixin.__init__(self)
 
     def build(self):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_RequestParameters
@@ -451,34 +460,18 @@ class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, Ret
         data.update(self._build_return_values())
         data.update(self._build_return_consumed_capacity())
         data.update(self._build_return_item_collection_metrics())
+        data.update(self._build_expression_attribute_names())
+        data.update(self._build_expression_attribute_values())
+        data.update(self._build_condition_expression())
         update = []
         if self.__set:
             update.append("SET {}".format(", ".join("{}=:{}".format(n, v) for n, v in self.__set.iteritems())))
         if update:
             data["UpdateExpression"] = " ".join(update)
-        if self.__expression_attribute_values:
-            data["ExpressionAttributeValues"] = {":" + n: _convert_value_to_db(v) for n, v in self.__expression_attribute_values.iteritems()}
-        if self.__expression_attribute_names:
-            data["ExpressionAttributeNames"] = {"#" + n: v for n, v in self.__expression_attribute_names.iteritems()}
-        if self.__condition_expression:
-            data["ConditionExpression"] = self.__condition_expression
         return data
 
     def set(self, attribute_name, value_name):
         self.__set[attribute_name] = value_name
-        return self
-
-    def expression_attribute_value(self, name, value):
-        self.__expression_attribute_values[name] = value
-        return self
-
-    def expression_attribute_name(self, short_name, path):
-        self.__expression_attribute_names[short_name] = path
-        return self
-
-    def condition_expression(self, expression):
-        # @todo Rethink the type system for all expression-related stuff
-        self.__condition_expression = expression
         return self
 
 
@@ -529,19 +522,6 @@ class UpdateItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testSeveralExpressionAttributeValue(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": 42})
-                .expression_attribute_value("v", "value")
-                .expression_attribute_value("w", "walue")
-                .build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"N": "42"}},
-                "ExpressionAttributeValues": {":v": {"S": "value"}, ":w": {"S": "walue"}},
-            }
-        )
-
     def testExpressionAttributeName(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
@@ -549,19 +529,6 @@ class UpdateItemUnitTests(unittest.TestCase):
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
                 "ExpressionAttributeNames": {"#n": "path"},
-            }
-        )
-
-    def testSeveralExpressionAttributeName(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": 42})
-                .expression_attribute_name("n1", "path1")
-                .expression_attribute_name("n2", "path2")
-                .build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"N": "42"}},
-                "ExpressionAttributeNames": {"#n1": "path1", "#n2": "path2"},
             }
         )
 

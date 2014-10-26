@@ -6,18 +6,24 @@ from LowVoltage.connection import ConnectionUnitTests, ConnectionIntegTests
 from LowVoltage.operations.expressions import ConditionExpressionUnitTests
 from LowVoltage.operations.conversion import ConversionUnitTests
 
+from LowVoltage.operations.return_mixins import (
+    ReturnValuesMixinUnitTests,
+    ReturnOldValuesMixinUnitTests,
+    ReturnConsumedCapacityMixinUnitTests,
+    ReturnItemCollectionMetricsMixinUnitTests,
+)
+from LowVoltage.operations.expression_mixins import (
+    ExpressionAttributeNamesMixinUnitTests,
+    ExpressionAttributeValuesMixinUnitTests,
+    ConditionExpressionMixinUnitTests,
+)
+
 from LowVoltage.operations.admin_operations import (
     CreateTableUnitTests, CreateTableIntegTests, CreateTableErrorTests,
     DeleteTableUnitTests, DeleteTableIntegTests,
     DescribeTableUnitTests, DescribeTableIntegTests,
     ListTablesUnitTests, ListTablesIntegTests,
     UpdateTableUnitTests, UpdateTableIntegTests,
-)
-from LowVoltage.operations.return_mixins import (
-    ReturnValuesMixinUnitTests,
-    ReturnOldValuesMixinUnitTests,
-    ReturnConsumedCapacityMixinUnitTests,
-    ReturnItemCollectionMetricsMixinUnitTests,
 )
 from LowVoltage.operations.item_operations import (
     DeleteItemUnitTests, DeleteItemIntegTests,
