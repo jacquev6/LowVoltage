@@ -47,7 +47,7 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
         #   - ProjectionExpression: @todo
         # - ReturnConsumedCapacity: done
         data = {}
-        self._build_return_consumed_capacity(data)
+        data.update(self._build_return_consumed_capacity())
         if self.__request_items:
             data["RequestItems"] = self.__request_items
         return data
@@ -81,22 +81,6 @@ class BatchGetItemUnitTests(unittest.TestCase):
         self.assertEqual(
             BatchGetItem().build(),
             {}
-        )
-
-    def testReturnConsumedCapacityTotal(self):
-        self.assertEqual(
-            BatchGetItem().return_consumed_capacity_total().build(),
-            {
-                "ReturnConsumedCapacity": "TOTAL",
-            }
-        )
-
-    def testReturnConsumedCapacityIndexes(self):
-        self.assertEqual(
-            BatchGetItem().return_consumed_capacity_indexes().build(),
-            {
-                "ReturnConsumedCapacity": "INDEXES",
-            }
         )
 
     def testReturnConsumedCapacityNone(self):
@@ -198,8 +182,8 @@ class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollecti
         # - ReturnConsumedCapacity: done
         # - ReturnItemCollectionMetrics: done
         data = {}
-        self._build_return_consumed_capacity(data)
-        self._build_return_item_collection_metrics(data)
+        data.update(self._build_return_consumed_capacity())
+        data.update(self._build_return_item_collection_metrics())
         if self.__request_items:
             data["RequestItems"] = self.__request_items
         return data
@@ -232,22 +216,6 @@ class BatchWriteItemUnitTests(unittest.TestCase):
             {}
         )
 
-    def testReturnConsumedCapacityTotal(self):
-        self.assertEqual(
-            BatchWriteItem().return_consumed_capacity_total().build(),
-            {
-                "ReturnConsumedCapacity": "TOTAL",
-            }
-        )
-
-    def testReturnConsumedCapacityIndexes(self):
-        self.assertEqual(
-            BatchWriteItem().return_consumed_capacity_indexes().build(),
-            {
-                "ReturnConsumedCapacity": "INDEXES",
-            }
-        )
-
     def testReturnConsumedCapacityNone(self):
         self.assertEqual(
             BatchWriteItem().return_consumed_capacity_none().build(),
@@ -256,15 +224,7 @@ class BatchWriteItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnSizeItemCollectionMetrics(self):
-        self.assertEqual(
-            BatchWriteItem().return_item_collection_metrics_size().build(),
-            {
-                "ReturnItemCollectionMetrics": "SIZE",
-            }
-        )
-
-    def testReturnNoItemCollectionMetrics(self):
+    def testReturnItemCollectionMetricsNone(self):
         self.assertEqual(
             BatchWriteItem().return_item_collection_metrics_none().build(),
             {

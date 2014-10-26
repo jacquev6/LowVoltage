@@ -5,6 +5,7 @@
 import unittest
 
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
+from LowVoltage.operations.return_mixins import ReturnValuesMixin, ReturnOldValuesMixin
 from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
@@ -13,36 +14,6 @@ import LowVoltage.return_types as _rtyp
 import LowVoltage.attribute_types as _atyp
 import LowVoltage.exceptions as _exn
 from LowVoltage.tests.cover import cover
-
-
-class ReturnOldValuesMixin(object):
-    def __init__(self):
-        self.__return_values = None
-
-    def _build_return_values(self, data):
-        if self.__return_values:
-            data["ReturnValues"] = self.__return_values
-
-    def return_values_all_old(self):
-        return self._set_return_values("ALL_OLD")
-
-    def return_values_none(self):
-        return self._set_return_values("NONE")
-
-    def _set_return_values(self, value):
-        self.__return_values = value
-        return self
-
-
-class ReturnValuesMixin(ReturnOldValuesMixin):
-    def return_values_all_new(self):
-        return self._set_return_values("ALL_NEW")
-
-    def return_values_updated_new(self):
-        return self._set_return_values("UPDATED_NEW")
-
-    def return_values_updated_old(self):
-        return self._set_return_values("UPDATED_OLD")
 
 
 class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
@@ -82,9 +53,9 @@ class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, 
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        self._build_return_values(data)
-        self._build_return_consumed_capacity(data)
-        self._build_return_item_collection_metrics(data)
+        data.update(self._build_return_values())
+        data.update(self._build_return_consumed_capacity())
+        data.update(self._build_return_item_collection_metrics())
         return data
 
 
@@ -98,17 +69,7 @@ class DeleteItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnAllOldValues(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).return_values_all_old().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "ALL_OLD",
-            }
-        )
-
-    def testReturnNoValues(self):
+    def testReturnValuesNone(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": "h"}).return_values_none().build(),
             {
@@ -118,27 +79,7 @@ class DeleteItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnIndexesConsumedCapacity(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).return_consumed_capacity_indexes().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnConsumedCapacity": "INDEXES",
-            }
-        )
-
-    def testReturnTotalConsumedCapacity(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).return_consumed_capacity_total().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnConsumedCapacity": "TOTAL",
-            }
-        )
-
-    def testReturnNoConsumedCapacity(self):
+    def testReturnConsumedCapacityNone(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
             {
@@ -148,17 +89,7 @@ class DeleteItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnSizeItemCollectionMetrics(self):
-        self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).return_item_collection_metrics_size().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnItemCollectionMetrics": "SIZE",
-            }
-        )
-
-    def testReturnNoItemCollectionMetrics(self):
+    def testReturnItemCollectionMetricsNone(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
             {
@@ -228,7 +159,7 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        self._build_return_consumed_capacity(data)
+        data.update(self._build_return_consumed_capacity())
         if self.__consistent_read is not None:
             data["ConsistentRead"] = self.__consistent_read
         if self.__projections:
@@ -263,27 +194,7 @@ class GetItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnIndexesConsumedCapacity(self):
-        self.assertEqual(
-            GetItem("Table", {"hash": "h"}).return_consumed_capacity_indexes().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnConsumedCapacity": "INDEXES",
-            }
-        )
-
-    def testReturnTotalConsumedCapacity(self):
-        self.assertEqual(
-            GetItem("Table", {"hash": "h"}).return_consumed_capacity_total().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnConsumedCapacity": "TOTAL",
-            }
-        )
-
-    def testReturnNoConsumedCapacity(self):
+    def testReturnConsumedCapacityNone(self):
         self.assertEqual(
             GetItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
             {
@@ -387,9 +298,9 @@ class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, Ret
             "TableName": self.__table_name,
             "Item": _convert_dict_to_db(self.__item),
         }
-        self._build_return_values(data)
-        self._build_return_consumed_capacity(data)
-        self._build_return_item_collection_metrics(data)
+        data.update(self._build_return_values())
+        data.update(self._build_return_consumed_capacity())
+        data.update(self._build_return_item_collection_metrics())
         return data
 
 
@@ -403,17 +314,7 @@ class PutItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnAllOldValues(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).return_values_all_old().build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "ReturnValues": "ALL_OLD",
-            }
-        )
-
-    def testReturnNoValues(self):
+    def testReturnValuesNone(self):
         self.assertEqual(
             PutItem("Table", {"hash": "h"}).return_values_none().build(),
             {
@@ -423,27 +324,7 @@ class PutItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnIndexesConsumedCapacity(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).return_consumed_capacity_indexes().build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "ReturnConsumedCapacity": "INDEXES",
-            }
-        )
-
-    def testReturnTotalConsumedCapacity(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).return_consumed_capacity_total().build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "ReturnConsumedCapacity": "TOTAL",
-            }
-        )
-
-    def testReturnNoConsumedCapacity(self):
+    def testReturnConsumedCapacityNone(self):
         self.assertEqual(
             PutItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
             {
@@ -453,17 +334,7 @@ class PutItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnSizeItemCollectionMetrics(self):
-        self.assertEqual(
-            PutItem("Table", {"hash": "h"}).return_item_collection_metrics_size().build(),
-            {
-                "TableName": "Table",
-                "Item": {"hash": {"S": "h"}},
-                "ReturnItemCollectionMetrics": "SIZE",
-            }
-        )
-
-    def testReturnNoItemCollectionMetrics(self):
+    def testReturnItemCollectionMetricsNone(self):
         self.assertEqual(
             PutItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
             {
@@ -575,9 +446,9 @@ class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, Ret
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        self._build_return_values(data)
-        self._build_return_consumed_capacity(data)
-        self._build_return_item_collection_metrics(data)
+        data.update(self._build_return_values())
+        data.update(self._build_return_consumed_capacity())
+        data.update(self._build_return_item_collection_metrics())
         update = []
         if self.__set:
             update.append("SET {}".format(", ".join("{}=:{}".format(n, v) for n, v in self.__set.iteritems())))
@@ -653,47 +524,7 @@ class UpdateItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnAllNewValues(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_values_all_new().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "ALL_NEW",
-            }
-        )
-
-    def testReturnUpdatedNewValues(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_values_updated_new().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "UPDATED_NEW",
-            }
-        )
-
-    def testReturnAllOldValues(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_values_all_old().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "ALL_OLD",
-            }
-        )
-
-    def testReturnUpdatedOldValues(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_values_updated_old().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnValues": "UPDATED_OLD",
-            }
-        )
-
-    def testReturnNoValues(self):
+    def testReturnValuesNone(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": "h"}).return_values_none().build(),
             {
@@ -703,27 +534,7 @@ class UpdateItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnIndexesConsumedCapacity(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_consumed_capacity_indexes().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnConsumedCapacity": "INDEXES",
-            }
-        )
-
-    def testReturnTotalConsumedCapacity(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_consumed_capacity_total().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnConsumedCapacity": "TOTAL",
-            }
-        )
-
-    def testReturnNoConsumedCapacity(self):
+    def testReturnConsumedCapacityNone(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
             {
@@ -733,17 +544,7 @@ class UpdateItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testReturnSizeItemCollectionMetrics(self):
-        self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_item_collection_metrics_size().build(),
-            {
-                "TableName": "Table",
-                "Key": {"hash": {"S": "h"}},
-                "ReturnItemCollectionMetrics": "SIZE",
-            }
-        )
-
-    def testReturnNoItemCollectionMetrics(self):
+    def testReturnItemCollectionMetricsNone(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
             {

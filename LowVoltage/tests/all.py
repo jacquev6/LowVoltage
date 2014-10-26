@@ -13,6 +13,12 @@ from LowVoltage.operations.admin_operations import (
     ListTablesUnitTests, ListTablesIntegTests,
     UpdateTableUnitTests, UpdateTableIntegTests,
 )
+from LowVoltage.operations.return_mixins import (
+    ReturnValuesMixinUnitTests,
+    ReturnOldValuesMixinUnitTests,
+    ReturnConsumedCapacityMixinUnitTests,
+    ReturnItemCollectionMetricsMixinUnitTests,
+)
 from LowVoltage.operations.item_operations import (
     DeleteItemUnitTests, DeleteItemIntegTests,
     GetItemUnitTests, GetItemIntegTests,
