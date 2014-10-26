@@ -17,8 +17,6 @@ from LowVoltage.tests.cover import cover
 
 
 class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
-    # @todo ProjectionExpression
-
     class Result(object):
         def __init__(
             self,
@@ -26,9 +24,12 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
             UnprocessedKeys=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_ResponseElements
+            # - ConsumedCapacity: @todo
+            # - Responses: done
+            # - UnprocessedKeys: @todo
             self.responses = {t: [_convert_db_to_dict(v) for v in vs] for t, vs in Responses.iteritems()}
-            self.unprocessed_keys = UnprocessedKeys # @todo Read doc and implement
-            # @todo ConsumedCapacity
+            self.unprocessed_keys = UnprocessedKeys
 
     def __init__(self):
         super(BatchGetItem, self).__init__("BatchGetItem")
@@ -37,8 +38,15 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
         self.__last_table = None
 
     def build(self):
-        data = {
-        }
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters
+        # - RequestItems:
+        #   - Keys: done
+        #   - AttributesToGet: deprecated
+        #   - ConsistentRead: done
+        #   - ExpressionAttributeNames: @todo
+        #   - ProjectionExpression: @todo
+        # - ReturnConsumedCapacity: done
+        data = {}
         self._build_return_consumed_capacity(data)
         if self.__request_items:
             data["RequestItems"] = self.__request_items
@@ -161,6 +169,7 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             )
             self.assertEqual(r.unprocessed_keys, {})
 
+
 class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     class Result(object):
         def __init__(
@@ -168,8 +177,11 @@ class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollecti
             UnprocessedItems=None,
             **dummy
         ):
-            self.unprocessed_items = UnprocessedItems  # @todo Read the doc and implement
-            # @todo ConsumedCapacity and ItemCollectionMetrics
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_ResponseElements
+            # - ConsumedCapacity: @todo
+            # - ItemCollectionMetrics: @todo
+            # - UnprocessedItems: @todo
+            self.unprocessed_items = UnprocessedItems
 
     def __init__(self):
         super(BatchWriteItem, self).__init__("BatchWriteItem")
@@ -179,8 +191,13 @@ class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollecti
         self.__last_table = None
 
     def build(self):
-        data = {
-        }
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_RequestParameters
+        # - RequestItems
+        #   - DeleteRequest.Key: done
+        #   - PutRequest.Item: done
+        # - ReturnConsumedCapacity: done
+        # - ReturnItemCollectionMetrics: done
+        data = {}
         self._build_return_consumed_capacity(data)
         self._build_return_item_collection_metrics(data)
         if self.__request_items:
@@ -320,6 +337,55 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.connection.request(LowVoltage.operations.item_operations.GetItem("Aaa", {"h": "1"})).item,
             None
         )
+
+
+# http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_RequestParameters
+# - KeyConditions: @todo
+# - TableName: @todo
+# - AttributesToGet: deprecated
+# - ConditionalOperator: deprecated
+# - ConsistentRead: @todo
+# - ExclusiveStartKey: @todo
+# - ExpressionAttributeNames: @todo
+# - ExpressionAttributeValues: @todo
+# - FilterExpression: @todo
+# - IndexName: @todo
+# - Limit: @todo
+# - ProjectionExpression: @todo
+# - QueryFilter: deprecated
+# - ReturnConsumedCapacity: @todo
+# - ScanIndexForward: @todo
+# - Select: @todo
+
+# http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_ResponseElements
+# - ConsumedCapacity: @todo
+# - Count: @todo
+# - Items: @todo
+# - LastEvaluatedKey: @todo
+# - ScannedCount: @todo
+
+# http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_RequestParameters
+# - TableName: @todo
+# - AttributesToGet: deprecated
+# - ConditionalOperator: deprecated
+# - ExclusiveStartKey: @todo
+# - ExpressionAttributeNames: @todo
+# - ExpressionAttributeValues: @todo
+# - FilterExpression: @todo
+# - Limit: @todo
+# - ProjectionExpression: @todo
+# - ReturnConsumedCapacity: @todo
+# - ScanFilter: deprecated
+# - Segment: @todo
+# - Select: @todo
+# - TotalSegments: @todo
+
+# http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements
+# - ConsumedCapacity: @todo
+# - Count: @todo
+# - Items: @todo
+# - LastEvaluatedKey: @todo
+# - ScannedCount: @todo
 
 
 if __name__ == "__main__":

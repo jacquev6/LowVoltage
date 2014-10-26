@@ -23,6 +23,8 @@ class CreateTable(_Operation):
             TableDescription=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_ResponseElements
+            # - TableDescription: done
             self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
 
     def __init__(self, table_name):
@@ -35,6 +37,40 @@ class CreateTable(_Operation):
         self.__write_capacity_units = None
         self.__gsis = {}
         self.__lsis = {}
+
+    def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_RequestParameters
+        # - AttributeDefinitions: done
+        # - KeySchema: done
+        # - ProvisionedThroughput: done
+        # - TableName: done
+        # - GlobalSecondaryIndexes: done
+        # - LocalSecondaryIndexes: done
+        data = {"TableName": self.__table_name}
+        schema = []
+        if self.__hash_key:
+            schema.append({"AttributeName": self.__hash_key, "KeyType": "HASH"})
+        if self.__range_key:
+            schema.append({"AttributeName": self.__range_key, "KeyType": "RANGE"})
+        if schema:
+            data["KeySchema"] = schema
+        if self.__attribute_definitions:
+            data["AttributeDefinitions"] = [
+                {"AttributeName": name, "AttributeType": typ}
+                for name, typ in self.__attribute_definitions.iteritems()
+            ]
+        throughput = {}
+        if self.__read_capacity_units:
+            throughput["ReadCapacityUnits"] = self.__read_capacity_units
+        if self.__write_capacity_units:
+            throughput["WriteCapacityUnits"] = self.__write_capacity_units
+        if throughput:
+            data["ProvisionedThroughput"] = throughput
+        if self.__gsis:
+            data["GlobalSecondaryIndexes"] = [i._build() for i in self.__gsis.itervalues()]
+        if self.__lsis:
+            data["LocalSecondaryIndexes"] = [i._build() for i in self.__lsis.itervalues()]
+        return data
 
     class _Index(_OperationProxy):
         def __init__(self, table, name):
@@ -143,33 +179,6 @@ class CreateTable(_Operation):
         if name not in self.__lsis:
             self.__lsis[name] = self._IndexWithThroughput(self, name)
         return self.__lsis[name]
-
-    def build(self):
-        data = {"TableName": self.__table_name}
-        schema = []
-        if self.__hash_key:
-            schema.append({"AttributeName": self.__hash_key, "KeyType": "HASH"})
-        if self.__range_key:
-            schema.append({"AttributeName": self.__range_key, "KeyType": "RANGE"})
-        if schema:
-            data["KeySchema"] = schema
-        if self.__attribute_definitions:
-            data["AttributeDefinitions"] = [
-                {"AttributeName": name, "AttributeType": typ}
-                for name, typ in self.__attribute_definitions.iteritems()
-            ]
-        throughput = {}
-        if self.__read_capacity_units:
-            throughput["ReadCapacityUnits"] = self.__read_capacity_units
-        if self.__write_capacity_units:
-            throughput["WriteCapacityUnits"] = self.__write_capacity_units
-        if throughput:
-            data["ProvisionedThroughput"] = throughput
-        if self.__gsis:
-            data["GlobalSecondaryIndexes"] = [i._build() for i in self.__gsis.itervalues()]
-        if self.__lsis:
-            data["LocalSecondaryIndexes"] = [i._build() for i in self.__lsis.itervalues()]
-        return data
 
 
 class CreateTableUnitTests(unittest.TestCase):
@@ -598,6 +607,8 @@ class DeleteTable(_Operation):
             TableDescription=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_ResponseElements
+            # - TableDescription: done
             self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
 
     def __init__(self, table_name):
@@ -605,6 +616,8 @@ class DeleteTable(_Operation):
         self.__table_name = table_name
 
     def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_RequestParameters
+        # - TableName: done
         return {"TableName": self.__table_name}
 
 
@@ -650,6 +663,8 @@ class DescribeTable(_Operation):
             Table=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_ResponseElements
+            # - Table: done
             self.table = None if Table is None else _rtyp.TableDescription(**Table)
 
     def __init__(self, table_name):
@@ -657,6 +672,8 @@ class DescribeTable(_Operation):
         self.__table_name = table_name
 
     def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_RequestParameters
+        # - TableName: done
         return {"TableName": self.__table_name}
 
 
@@ -706,6 +723,9 @@ class ListTables(_Operation):
             TableNames=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_ResponseElements
+            # - LastEvaluatedTableName: done
+            # - TableNames: done
             self.last_evaluated_table_name = LastEvaluatedTableName
             self.table_names = TableNames
 
@@ -714,6 +734,17 @@ class ListTables(_Operation):
         self.__limit = None
         self.__exclusive_start_table_name = None
 
+    def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_RequestParameters
+        # - ExclusiveStartTableName: done
+        # - Limit: done
+        data = {}
+        if self.__limit:
+            data["Limit"] = str(self.__limit)
+        if self.__exclusive_start_table_name:
+            data["ExclusiveStartTableName"] = self.__exclusive_start_table_name
+        return data
+
     def limit(self, limit):
         self.__limit = limit
         return self
@@ -721,14 +752,6 @@ class ListTables(_Operation):
     def exclusive_start_table_name(self, table_name):
         self.__exclusive_start_table_name = table_name
         return self
-
-    def build(self):
-        data = {}
-        if self.__limit:
-            data["Limit"] = str(self.__limit)
-        if self.__exclusive_start_table_name:
-            data["ExclusiveStartTableName"] = self.__exclusive_start_table_name
-        return data
 
 
 class ListTablesUnitTests(unittest.TestCase):
@@ -786,6 +809,8 @@ class UpdateTable(_Operation):
             TableDescription=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_ResponseElements
+            # - TableDescription: done
             self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
 
     def __init__(self, table_name):
@@ -794,6 +819,23 @@ class UpdateTable(_Operation):
         self.__read_capacity_units = None
         self.__write_capacity_units = None
         self.__gsis = {}
+
+    def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_RequestParameters
+        # - TableName: done
+        # - GlobalSecondaryIndexUpdates: done
+        # - ProvisionedThroughput: done
+        data = {"TableName": self.__table_name}
+        throughput = {}
+        if self.__read_capacity_units:
+            throughput["ReadCapacityUnits"] = self.__read_capacity_units
+        if self.__write_capacity_units:
+            throughput["WriteCapacityUnits"] = self.__write_capacity_units
+        if throughput:
+            data["ProvisionedThroughput"] = throughput
+        if self.__gsis:
+            data["GlobalSecondaryIndexUpdates"] = [{"Update": i._build()} for i in self.__gsis.itervalues()]
+        return data
 
     class _IndexWithThroughput(_OperationProxy):
         def __init__(self, table, name):
@@ -830,19 +872,6 @@ class UpdateTable(_Operation):
         if name not in self.__gsis:
             self.__gsis[name] = self._IndexWithThroughput(self, name)
         return self.__gsis[name]
-
-    def build(self):
-        data = {"TableName": self.__table_name}
-        throughput = {}
-        if self.__read_capacity_units:
-            throughput["ReadCapacityUnits"] = self.__read_capacity_units
-        if self.__write_capacity_units:
-            throughput["WriteCapacityUnits"] = self.__write_capacity_units
-        if throughput:
-            data["ProvisionedThroughput"] = throughput
-        if self.__gsis:
-            data["GlobalSecondaryIndexUpdates"] = [{"Update": i._build()} for i in self.__gsis.itervalues()]
-        return data
 
 
 class UpdateTableUnitTests(unittest.TestCase):

@@ -52,8 +52,11 @@ class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, 
             Attributes=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_ResponseElements
+            # - Attributes: done
+            # - ConsumedCapacity: @todo
+            # - ItemCollectionMetrics: @todo
             self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
-            # @todo ConsumedCapacity and ItemCollectionMetrics
 
     def __init__(self, table_name, key):
         super(DeleteItem, self).__init__("DeleteItem")
@@ -64,6 +67,17 @@ class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, 
         ReturnItemCollectionMetricsMixin.__init__(self)
 
     def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_RequestParameters
+        # - Key: done
+        # - TableName: done
+        # - ConditionExpression: @todo
+        # - ConditionalOperator: deprecated
+        # - Expected: deprecated
+        # - ExpressionAttributeNames: @todo
+        # - ExpressionAttributeValues: @todo
+        # - ReturnConsumedCapacity: done
+        # - ReturnItemCollectionMetrics: done
+        # - ReturnValues: done
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
@@ -182,16 +196,16 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
 
 class GetItem(_Operation, ReturnConsumedCapacityMixin):
-    # @todo ProjectionExpression
-
     class Result(object):
         def __init__(
             self,
             Item=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_ResponseElements
+            # - ConsumedCapacity: @todo
+            # - Item: done
             self.item = None if Item is None else _convert_db_to_dict(Item)
-            # @todo ConsumedCapacity
 
     def __init__(self, table_name, key):
         super(GetItem, self).__init__("GetItem")
@@ -201,6 +215,14 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
         self.__consistent_read = None
 
     def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_RequestParameters
+        # - Key: done
+        # - TableName: done
+        # - AttributesToGet: deprecated
+        # - ConsistentRead: done
+        # - ExpressionAttributeNames: @todo
+        # - ProjectionExpression: @todo
+        # - ReturnConsumedCapacity: done
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
@@ -307,8 +329,11 @@ class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, Ret
             Attributes=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_ResponseElements
+            # - Attributes: done
+            # - ConsumedCapacity: @todo
+            # - ItemCollectionMetrics: @todo
             self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
-            # @todo ConsumedCapacity and ItemCollectionMetrics
 
     def __init__(self, table_name, item):
         super(PutItem, self).__init__("PutItem")
@@ -319,6 +344,17 @@ class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, Ret
         ReturnItemCollectionMetricsMixin.__init__(self)
 
     def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_RequestParameters
+        # - Item: done
+        # - TableName: done
+        # - ConditionExpression: @todo
+        # - ConditionalOperator: deprecated
+        # - Expected: deprecated
+        # - ExpressionAttributeNames: @todo
+        # - ExpressionAttributeValues: @todo
+        # - ReturnConsumedCapacity: done
+        # - ReturnItemCollectionMetrics: done
+        # - ReturnValues: done
         data = {
             "TableName": self.__table_name,
             "Item": _convert_dict_to_db(self.__item),
@@ -477,8 +513,11 @@ class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, Ret
             Attributes=None,
             **dummy
         ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_ResponseElements
+            # - Attributes: done
+            # - ConsumedCapacity: @todo
+            # - ItemCollectionMetrics: @todo
             self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
-            # @todo ConsumedCapacity and ItemCollectionMetrics
 
     def __init__(self, table_name, key):
         super(UpdateItem, self).__init__("UpdateItem")
@@ -491,6 +530,19 @@ class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, Ret
         ReturnItemCollectionMetricsMixin.__init__(self)
 
     def build(self):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_RequestParameters
+        # - Key: done
+        # - TableName: done
+        # - AttributeUpdates: deprecated
+        # - ConditionExpression: @todo
+        # - ConditionalOperator: deprecated
+        # - Expected: deprecated
+        # - ExpressionAttributeNames: @todo
+        # - ExpressionAttributeValues: @todo
+        # - ReturnConsumedCapacity: done
+        # - ReturnItemCollectionMetrics: done
+        # - ReturnValues: done
+        # - UpdateExpression: @todo (in progress)
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),

@@ -18,6 +18,7 @@ class TableDescription:
         TableStatus=None,
         **dummy
     ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html
         self.attribute_definitions = None if AttributeDefinitions is None else [AttributeDefinition(**d) for d in AttributeDefinitions]
         # self.creation_date_time = CreationDateTime  # @todo datetime
         self.global_secondary_indexes = None if GlobalSecondaryIndexes is None else [GlobalSecondaryIndexDescription(**d) for d in GlobalSecondaryIndexes]
@@ -37,6 +38,7 @@ class AttributeDefinition:
         AttributeType=None,
         **dummy
     ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeDefinition.html
         self.attribute_name = AttributeName
         self.attribute_type = AttributeType
 
@@ -53,6 +55,7 @@ class GlobalSecondaryIndexDescription:
         ProvisionedThroughput=None,
         **dummy
     ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GlobalSecondaryIndexDescription.html
         self.index_name = IndexName
         self.index_size_bytes = IndexSizeBytes
         self.index_status = IndexStatus
@@ -69,6 +72,7 @@ class Projection:
         ProjectionType=None,
         **dummy
     ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Projection.html
         self.non_key_attributes = NonKeyAttributes
         self.projection_type = ProjectionType
 
@@ -83,6 +87,7 @@ class ProvisionedThroughputDescription:
         WriteCapacityUnits=None,
         **dummy
     ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughputDescription.html
         self.last_decrease_date_time = LastDecreaseDateTime  # @todo datetime
         self.last_increase_date_time = LastIncreaseDateTime  # @todo datetime
         self.number_of_decreases_today = NumberOfDecreasesToday
@@ -97,6 +102,7 @@ class KeySchemaElement:
         KeyType=None,
         **dummy
     ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_KeySchemaElement.html
         self.attribute_name = AttributeName
         self.key_type = KeyType
 
@@ -112,6 +118,7 @@ class LocalSecondaryIndexDescription:
         Projection=None,
         **dummy
     ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_LocalSecondaryIndexDescription.html
         self.index_name = IndexName
         self.index_size_bytes = IndexSizeBytes
         self.index_status = IndexStatus
