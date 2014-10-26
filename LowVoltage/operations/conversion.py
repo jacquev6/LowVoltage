@@ -23,14 +23,12 @@ def _convert_value_to_db(value):
     elif value is None:
         return {"NULL": True}
     elif isinstance(value, set):
-        for first in value:
-            break  # http://stackoverflow.com/a/59841/905845
-        else:
+        if len(value) == 0:
             raise TypeError
-        if isinstance(first, basestring):
-            return {"SS": list(value)}
-        elif isinstance(first, numbers.Integral):
+        elif all(isinstance(v, numbers.Integral) for v in value):
             return {"NS": [str(n) for n in value]}
+        elif all(isinstance(v, basestring) for v in value):
+            return {"SS": list(value)}
         else:
             raise TypeError
     elif isinstance(value, list):
@@ -84,6 +82,8 @@ class ConversionUnitTests(unittest.TestCase):
             _convert_value_to_db(set())
         with self.assertRaises(TypeError):
             _convert_value_to_db(set([(1, 2)]))
+        with self.assertRaises(TypeError):
+            _convert_value_to_db(set([1, "2"]))
         with self.assertRaises(TypeError):
             _convert_value_to_db((1, 2))
 
