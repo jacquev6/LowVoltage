@@ -423,7 +423,9 @@ class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, Ret
         self.__table_name = table_name
         self.__key = key
         self.__set = {}
-        self.__values = {}
+        self.__expression_attribute_values = {}
+        self.__expression_attribute_names = {}
+        self.__condition_expression = None
         ReturnValuesMixin.__init__(self)
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
@@ -433,11 +435,11 @@ class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, Ret
         # - Key: done
         # - TableName: done
         # - AttributeUpdates: deprecated
-        # - ConditionExpression: @todo
+        # - ConditionExpression: done
         # - ConditionalOperator: deprecated
         # - Expected: deprecated
-        # - ExpressionAttributeNames: @todo
-        # - ExpressionAttributeValues: @todo
+        # - ExpressionAttributeNames: done
+        # - ExpressionAttributeValues: done
         # - ReturnConsumedCapacity: done
         # - ReturnItemCollectionMetrics: done
         # - ReturnValues: done
@@ -454,16 +456,29 @@ class UpdateItem(_Operation, ReturnValuesMixin, ReturnConsumedCapacityMixin, Ret
             update.append("SET {}".format(", ".join("{}=:{}".format(n, v) for n, v in self.__set.iteritems())))
         if update:
             data["UpdateExpression"] = " ".join(update)
-        if self.__values:
-            data["ExpressionAttributeValues"] = {":" + n: _convert_value_to_db(v) for n, v in self.__values.iteritems()}
+        if self.__expression_attribute_values:
+            data["ExpressionAttributeValues"] = {":" + n: _convert_value_to_db(v) for n, v in self.__expression_attribute_values.iteritems()}
+        if self.__expression_attribute_names:
+            data["ExpressionAttributeNames"] = {"#" + n: v for n, v in self.__expression_attribute_names.iteritems()}
+        if self.__condition_expression:
+            data["ConditionExpression"] = self.__condition_expression
         return data
 
     def set(self, attribute_name, value_name):
         self.__set[attribute_name] = value_name
         return self
 
-    def value(self, name, value):
-        self.__values[name] = value
+    def expression_attribute_value(self, name, value):
+        self.__expression_attribute_values[name] = value
+        return self
+
+    def expression_attribute_name(self, short_name, path):
+        self.__expression_attribute_names[short_name] = path
+        return self
+
+    def condition_expression(self, expression):
+        # @todo Rethink the type system for all expression-related stuff
+        self.__condition_expression = expression
         return self
 
 
@@ -504,9 +519,9 @@ class UpdateItemUnitTests(unittest.TestCase):
             ]
         )
 
-    def testValue(self):
+    def testExpressionAttributeValue(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).value("v", "value").build(),
+            UpdateItem("Table", {"hash": 42}).expression_attribute_value("v", "value").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -514,13 +529,49 @@ class UpdateItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testSeveralValues(self):
+    def testSeveralExpressionAttributeValue(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).value("v", "value").value("w", "walue").build(),
+            UpdateItem("Table", {"hash": 42})
+                .expression_attribute_value("v", "value")
+                .expression_attribute_value("w", "walue")
+                .build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
                 "ExpressionAttributeValues": {":v": {"S": "value"}, ":w": {"S": "walue"}},
+            }
+        )
+
+    def testExpressionAttributeName(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "ExpressionAttributeNames": {"#n": "path"},
+            }
+        )
+
+    def testSeveralExpressionAttributeName(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": 42})
+                .expression_attribute_name("n1", "path1")
+                .expression_attribute_name("n2", "path2")
+                .build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "ExpressionAttributeNames": {"#n1": "path1", "#n2": "path2"},
+            }
+        )
+
+    def testConditionExpression(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": 42}).condition_expression("a=b").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "ConditionExpression": "a=b",
             }
         )
 
@@ -566,16 +617,38 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
     def testSet(self):
         r = self.connection.request(
-            UpdateItem("Aaa", {"h": "simple"}).set("a", "v").set("b", "w").value("v", "aaa").value("w", "bbb")
+            UpdateItem("Aaa", {"h": "set"})
+                .set("a", "v")
+                .set("#p", "w")
+                .expression_attribute_value("v", "aaa")
+                .expression_attribute_value("w", "bbb")
+                .expression_attribute_name("p", "b")
         )
 
         with cover("r", r) as r:
             self.assertEqual(r.attributes, None)
 
         self.assertEqual(
-            self.connection.request(GetItem("Aaa", {"h": "simple"})).item,
-            {"h": "simple", "a": "aaa", "b": "bbb"}
+            self.connection.request(GetItem("Aaa", {"h": "set"})).item,
+            {"h": "set", "a": "aaa", "b": "bbb"}
         )
+
+    def testConditionExpression(self):
+        self.connection.request(PutItem("Aaa", {"h": "expr", "a": 42, "b": 42}))
+
+        r = self.connection.request(
+            UpdateItem("Aaa", {"h": "expr"})
+                .set("checked", "true")
+                .expression_attribute_value("true", True)
+                .condition_expression("a=b")
+                .return_values_all_new()
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(
+                r.attributes,
+                {"h": "expr", "a": 42, "b": 42, "checked": True}
+            )
 
 
 if __name__ == "__main__":
