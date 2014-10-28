@@ -118,5 +118,39 @@ class ConditionExpressionMixinUnitTests(unittest.TestCase):
         )
 
 
+class ProjectionExpressionMixin(object):
+    def __init__(self):
+        self.__projections = []
+
+    def _build_projection_expression(self):
+        data = {}
+        if self.__projections:
+            data["ProjectionExpression"] = ", ".join(self.__projections)
+        return data
+
+    def project(self, *names):
+        for name in names:
+            if isinstance(name, basestring):
+                name = [name]
+            self.__projections.extend(name)
+        return self
+
+
+class ProjectionExpressionMixinUnitTests(unittest.TestCase):
+    def testDefault(self):
+        self.assertEqual(
+            ProjectionExpressionMixin()._build_projection_expression(),
+            {}
+        )
+
+    def testExpression(self):
+        self.assertEqual(
+            ProjectionExpressionMixin().project("a", ["b", "c"])._build_projection_expression(),
+            {
+                "ProjectionExpression": "a, b, c",
+            }
+        )
+
+
 if __name__ == "__main__":
     unittest.main()  # pragma no cover (Test code)

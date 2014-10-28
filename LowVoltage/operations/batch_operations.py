@@ -6,7 +6,7 @@ import unittest
 
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
 from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
-from LowVoltage.operations.expression_mixins import ExpressionAttributeNamesMixin
+from LowVoltage.operations.expression_mixins import ExpressionAttributeNamesMixin, ProjectionExpressionMixin
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
 import LowVoltage.operations.admin_operations
@@ -52,23 +52,22 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
             data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
         return data
 
-    class _Table(_OperationProxy, ExpressionAttributeNamesMixin):
+    class _Table(_OperationProxy, ExpressionAttributeNamesMixin, ProjectionExpressionMixin):
         def __init__(self, operation, name):
             super(BatchGetItem._Table, self).__init__(operation)
             ExpressionAttributeNamesMixin.__init__(self)
+            ProjectionExpressionMixin.__init__(self)
             self.__consistent_read = None
             self.__keys = []
-            self.__projections = []
 
         def _build(self):
             data = {}
             data.update(self._build_expression_attribute_names())
+            data.update(self._build_projection_expression())
             if self.__consistent_read is not None:
                 data["ConsistentRead"] = self.__consistent_read
             if self.__keys:
                 data["Keys"] = [_convert_dict_to_db(k) for k in self.__keys]
-            if self.__projections:
-                data["ProjectionExpression"] = ", ".join(self.__projections)
             return data
 
         def keys(self, *keys):
@@ -84,13 +83,6 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
 
         def consistent_read_false(self):
             self.__consistent_read = False
-            return self
-
-        def project(self, *names):
-            for name in names:
-                if isinstance(name, basestring):
-                    name = [name]
-                self.__projections.extend(name)
             return self
 
     def table(self, name):

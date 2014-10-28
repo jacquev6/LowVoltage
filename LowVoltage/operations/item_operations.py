@@ -11,7 +11,7 @@ from LowVoltage.operations.return_mixins import (
 )
 from LowVoltage.operations.expression_mixins import (
     ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin,
-    ConditionExpressionMixin,
+    ConditionExpressionMixin, ProjectionExpressionMixin,
 )
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
@@ -172,7 +172,7 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
 
 class GetItem(_Operation,
-    ReturnConsumedCapacityMixin, ExpressionAttributeNamesMixin,
+    ReturnConsumedCapacityMixin, ExpressionAttributeNamesMixin, ProjectionExpressionMixin,
 ):
     class Result(object):
         def __init__(
@@ -191,8 +191,8 @@ class GetItem(_Operation,
         self.__key = key
         ReturnConsumedCapacityMixin.__init__(self)
         ExpressionAttributeNamesMixin.__init__(self)
+        ProjectionExpressionMixin.__init__(self)
         self.__consistent_read = None
-        self.__projections = []
 
     def build(self):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_RequestParameters
@@ -209,10 +209,9 @@ class GetItem(_Operation,
         }
         data.update(self._build_return_consumed_capacity())
         data.update(self._build_expression_attribute_names())
+        data.update(self._build_projection_expression())
         if self.__consistent_read is not None:
             data["ConsistentRead"] = self.__consistent_read
-        if self.__projections:
-            data["ProjectionExpression"] = ", ".join(self.__projections)
         return data
 
     def consistent_read_true(self):
@@ -223,13 +222,6 @@ class GetItem(_Operation,
 
     def _set_consistent_read(self, value):
         self.__consistent_read = value
-        return self
-
-    def project(self, *names):
-        for name in names:
-            if isinstance(name, basestring):
-                name = [name]
-            self.__projections.extend(name)
         return self
 
 
