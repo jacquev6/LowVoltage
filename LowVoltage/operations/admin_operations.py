@@ -73,8 +73,8 @@ class CreateTable(_Operation):
         return data
 
     class _Index(_OperationProxy):
-        def __init__(self, table, name):
-            super(CreateTable._Index, self).__init__(table)
+        def __init__(self, operation, name):
+            super(CreateTable._Index, self).__init__(operation)
             self.__name = name
             self.__hash_key = None
             self.__range_key = None
@@ -838,8 +838,8 @@ class UpdateTable(_Operation):
         return data
 
     class _IndexWithThroughput(_OperationProxy):
-        def __init__(self, table, name):
-            super(UpdateTable._IndexWithThroughput, self).__init__(table)
+        def __init__(self, operation, name):
+            super(UpdateTable._IndexWithThroughput, self).__init__(operation)
             self.__name = name
             self.__read_capacity_units = None
             self.__write_capacity_units = None

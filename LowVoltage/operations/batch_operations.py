@@ -29,7 +29,7 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
             # - ConsumedCapacity: @todo
             # - Responses: done
             # - UnprocessedKeys: @todo
-            self.responses = {t: [_convert_db_to_dict(v) for v in vs] for t, vs in Responses.iteritems()}
+            self.responses = None if Responses is None else {t: [_convert_db_to_dict(v) for v in vs] for t, vs in Responses.iteritems()}
             self.unprocessed_keys = UnprocessedKeys
 
     def __init__(self):
