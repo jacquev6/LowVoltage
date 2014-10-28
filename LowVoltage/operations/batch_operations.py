@@ -92,6 +92,9 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
 
 
 class BatchGetItemUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(BatchGetItem().name, "BatchGetItem")
+
     def testEmpty(self):
         self.assertEqual(
             BatchGetItem().build(),
@@ -278,6 +281,9 @@ class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollecti
 
 
 class BatchWriteItemUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(BatchWriteItem().name, "BatchWriteItem")
+
     def testEmpty(self):
         self.assertEqual(
             BatchWriteItem().build(),
@@ -392,28 +398,58 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 # - LastEvaluatedKey: @todo
 # - ScannedCount: @todo
 
-# http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_RequestParameters
-# - TableName: @todo
-# - AttributesToGet: deprecated
-# - ConditionalOperator: deprecated
-# - ExclusiveStartKey: @todo
-# - ExpressionAttributeNames: @todo
-# - ExpressionAttributeValues: @todo
-# - FilterExpression: @todo
-# - Limit: @todo
-# - ProjectionExpression: @todo
-# - ReturnConsumedCapacity: @todo
-# - ScanFilter: deprecated
-# - Segment: @todo
-# - Select: @todo
-# - TotalSegments: @todo
+class Scan(_Operation):
+    class Result(object):
+        def __init__(
+            self,
+            ConsumedCapacity=None,
+            Count=None,
+            Items=None,
+            LastEvaluatedKey=None,
+            ScannedCount=None,
+            **dummy
+        ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements
+            # - ConsumedCapacity: @todo
+            # - Count: done
+            # - Items: done
+            # - LastEvaluatedKey: done
+            # - ScannedCount: done
+            self.count = None if Count is None else long(Count)
+            self.items = None if Items is None else [_convert_db_to_dict(i) for i in Items]
+            self.last_evaluated_key = LastEvaluatedKey
+            self.scanned_count = None if ScannedCount is None else long(ScannedCount)
 
-# http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements
-# - ConsumedCapacity: @todo
-# - Count: @todo
-# - Items: @todo
-# - LastEvaluatedKey: @todo
-# - ScannedCount: @todo
+    def __init__(self, table_name):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_RequestParameters
+        # - TableName: done
+        # - AttributesToGet: deprecated
+        # - ConditionalOperator: deprecated
+        # - ExclusiveStartKey: @todo
+        # - ExpressionAttributeNames: @todo
+        # - ExpressionAttributeValues: @todo
+        # - FilterExpression: @todo
+        # - Limit: @todo
+        # - ProjectionExpression: @todo
+        # - ReturnConsumedCapacity: @todo
+        # - ScanFilter: deprecated
+        # - Segment: @todo
+        # - Select: @todo
+        # - TotalSegments: @todo
+        super(Scan, self).__init__("Scan")
+        self.__table_name = table_name
+
+    def build(self):
+        data = {"TableName": self.__table_name}
+        return data
+
+
+class ScanUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(Scan("Aaa").name, "Scan")
+
+    def testTableName(self):
+        self.assertEqual(Scan("Aaa").build(), {"TableName": "Aaa"})
 
 
 if __name__ == "__main__":

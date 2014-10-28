@@ -75,6 +75,9 @@ class DeleteItem(_Operation,
 
 
 class DeleteItemUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(DeleteItem("Table", {"hash": 42}).name, "DeleteItem")
+
     def testKey(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": 42}).build(),
@@ -226,6 +229,9 @@ class GetItem(_Operation,
 
 
 class GetItemUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(GetItem("Table", {"hash": 42}).name, "GetItem")
+
     def testKey(self):
         self.assertEqual(
             GetItem("Table", {"hash": 42}).build(),
@@ -365,6 +371,9 @@ class PutItem(_Operation,
 
 
 class PutItemUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(PutItem("Table", {"hash": 42}).name, "PutItem")
+
     def testItem(self):
         self.assertEqual(
             PutItem("Table", {"hash": "value"}).build(),
@@ -584,6 +593,9 @@ class UpdateItem(_Operation,
 
 
 class UpdateItemUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(UpdateItem("Table", {"hash": 42}).name, "UpdateItem")
+
     def testKey(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).build(),
