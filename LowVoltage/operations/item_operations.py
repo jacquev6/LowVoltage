@@ -491,7 +491,6 @@ class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             }
         )
 
-
     def testReturnOldValues(self):
         self.connection.request(PutItem("Aaa", {"h": "return", "a": "yyy"}))
 
