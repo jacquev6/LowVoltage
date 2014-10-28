@@ -22,7 +22,10 @@ import LowVoltage.exceptions as _exn
 from LowVoltage.tests.cover import cover
 
 
-class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+class DeleteItem(_Operation,
+    ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
+    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
+):
     class Result(object):
         def __init__(
             self,
@@ -42,16 +45,19 @@ class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, 
         ReturnOldValuesMixin.__init__(self)
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
+        ExpressionAttributeNamesMixin.__init__(self)
+        ExpressionAttributeValuesMixin.__init__(self)
+        ConditionExpressionMixin.__init__(self)
 
     def build(self):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_RequestParameters
         # - Key: done
         # - TableName: done
-        # - ConditionExpression: @todo
+        # - ConditionExpression: done
         # - ConditionalOperator: deprecated
         # - Expected: deprecated
-        # - ExpressionAttributeNames: @todo
-        # - ExpressionAttributeValues: @todo
+        # - ExpressionAttributeNames: done
+        # - ExpressionAttributeValues: done
         # - ReturnConsumedCapacity: done
         # - ReturnItemCollectionMetrics: done
         # - ReturnValues: done
@@ -62,6 +68,9 @@ class DeleteItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, 
         data.update(self._build_return_values())
         data.update(self._build_return_consumed_capacity())
         data.update(self._build_return_item_collection_metrics())
+        data.update(self._build_expression_attribute_names())
+        data.update(self._build_expression_attribute_values())
+        data.update(self._build_condition_expression())
         return data
 
 
@@ -105,6 +114,36 @@ class DeleteItemUnitTests(unittest.TestCase):
             }
         )
 
+    def testExpressionAttributeValue(self):
+        self.assertEqual(
+            DeleteItem("Table", {"hash": 42}).expression_attribute_value("v", "value").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "ExpressionAttributeValues": {":v": {"S": "value"}},
+            }
+        )
+
+    def testExpressionAttributeName(self):
+        self.assertEqual(
+            DeleteItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "ExpressionAttributeNames": {"#n": "path"},
+            }
+        )
+
+    def testConditionExpression(self):
+        self.assertEqual(
+            DeleteItem("Table", {"hash": 42}).condition_expression("a=b").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "ConditionExpression": "a=b",
+            }
+        )
+
 
 class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
@@ -132,7 +171,9 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.attributes, {"h": "get", "a": "yyy"})
 
 
-class GetItem(_Operation, ReturnConsumedCapacityMixin):
+class GetItem(_Operation,
+    ReturnConsumedCapacityMixin, ExpressionAttributeNamesMixin,
+):
     class Result(object):
         def __init__(
             self,
@@ -149,6 +190,7 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
         self.__table_name = table_name
         self.__key = key
         ReturnConsumedCapacityMixin.__init__(self)
+        ExpressionAttributeNamesMixin.__init__(self)
         self.__consistent_read = None
         self.__projections = []
 
@@ -158,14 +200,15 @@ class GetItem(_Operation, ReturnConsumedCapacityMixin):
         # - TableName: done
         # - AttributesToGet: deprecated
         # - ConsistentRead: done
-        # - ExpressionAttributeNames: @todo
-        # - ProjectionExpression: @todo
+        # - ExpressionAttributeNames: done
+        # - ProjectionExpression: done
         # - ReturnConsumedCapacity: done
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
         data.update(self._build_return_consumed_capacity())
+        data.update(self._build_expression_attribute_names())
         if self.__consistent_read is not None:
             data["ConsistentRead"] = self.__consistent_read
         if self.__projections:
@@ -240,6 +283,16 @@ class GetItemUnitTests(unittest.TestCase):
             }
         )
 
+    def testExpressionAttributeName(self):
+        self.assertEqual(
+            GetItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "ExpressionAttributeNames": {"#n": "path"},
+            }
+        )
+
 
 class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
@@ -267,7 +320,10 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.item, {"b": {"c": ["d2"]}, "e": 42})
 
 
-class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+class PutItem(_Operation,
+    ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
+    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
+):
     class Result(object):
         def __init__(
             self,
@@ -287,16 +343,19 @@ class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, Ret
         ReturnOldValuesMixin.__init__(self)
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
+        ExpressionAttributeNamesMixin.__init__(self)
+        ExpressionAttributeValuesMixin.__init__(self)
+        ConditionExpressionMixin.__init__(self)
 
     def build(self):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_RequestParameters
         # - Item: done
         # - TableName: done
-        # - ConditionExpression: @todo
+        # - ConditionExpression: done
         # - ConditionalOperator: deprecated
         # - Expected: deprecated
-        # - ExpressionAttributeNames: @todo
-        # - ExpressionAttributeValues: @todo
+        # - ExpressionAttributeNames: done
+        # - ExpressionAttributeValues: done
         # - ReturnConsumedCapacity: done
         # - ReturnItemCollectionMetrics: done
         # - ReturnValues: done
@@ -307,6 +366,9 @@ class PutItem(_Operation, ReturnOldValuesMixin, ReturnConsumedCapacityMixin, Ret
         data.update(self._build_return_values())
         data.update(self._build_return_consumed_capacity())
         data.update(self._build_return_item_collection_metrics())
+        data.update(self._build_expression_attribute_names())
+        data.update(self._build_expression_attribute_values())
+        data.update(self._build_condition_expression())
         return data
 
 
@@ -347,6 +409,36 @@ class PutItemUnitTests(unittest.TestCase):
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
                 "ReturnItemCollectionMetrics": "NONE",
+            }
+        )
+
+    def testExpressionAttributeValue(self):
+        self.assertEqual(
+            PutItem("Table", {"hash": 42}).expression_attribute_value("v", "value").build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"N": "42"}},
+                "ExpressionAttributeValues": {":v": {"S": "value"}},
+            }
+        )
+
+    def testExpressionAttributeName(self):
+        self.assertEqual(
+            PutItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"N": "42"}},
+                "ExpressionAttributeNames": {"#n": "path"},
+            }
+        )
+
+    def testConditionExpression(self):
+        self.assertEqual(
+            PutItem("Table", {"hash": 42}).condition_expression("a=b").build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"N": "42"}},
+                "ConditionExpression": "a=b",
             }
         )
 
@@ -432,6 +524,9 @@ class UpdateItem(_Operation,
         self.__table_name = table_name
         self.__key = key
         self.__set = {}
+        self.__remove = []
+        self.__add = {}
+        self.__delete = {}
         ReturnValuesMixin.__init__(self)
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
@@ -452,7 +547,7 @@ class UpdateItem(_Operation,
         # - ReturnConsumedCapacity: done
         # - ReturnItemCollectionMetrics: done
         # - ReturnValues: done
-        # - UpdateExpression: @todo (in progress)
+        # - UpdateExpression: done
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
@@ -465,13 +560,35 @@ class UpdateItem(_Operation,
         data.update(self._build_condition_expression())
         update = []
         if self.__set:
+            # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.SET
             update.append("SET {}".format(", ".join("{}=:{}".format(n, v) for n, v in self.__set.iteritems())))
+        if self.__remove:
+            # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.REMOVE
+            update.append("REMOVE {}".format(", ".join(self.__remove)))
+        if self.__add:
+            # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.ADD
+            update.append("ADD {}".format(", ".join("{} :{}".format(n, v) for n, v in self.__add.iteritems())))
+        if self.__delete:
+            # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.DELETE
+            update.append("DELETE {}".format(", ".join("{} :{}".format(n, v) for n, v in self.__delete.iteritems())))
         if update:
             data["UpdateExpression"] = " ".join(update)
         return data
 
     def set(self, attribute_name, value_name):
         self.__set[attribute_name] = value_name
+        return self
+
+    def remove(self, path):
+        self.__remove.append(path)
+        return self
+
+    def add(self, attribute_name, value_name):
+        self.__add[attribute_name] = value_name
+        return self
+
+    def delete(self, attribute_name, value_name):
+        self.__delete[attribute_name] = value_name
         return self
 
 
@@ -508,6 +625,70 @@ class UpdateItemUnitTests(unittest.TestCase):
                     "TableName": "Table",
                     "Key": {"hash": {"N": "42"}},
                     "UpdateExpression": "SET b=:w, a=:v",
+                }
+            ]
+        )
+
+    def testRemove(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": 42}).remove("a").remove("b").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "UpdateExpression": "REMOVE a, b",
+            }
+        )
+
+    def testAdd(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": 42}).add("a", "v").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "UpdateExpression": "ADD a :v",
+            }
+        )
+
+    def testSeveralAdds(self):
+        self.assertIn(
+            UpdateItem("Table", {"hash": 42}).add("a", "v").add("b", "w").build(),
+            [
+                {
+                    "TableName": "Table",
+                    "Key": {"hash": {"N": "42"}},
+                    "UpdateExpression": "ADD a :v, b :w",
+                },
+                {
+                    "TableName": "Table",
+                    "Key": {"hash": {"N": "42"}},
+                    "UpdateExpression": "ADD b :w, a :v",
+                }
+            ]
+        )
+
+    def testDelete(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": 42}).delete("a", "v").build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+                "UpdateExpression": "DELETE a :v",
+            }
+        )
+
+    def testSeveralDeletes(self):
+        self.assertIn(
+            UpdateItem("Table", {"hash": 42}).delete("a", "v").delete("b", "w").build(),
+            [
+                {
+                    "TableName": "Table",
+                    "Key": {"hash": {"N": "42"}},
+                    "UpdateExpression": "DELETE a :v, b :w",
+                },
+                {
+                    "TableName": "Table",
+                    "Key": {"hash": {"N": "42"}},
+                    "UpdateExpression": "DELETE b :w, a :v",
                 }
             ]
         )
@@ -599,6 +780,51 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.connection.request(GetItem("Aaa", {"h": "set"})).item,
             {"h": "set", "a": "aaa", "b": "bbb"}
         )
+
+    def testComplexUpdate(self):
+        self.connection.request(
+            PutItem(
+                "Aaa",
+                {
+                    "h": "complex",
+                    "a": "a",
+                    "b": "b",
+                    "c": "c",
+                    "d": set([41, 43]),
+                    "e": 42,
+                    "f": set([41, 42, 43]),
+                    "g": set([39, 40]),
+                }
+            )
+        )
+
+        r = self.connection.request(
+            UpdateItem("Aaa", {"h": "complex"})
+                .set("a", "s")
+                .set("b", "i")
+                .remove("c")
+                .add("d", "s")
+                .add("e", "i")
+                .delete("f", "s")
+                .delete("g", "s")
+                .expression_attribute_value("s", set([42, 43]))
+                .expression_attribute_value("i", 52)
+                .return_values_all_new()
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(
+                r.attributes,
+                {
+                    "h": "complex",
+                    "a": set([42, 43]),
+                    "b": 52,
+                    "d": set([41, 42, 43]),
+                    "e": 94,
+                    "f": set([41]),
+                    "g": set([39, 40]),
+                }
+            )
 
     def testConditionExpression(self):
         self.connection.request(PutItem("Aaa", {"h": "expr", "a": 42, "b": 42}))
