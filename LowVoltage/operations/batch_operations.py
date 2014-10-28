@@ -417,7 +417,7 @@ class Scan(_Operation):
             # - ScannedCount: done
             self.count = None if Count is None else long(Count)
             self.items = None if Items is None else [_convert_db_to_dict(i) for i in Items]
-            self.last_evaluated_key = LastEvaluatedKey
+            self.last_evaluated_key = None if LastEvaluatedKey is None else _convert_db_to_dict(LastEvaluatedKey)
             self.scanned_count = None if ScannedCount is None else long(ScannedCount)
 
     def __init__(self, table_name):
@@ -425,23 +425,48 @@ class Scan(_Operation):
         # - TableName: done
         # - AttributesToGet: deprecated
         # - ConditionalOperator: deprecated
-        # - ExclusiveStartKey: @todo
+        # - ExclusiveStartKey: done
         # - ExpressionAttributeNames: @todo
         # - ExpressionAttributeValues: @todo
         # - FilterExpression: @todo
-        # - Limit: @todo
+        # - Limit: done
         # - ProjectionExpression: @todo
         # - ReturnConsumedCapacity: @todo
         # - ScanFilter: deprecated
-        # - Segment: @todo
+        # - Segment: done
         # - Select: @todo
-        # - TotalSegments: @todo
+        # - TotalSegments: done
         super(Scan, self).__init__("Scan")
         self.__table_name = table_name
+        self.__exclusive_start_key = None
+        self.__limit = None
+        self.__segment = None
+        self.__total_segments = None
 
     def build(self):
         data = {"TableName": self.__table_name}
+        if self.__segment is not None:
+            data["Segment"] = self.__segment
+        if self.__total_segments:
+            data["TotalSegments"] = self.__total_segments
+        if self.__exclusive_start_key:
+            data["ExclusiveStartKey"] = _convert_dict_to_db(self.__exclusive_start_key)
+        if self.__limit:
+            data["Limit"] = self.__limit
         return data
+
+    def segment(self, segment, total_segments):
+        self.__segment = segment
+        self.__total_segments = total_segments
+        return self
+
+    def exclusive_start_key(self, key):
+        self.__exclusive_start_key = key
+        return self
+
+    def limit(self, limit):
+        self.__limit = limit
+        return self
 
 
 class ScanUnitTests(unittest.TestCase):
@@ -450,6 +475,82 @@ class ScanUnitTests(unittest.TestCase):
 
     def testTableName(self):
         self.assertEqual(Scan("Aaa").build(), {"TableName": "Aaa"})
+
+    def testSegment(self):
+        self.assertEqual(Scan("Aaa").segment(0, 2).build(), {"TableName": "Aaa", "Segment": 0, "TotalSegments": 2})
+        self.assertEqual(Scan("Aaa").segment(1, 2).build(), {"TableName": "Aaa", "Segment": 1, "TotalSegments": 2})
+
+    def testExclusiveStartKey(self):
+        self.assertEqual(Scan("Aaa").exclusive_start_key({"h": "v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
+
+    def testLimit(self):
+        self.assertEqual(Scan("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
+
+
+class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def setUp(self):
+        self.connection.request(
+            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+        )
+
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "v": 0}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "v": 1}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "v": 2}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "3", "v": 3}))
+
+    def tearDown(self):
+        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+
+    def testSimpleScan(self):
+        r = self.connection.request(
+            Scan("Aaa")
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(r.count, 4)
+            items = sorted((r.items[i] for i in range(4)), key=lambda i: i["h"])
+            self.assertEqual(items, [{"h": "0", "v": 0}, {"h": "1", "v": 1}, {"h": "2", "v": 2}, {"h": "3", "v": 3}])
+            self.assertEqual(r.last_evaluated_key, None)
+            self.assertEqual(r.scanned_count, 4)
+
+    def testPaginatedSegmentedScan(self):
+        # If this test fails randomly, change it to assert on the sum and union of the results
+        r01 = self.connection.request(
+            Scan("Aaa").segment(0, 2).limit(1)
+        )
+        r02 = self.connection.request(
+            Scan("Aaa").segment(0, 2).exclusive_start_key({"h": "1"})
+        )
+        r11 = self.connection.request(
+            Scan("Aaa").segment(1, 2).limit(1)
+        )
+        r12 = self.connection.request(
+            Scan("Aaa").segment(1, 2).exclusive_start_key({"h": "0"})
+        )
+
+        with cover("r01", r01) as r:
+            self.assertEqual(r.count, 1)
+            self.assertEqual(r.items[0], {"h": "1", "v": 1})
+            self.assertEqual(r.last_evaluated_key, {"h": "1"})
+            self.assertEqual(r.scanned_count, 1)
+
+        with cover("r02", r02) as r:
+            self.assertEqual(r.count, 1)
+            self.assertEqual(r.items[0], {"h": "3", "v": 3})
+            self.assertEqual(r.last_evaluated_key, None)
+            self.assertEqual(r.scanned_count, 1)
+
+        with cover("r11", r11) as r:
+            self.assertEqual(r.count, 1)
+            self.assertEqual(r.items[0], {"h": "0", "v": 0})
+            self.assertEqual(r.last_evaluated_key, {"h": "0"})
+            self.assertEqual(r.scanned_count, 1)
+
+        with cover("r12", r12) as r:
+            self.assertEqual(r.count, 1)
+            self.assertEqual(r.items[0], {"h": "2", "v": 2})
+            self.assertEqual(r.last_evaluated_key, None)
+            self.assertEqual(r.scanned_count, 1)
 
 
 if __name__ == "__main__":
