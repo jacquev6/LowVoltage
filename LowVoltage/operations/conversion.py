@@ -22,7 +22,7 @@ def _convert_value_to_db(value):
         return {"N": str(value)}
     elif value is None:
         return {"NULL": True}
-    elif isinstance(value, set):
+    elif isinstance(value, (set, frozenset)):
         if len(value) == 0:
             raise TypeError
         elif all(isinstance(v, numbers.Integral) for v in value):
@@ -75,6 +75,7 @@ class ConversionUnitTests(unittest.TestCase):
         self.assertEqual(_convert_value_to_db(42), {"N": "42"})
         self.assertEqual(_convert_value_to_db(None), {"NULL": True})
         self.assertIn(_convert_value_to_db(set([42, 43])), [{"NS": ["42", "43"]}, {"NS": ["43", "42"]}])
+        self.assertIn(_convert_value_to_db(frozenset([42, 43])), [{"NS": ["42", "43"]}, {"NS": ["43", "42"]}])
         self.assertIn(_convert_value_to_db(set(["foo", "bar"])), [{"SS": ["foo", "bar"]}, {"SS": ["bar", "foo"]}])
         self.assertEqual(_convert_value_to_db([True, 42]), {"L": [{"BOOL": True}, {"N": "42"}]})
         self.assertEqual(_convert_value_to_db({"a": True, "b": 42}), {"M": {"a": {"BOOL": True}, "b": {"N": "42"}}})
@@ -87,7 +88,7 @@ class ConversionUnitTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             _convert_value_to_db((1, 2))
 
-    def testConvertTbToValue(self):
+    def testConvertDbToValue(self):
         self.assertEqual(_convert_db_to_value({"S": "foo"}), "foo")
         self.assertEqual(_convert_db_to_value({"BOOL": True}), True)
         self.assertEqual(_convert_db_to_value({"BOOL": False}), False)
