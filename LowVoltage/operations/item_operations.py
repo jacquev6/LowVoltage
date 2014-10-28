@@ -271,13 +271,13 @@ class GetItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testProjection(self):
+    def testProject(self):
         self.assertEqual(
-            GetItem("Table", {"hash": "h"}).project("abc", ["def", "ghi"]).build(),
+            GetItem("Table", {"hash": "h"}).project("abc").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
-                "ProjectionExpression": "abc, def, ghi",
+                "ProjectionExpression": "abc",
             }
         )
 

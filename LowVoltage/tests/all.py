@@ -17,6 +17,7 @@ from LowVoltage.operations.expression_mixins import (
     ExpressionAttributeValuesMixinUnitTests,
     ConditionExpressionMixinUnitTests,
     ProjectionExpressionMixinUnitTests,
+    FilterExpressionMixinUnitTests,
 )
 
 from LowVoltage.operations.admin_operations import (

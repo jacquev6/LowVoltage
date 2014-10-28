@@ -6,7 +6,10 @@ import unittest
 
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
 from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
-from LowVoltage.operations.expression_mixins import ExpressionAttributeNamesMixin, ProjectionExpressionMixin
+from LowVoltage.operations.expression_mixins import (
+    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin,
+    ProjectionExpressionMixin, FilterExpressionMixin,
+)
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
 import LowVoltage.operations.admin_operations
@@ -146,13 +149,13 @@ class BatchGetItemUnitTests(unittest.TestCase):
             }
         )
 
-    def testProjection(self):
+    def testProject(self):
         self.assertEqual(
-            BatchGetItem().table("Table1").project("a", ["b", "c"]).build(),
+            BatchGetItem().table("Table1").project("a").build(),
             {
                 "RequestItems": {
                     "Table1": {
-                        "ProjectionExpression": "a, b, c",
+                        "ProjectionExpression": "a",
                     },
                 }
             }
@@ -398,7 +401,7 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 # - LastEvaluatedKey: @todo
 # - ScannedCount: @todo
 
-class Scan(_Operation):
+class Scan(_Operation, ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin, ReturnConsumedCapacityMixin):
     class Result(object):
         def __init__(
             self,
@@ -426,25 +429,36 @@ class Scan(_Operation):
         # - AttributesToGet: deprecated
         # - ConditionalOperator: deprecated
         # - ExclusiveStartKey: done
-        # - ExpressionAttributeNames: @todo
-        # - ExpressionAttributeValues: @todo
-        # - FilterExpression: @todo
+        # - ExpressionAttributeNames: done
+        # - ExpressionAttributeValues: done
+        # - FilterExpression: done
         # - Limit: done
-        # - ProjectionExpression: @todo
-        # - ReturnConsumedCapacity: @todo
+        # - ProjectionExpression: done
+        # - ReturnConsumedCapacity: done
         # - ScanFilter: deprecated
         # - Segment: done
-        # - Select: @todo
+        # - Select: done
         # - TotalSegments: done
         super(Scan, self).__init__("Scan")
+        ExpressionAttributeNamesMixin.__init__(self)
+        ExpressionAttributeValuesMixin.__init__(self)
+        ProjectionExpressionMixin.__init__(self)
+        ReturnConsumedCapacityMixin.__init__(self)
+        FilterExpressionMixin.__init__(self)
         self.__table_name = table_name
         self.__exclusive_start_key = None
         self.__limit = None
+        self.__select = None
         self.__segment = None
         self.__total_segments = None
 
     def build(self):
         data = {"TableName": self.__table_name}
+        data.update(self._build_expression_attribute_names())
+        data.update(self._build_expression_attribute_values())
+        data.update(self._build_projection_expression())
+        data.update(self._build_return_consumed_capacity())
+        data.update(self._build_filter_expression())
         if self.__segment is not None:
             data["Segment"] = self.__segment
         if self.__total_segments:
@@ -453,6 +467,8 @@ class Scan(_Operation):
             data["ExclusiveStartKey"] = _convert_dict_to_db(self.__exclusive_start_key)
         if self.__limit:
             data["Limit"] = self.__limit
+        if self.__select:
+            data["Select"] = self.__select
         return data
 
     def segment(self, segment, total_segments):
@@ -466,6 +482,18 @@ class Scan(_Operation):
 
     def limit(self, limit):
         self.__limit = limit
+        return self
+
+    def select_count(self):
+        self.__select = "COUNT"
+        return self
+
+    def select_all_attributes(self):
+        self.__select = "ALL_ATTRIBUTES"
+        return self
+
+    def select_specific_attributes(self):
+        self.__select = "SPECIFIC_ATTRIBUTES"
         return self
 
 
@@ -485,6 +513,26 @@ class ScanUnitTests(unittest.TestCase):
 
     def testLimit(self):
         self.assertEqual(Scan("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
+
+    def testSelect(self):
+        self.assertEqual(Scan("Aaa").select_all_attributes().build(), {"TableName": "Aaa", "Select": "ALL_ATTRIBUTES"})
+        self.assertEqual(Scan("Aaa").select_count().build(), {"TableName": "Aaa", "Select": "COUNT"})
+        self.assertEqual(Scan("Aaa").select_specific_attributes().build(), {"TableName": "Aaa", "Select": "SPECIFIC_ATTRIBUTES"})
+
+    def testExpressionAttributeName(self):
+        self.assertEqual(Scan("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
+
+    def testExpressionAttributeValue(self):
+        self.assertEqual(Scan("Aaa").expression_attribute_value("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
+
+    def testProject(self):
+        self.assertEqual(Scan("Aaa").project("a").build(), {"TableName": "Aaa", "ProjectionExpression": "a"})
+
+    def testReturnConsumedCapacityNone(self):
+        self.assertEqual(Scan("Aaa").return_consumed_capacity_none().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "NONE"})
+
+    def testFilterExpression(self):
+        self.assertEqual(Scan("Aaa").filter_expression("a=b").build(), {"TableName": "Aaa", "FilterExpression": "a=b"})
 
 
 class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):

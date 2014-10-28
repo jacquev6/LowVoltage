@@ -118,6 +118,37 @@ class ConditionExpressionMixinUnitTests(unittest.TestCase):
         )
 
 
+class FilterExpressionMixin(object):
+    def __init__(self):
+        self.__filter_expression = None
+
+    def _build_filter_expression(self):
+        data = {}
+        if self.__filter_expression:
+            data["FilterExpression"] = self.__filter_expression
+        return data
+
+    def filter_expression(self, expression):
+        self.__filter_expression = expression
+        return self
+
+
+class FilterExpressionMixinUnitTests(unittest.TestCase):
+    def testDefault(self):
+        self.assertEqual(
+            FilterExpressionMixin()._build_filter_expression(),
+            {}
+        )
+
+    def testExpression(self):
+        self.assertEqual(
+            FilterExpressionMixin().filter_expression("a=b")._build_filter_expression(),
+            {
+                "FilterExpression": "a=b",
+            }
+        )
+
+
 class ProjectionExpressionMixin(object):
     def __init__(self):
         self.__projections = []
