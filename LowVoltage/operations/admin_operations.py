@@ -177,7 +177,7 @@ class CreateTable(_Operation):
 
     def local_secondary_index(self, name):
         if name not in self.__lsis:
-            self.__lsis[name] = self._IndexWithThroughput(self, name)
+            self.__lsis[name] = self._Index(self, name)
         return self.__lsis[name]
 
 

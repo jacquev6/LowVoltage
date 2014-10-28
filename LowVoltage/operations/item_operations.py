@@ -4,7 +4,7 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
+from LowVoltage.operations.operation import Operation as _Operation
 from LowVoltage.operations.return_mixins import (
     ReturnValuesMixin, ReturnOldValuesMixin,
     ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,

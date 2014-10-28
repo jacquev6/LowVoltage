@@ -4,8 +4,9 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation as _Operation
+from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
 from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from LowVoltage.operations.expression_mixins import ExpressionAttributeNamesMixin
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
 import LowVoltage.operations.admin_operations
@@ -34,8 +35,7 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
     def __init__(self):
         super(BatchGetItem, self).__init__("BatchGetItem")
         ReturnConsumedCapacityMixin.__init__(self)
-        self.__request_items = {}
-        self.__last_table = None
+        self.__tables = {}
 
     def build(self):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters
@@ -43,37 +43,60 @@ class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
         #   - Keys: done
         #   - AttributesToGet: deprecated
         #   - ConsistentRead: done
-        #   - ExpressionAttributeNames: @todo
-        #   - ProjectionExpression: @todo
+        #   - ExpressionAttributeNames: done
+        #   - ProjectionExpression: done
         # - ReturnConsumedCapacity: done
         data = {}
         data.update(self._build_return_consumed_capacity())
-        if self.__request_items:
-            data["RequestItems"] = self.__request_items
+        if self.__tables:
+            data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
         return data
 
-    def table(self, table_name):
-        if table_name not in self.__request_items:
-            self.__request_items[table_name] = {}
-        self.__last_table = self.__request_items[table_name]
-        return self
+    class _Table(_OperationProxy, ExpressionAttributeNamesMixin):
+        def __init__(self, operation, name):
+            super(BatchGetItem._Table, self).__init__(operation)
+            ExpressionAttributeNamesMixin.__init__(self)
+            self.__consistent_read = None
+            self.__keys = []
+            self.__projections = []
 
-    def keys(self, *keys):
-        if "Keys" not in self.__last_table:
-            self.__last_table["Keys"] = []
-        for key in keys:
-            if isinstance(key, dict):
-                key = [key]
-            self.__last_table["Keys"].extend(_convert_dict_to_db(k) for k in key)
-        return self
+        def _build(self):
+            data = {}
+            data.update(self._build_expression_attribute_names())
+            if self.__consistent_read is not None:
+                data["ConsistentRead"] = self.__consistent_read
+            if self.__keys:
+                data["Keys"] = [_convert_dict_to_db(k) for k in self.__keys]
+            if self.__projections:
+                data["ProjectionExpression"] = ", ".join(self.__projections)
+            return data
 
-    def consistent_read_true(self):
-        self.__last_table["ConsistentRead"] = True
-        return self
+        def keys(self, *keys):
+            for key in keys:
+                if isinstance(key, dict):
+                    key = [key]
+                self.__keys.extend(key)
+            return self
 
-    def consistent_read_false(self):
-        self.__last_table["ConsistentRead"] = False
-        return self
+        def consistent_read_true(self):
+            self.__consistent_read = True
+            return self
+
+        def consistent_read_false(self):
+            self.__consistent_read = False
+            return self
+
+        def project(self, *names):
+            for name in names:
+                if isinstance(name, basestring):
+                    name = [name]
+                self.__projections.extend(name)
+            return self
+
+    def table(self, name):
+        if name not in self.__tables:
+            self.__tables[name] = self._Table(self, name)
+        return self.__tables[name]
 
 
 class BatchGetItemUnitTests(unittest.TestCase):
@@ -128,6 +151,30 @@ class BatchGetItemUnitTests(unittest.TestCase):
             }
         )
 
+    def testProjection(self):
+        self.assertEqual(
+            BatchGetItem().table("Table1").project("a", ["b", "c"]).build(),
+            {
+                "RequestItems": {
+                    "Table1": {
+                        "ProjectionExpression": "a, b, c",
+                    },
+                }
+            }
+        )
+
+    def testExpressionAttributeName(self):
+        self.assertEqual(
+            BatchGetItem().table("Table1").expression_attribute_name("a", "p").build(),
+            {
+                "RequestItems": {
+                    "Table1": {
+                        "ExpressionAttributeNames": {"#a": "p"},
+                    },
+                }
+            }
+        )
+
 
 class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
@@ -153,6 +200,23 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             )
             self.assertEqual(r.unprocessed_keys, {})
 
+    def testBatchGetWithProjections(self):
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "a": "a1", "b": "b1", "c": "c1"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "a": "a2", "b": "b2", "c": "c2"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "3", "a": "a3", "b": "b3", "c": "c3"}))
+
+        r = self.connection.request(
+            BatchGetItem().table("Aaa").keys({"h": "1"}, {"h": "2"}, {"h": "3"}).expression_attribute_name("p", "b").project("h").project("a", ["#p"])
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(r.responses.keys(), ["Aaa"])
+            self.assertEqual(
+                sorted(r.responses["Aaa"], key=lambda i: i["h"]),
+                [{"h": "1", "a": "a1", "b": "b1"}, {"h": "2", "a": "a2", "b": "b2"}, {"h": "3", "a": "a3", "b": "b3"}]
+            )
+            self.assertEqual(r.unprocessed_keys, {})
+
 
 class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
     class Result(object):
@@ -171,8 +235,7 @@ class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollecti
         super(BatchWriteItem, self).__init__("BatchWriteItem")
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
-        self.__request_items = {}
-        self.__last_table = None
+        self.__tables = {}
 
     def build(self):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_RequestParameters
@@ -184,29 +247,42 @@ class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollecti
         data = {}
         data.update(self._build_return_consumed_capacity())
         data.update(self._build_return_item_collection_metrics())
-        if self.__request_items:
-            data["RequestItems"] = self.__request_items
+        if self.__tables:
+            data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
         return data
 
-    def table(self, table_name):
-        if table_name not in self.__request_items:
-            self.__request_items[table_name] = []
-        self.__last_table = self.__request_items[table_name]
-        return self
+    class _Table(_OperationProxy):
+        def __init__(self, operation, name):
+            super(BatchWriteItem._Table, self).__init__(operation)
+            self.__delete = []
+            self.__put = []
 
-    def delete(self, *keys):
-        for key in keys:
-            if isinstance(key, dict):
-                key = [key]
-            self.__last_table.extend({"DeleteRequest": {"Key": _convert_dict_to_db(k)}} for k in key)
-        return self
+        def _build(self):
+            items = []
+            if self.__delete:
+                items.extend({"DeleteRequest": {"Key": _convert_dict_to_db(k)}} for k in self.__delete)
+            if self.__put:
+                items.extend({"PutRequest": {"Item": _convert_dict_to_db(i)}} for i in self.__put)
+            return items
 
-    def put(self, *items):
-        for item in items:
-            if isinstance(item, dict):
-                item = [item]
-            self.__last_table.extend({"PutRequest": {"Item": _convert_dict_to_db(i)}} for i in item)
-        return self
+        def delete(self, *keys):
+            for key in keys:
+                if isinstance(key, dict):
+                    key = [key]
+                self.__delete.extend(key)
+            return self
+
+        def put(self, *items):
+            for item in items:
+                if isinstance(item, dict):
+                    item = [item]
+                self.__put.extend(item)
+            return self
+
+    def table(self, name):
+        if name not in self.__tables:
+            self.__tables[name] = self._Table(self, name)
+        return self.__tables[name]
 
 
 class BatchWriteItemUnitTests(unittest.TestCase):
