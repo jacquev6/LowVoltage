@@ -2,6 +2,8 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
+from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
+
 
 class TableDescription:
     def __init__(
@@ -125,3 +127,43 @@ class LocalSecondaryIndexDescription:
         self.item_count = None if ItemCount is None else long(ItemCount)
         self.key_schema = None if KeySchema is None else [KeySchemaElement(**e) for e in KeySchema]
         self.projection = None if Projection is None else globals()["Projection"](**Projection)
+
+
+class ConsumedCapacity:
+    def __init__(
+        self,
+        CapacityUnits=None,
+        GlobalSecondaryIndexes=None,
+        LocalSecondaryIndexes=None,
+        Table=None,
+        TableName=None,
+        **dummy
+    ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ConsumedCapacity.html
+        self.capacity_units = None if CapacityUnits is None else float(CapacityUnits)
+        self.global_secondary_indexes = None if GlobalSecondaryIndexes is None else {n: Capacity(**v) for n, v in GlobalSecondaryIndexes.iteritems()}
+        self.local_secondary_indexes = None if LocalSecondaryIndexes is None else {n: Capacity(**v) for n, v in LocalSecondaryIndexes.iteritems()}
+        self.table = None if Table is None else Capacity(**Table)
+        self.table_name = TableName
+
+
+class Capacity:
+    def __init__(
+        self,
+        CapacityUnits=None,
+        **dummy
+    ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Capacity.html
+        self.capacity_units = None if CapacityUnits is None else float(CapacityUnits)
+
+
+class ItemCollectionMetrics:
+    def __init__(
+        self,
+        ItemCollectionKey=None,
+        SizeEstimateRangeGB=None,
+        **dummy
+    ):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ItemCollectionMetrics.html
+        self.item_collection_key = None if ItemCollectionKey is None else _convert_db_to_dict(ItemCollectionKey)
+        self.size_estimate_range_gb = None if SizeEstimateRangeGB is None else [float(e) for e in SizeEstimateRangeGB]

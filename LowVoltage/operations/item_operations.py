@@ -30,13 +30,17 @@ class DeleteItem(_Operation,
         def __init__(
             self,
             Attributes=None,
+            ConsumedCapacity=None,
+            ItemCollectionMetrics=None,
             **dummy
         ):
             # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_ResponseElements
             # - Attributes: done
-            # - ConsumedCapacity: @todo
-            # - ItemCollectionMetrics: @todo
+            # - ConsumedCapacity: done
+            # - ItemCollectionMetrics: done
             self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
+            self.consumed_capacity = None if ConsumedCapacity is None else _rtyp.ConsumedCapacity(**ConsumedCapacity)
+            self.item_collection_metrics = None if ItemCollectionMetrics is None else _rtyp.ItemCollectionMetrics(**ItemCollectionMetrics)
 
     def __init__(self, table_name, key):
         super(DeleteItem, self).__init__("DeleteItem")
@@ -164,6 +168,8 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         with cover("r", r) as r:
             self.assertEqual(r.attributes, None)
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
 
     def testReturnOldValues(self):
         self.connection.request(PutItem("Aaa", {"h": "get", "a": "yyy"}))
@@ -172,6 +178,8 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         with cover("r", r) as r:
             self.assertEqual(r.attributes, {"h": "get", "a": "yyy"})
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
 
 
 class GetItem(_Operation,
@@ -180,12 +188,14 @@ class GetItem(_Operation,
     class Result(object):
         def __init__(
             self,
+            ConsumedCapacity=None,
             Item=None,
             **dummy
         ):
             # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_ResponseElements
-            # - ConsumedCapacity: @todo
+            # - ConsumedCapacity: done
             # - Item: done
+            self.consumed_capacity = None if ConsumedCapacity is None else _rtyp.ConsumedCapacity(**ConsumedCapacity)
             self.item = None if Item is None else _convert_db_to_dict(Item)
 
     def __init__(self, table_name, key):
@@ -307,6 +317,7 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         r = self.connection.request(GetItem("Aaa", {"h": "get"}))
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item, {"h": "get", "a": "yyy"})
 
     def testGetWithProjections(self):
@@ -315,6 +326,7 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         r = self.connection.request(GetItem("Aaa", {"h": "attrs"}).project("b.c[1]", "e"))
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item, {"b": {"c": ["d2"]}, "e": 42})
 
 
@@ -326,13 +338,17 @@ class PutItem(_Operation,
         def __init__(
             self,
             Attributes=None,
+            ConsumedCapacity=None,
+            ItemCollectionMetrics=None,
             **dummy
         ):
             # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_ResponseElements
             # - Attributes: done
-            # - ConsumedCapacity: @todo
-            # - ItemCollectionMetrics: @todo
+            # - ConsumedCapacity: done
+            # - ItemCollectionMetrics: done
             self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
+            self.consumed_capacity = None if ConsumedCapacity is None else _rtyp.ConsumedCapacity(**ConsumedCapacity)
+            self.item_collection_metrics = None if ItemCollectionMetrics is None else _rtyp.ItemCollectionMetrics(**ItemCollectionMetrics)
 
     def __init__(self, table_name, item):
         super(PutItem, self).__init__("PutItem")
@@ -458,6 +474,8 @@ class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         with cover("r", r) as r:
             self.assertEqual(r.attributes, None)
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
 
         self.assertEqual(self.connection.request(GetItem("Aaa", {"h": "simple"})).item, {"h": "simple"})
 
@@ -501,6 +519,8 @@ class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         with cover("r", r) as r:
             self.assertEqual(r.attributes, {"h": "return", "a": "yyy"})
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
 
 
 class UpdateItem(_Operation,
@@ -511,13 +531,17 @@ class UpdateItem(_Operation,
         def __init__(
             self,
             Attributes=None,
+            ConsumedCapacity=None,
+            ItemCollectionMetrics=None,
             **dummy
         ):
             # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_ResponseElements
             # - Attributes: done
-            # - ConsumedCapacity: @todo
-            # - ItemCollectionMetrics: @todo
+            # - ConsumedCapacity: done
+            # - ItemCollectionMetrics: done
             self.attributes = None if Attributes is None else _convert_db_to_dict(Attributes)
+            self.consumed_capacity = None if ConsumedCapacity is None else _rtyp.ConsumedCapacity(**ConsumedCapacity)
+            self.item_collection_metrics = None if ItemCollectionMetrics is None else _rtyp.ItemCollectionMetrics(**ItemCollectionMetrics)
 
     def __init__(self, table_name, key):
         super(UpdateItem, self).__init__("UpdateItem")
@@ -778,6 +802,8 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
         with cover("r", r) as r:
             self.assertEqual(r.attributes, None)
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
 
         self.assertEqual(
             self.connection.request(GetItem("Aaa", {"h": "set"})).item,
@@ -828,6 +854,8 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
                     "g": set([39, 40]),
                 }
             )
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
 
     def testConditionExpression(self):
         self.connection.request(PutItem("Aaa", {"h": "expr", "a": 42, "b": 42}))
@@ -845,6 +873,8 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
                 r.attributes,
                 {"h": "expr", "a": 42, "b": 42, "checked": True}
             )
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
 
 
 if __name__ == "__main__":

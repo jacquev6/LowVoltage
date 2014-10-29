@@ -26,14 +26,16 @@ class BatchGetItem(_Operation,
     class Result(object):
         def __init__(
             self,
+            ConsumedCapacity=None,
             Responses=None,
             UnprocessedKeys=None,
             **dummy
         ):
             # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_ResponseElements
-            # - ConsumedCapacity: @todo
+            # - ConsumedCapacity: done
             # - Responses: done
             # - UnprocessedKeys: @todo
+            self.consumed_capacity = None if ConsumedCapacity is None else _rtyp.ConsumedCapacity(**ConsumedCapacity)
             self.responses = None if Responses is None else {t: [_convert_db_to_dict(v) for v in vs] for t, vs in Responses.iteritems()}
             self.unprocessed_keys = UnprocessedKeys
 
@@ -193,6 +195,7 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         r = self.connection.request(BatchGetItem().table("Aaa").keys({"h": "1"}, {"h": "2"}, {"h": "3"}))
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.responses.keys(), ["Aaa"])
             self.assertEqual(
                 sorted(r.responses["Aaa"], key=lambda i: i["h"]),
@@ -210,6 +213,7 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.responses.keys(), ["Aaa"])
             self.assertEqual(
                 sorted(r.responses["Aaa"], key=lambda i: i["h"]),
@@ -224,13 +228,17 @@ class BatchWriteItem(_Operation,
     class Result(object):
         def __init__(
             self,
+            ConsumedCapacity=None,
+            ItemCollectionMetrics=None,
             UnprocessedItems=None,
             **dummy
         ):
             # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_ResponseElements
-            # - ConsumedCapacity: @todo
-            # - ItemCollectionMetrics: @todo
+            # - ConsumedCapacity: done
+            # - ItemCollectionMetrics: done
             # - UnprocessedItems: @todo
+            self.consumed_capacity = None if ConsumedCapacity is None else _rtyp.ConsumedCapacity(**ConsumedCapacity)
+            self.item_collection_metrics = None if ItemCollectionMetrics is None else _rtyp.ItemCollectionMetrics(**ItemCollectionMetrics)
             self.unprocessed_items = UnprocessedItems
 
     def __init__(self):
@@ -357,6 +365,8 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
             self.assertEqual(r.unprocessed_items, {})
 
         self.assertEqual(
@@ -372,6 +382,8 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         r = self.connection.request(BatchWriteItem().table("Aaa").delete({"h": "1"}, {"h": "2"}, {"h": "3"}))
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics, None)
             self.assertEqual(r.unprocessed_items, {})
 
         self.assertEqual(
@@ -395,11 +407,12 @@ class Query(_Operation,
             **dummy
         ):
             # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_ResponseElements
-            # - ConsumedCapacity: @todo
+            # - ConsumedCapacity: done
             # - Count: done
             # - Items: done
             # - LastEvaluatedKey: done
             # - ScannedCount: done
+            self.consumed_capacity = None if ConsumedCapacity is None else _rtyp.ConsumedCapacity(**ConsumedCapacity)
             self.count = None if Count is None else long(Count)
             self.items = None if Items is None else [_convert_db_to_dict(i) for i in Items]
             self.last_evaluated_key = None if LastEvaluatedKey is None else _convert_db_to_dict(LastEvaluatedKey)
@@ -669,6 +682,7 @@ class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
             self.assertEqual(r.items[0], {"h": "1", "r": 42, "v": 2})
             self.assertEqual(r.last_evaluated_key, None)
@@ -686,6 +700,7 @@ class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
             self.assertEqual(r.items[0], {"r": 44, "v": 3})
             self.assertEqual(r.last_evaluated_key, {"h": "0", "r": 43})
@@ -707,11 +722,12 @@ class Scan(_Operation,
             **dummy
         ):
             # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements
-            # - ConsumedCapacity: @todo
+            # - ConsumedCapacity: done
             # - Count: done
             # - Items: done
             # - LastEvaluatedKey: done
             # - ScannedCount: done
+            self.consumed_capacity = None if ConsumedCapacity is None else _rtyp.ConsumedCapacity(**ConsumedCapacity)
             self.count = None if Count is None else long(Count)
             self.items = None if Items is None else [_convert_db_to_dict(i) for i in Items]
             self.last_evaluated_key = None if LastEvaluatedKey is None else _convert_db_to_dict(LastEvaluatedKey)
@@ -849,6 +865,7 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 4)
             items = sorted((r.items[i] for i in range(4)), key=lambda i: i["h"])
             self.assertEqual(items, [{"h": "0", "v": 0}, {"h": "1", "v": 1}, {"h": "2", "v": 2}, {"h": "3", "v": 3}])
@@ -871,24 +888,28 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         with cover("r01", r01) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
             self.assertEqual(r.items[0], {"h": "1", "v": 1})
             self.assertEqual(r.last_evaluated_key, {"h": "1"})
             self.assertEqual(r.scanned_count, 1)
 
         with cover("r02", r02) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
             self.assertEqual(r.items[0], {"h": "3", "v": 3})
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 1)
 
         with cover("r11", r11) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
             self.assertEqual(r.items[0], {"h": "0", "v": 0})
             self.assertEqual(r.last_evaluated_key, {"h": "0"})
             self.assertEqual(r.scanned_count, 1)
 
         with cover("r12", r12) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
             self.assertEqual(r.items[0], {"h": "2", "v": 2})
             self.assertEqual(r.last_evaluated_key, None)
@@ -900,6 +921,7 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         with cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 2)
             self.assertEqual(r.items[0], {"h": "3"})
             self.assertEqual(r.items[1], {"h": "2"})
