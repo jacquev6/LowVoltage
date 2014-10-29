@@ -376,30 +376,105 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
 
-# http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_RequestParameters
-# - KeyConditions: @todo
-# - TableName: @todo
-# - AttributesToGet: deprecated
-# - ConditionalOperator: deprecated
-# - ConsistentRead: @todo
-# - ExclusiveStartKey: @todo
-# - ExpressionAttributeNames: @todo
-# - ExpressionAttributeValues: @todo
-# - FilterExpression: @todo
-# - IndexName: @todo
-# - Limit: @todo
-# - ProjectionExpression: @todo
-# - QueryFilter: deprecated
-# - ReturnConsumedCapacity: @todo
-# - ScanIndexForward: @todo
-# - Select: @todo
+class Query(_Operation):
+    class Result(object):
+        def __init__(
+            self,
+            ConsumedCapacity=None,
+            Count=None,
+            Items=None,
+            LastEvaluatedKey=None,
+            ScannedCount=None,
+            **dummy
+        ):
+            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_ResponseElements
+            # - ConsumedCapacity: @todo
+            # - Count: done
+            # - Items: done
+            # - LastEvaluatedKey: done
+            # - ScannedCount: done
+            self.count = None if Count is None else long(Count)
+            self.items = None if Items is None else [_convert_db_to_dict(i) for i in Items]
+            self.last_evaluated_key = None if LastEvaluatedKey is None else _convert_db_to_dict(LastEvaluatedKey)
+            self.scanned_count = None if ScannedCount is None else long(ScannedCount)
 
-# http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_ResponseElements
-# - ConsumedCapacity: @todo
-# - Count: @todo
-# - Items: @todo
-# - LastEvaluatedKey: @todo
-# - ScannedCount: @todo
+    def __init__(self, table_name):
+        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_RequestParameters
+        # - KeyConditions: @todo
+        # - TableName: done
+        # - AttributesToGet: deprecated
+        # - ConditionalOperator: deprecated
+        # - ConsistentRead: @todo
+        # - ExclusiveStartKey: @todo
+        # - ExpressionAttributeNames: @todo
+        # - ExpressionAttributeValues: @todo
+        # - FilterExpression: @todo
+        # - IndexName: @todo
+        # - Limit: @todo
+        # - ProjectionExpression: @todo
+        # - QueryFilter: deprecated
+        # - ReturnConsumedCapacity: @todo
+        # - ScanIndexForward: @todo
+        # - Select: @todo
+        super(Query, self).__init__("Query")
+        self.__table_name = table_name
+        self.__conditions = {}
+
+    def build(self):
+        data = {"TableName": self.__table_name}
+        if self.__conditions:
+            data["KeyConditions"] = self.__conditions
+        return data
+
+    def key_eq(self, name, value):
+        self.__conditions[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [_convert_value_to_db(value)]}
+        return self
+
+
+class QueryUnitTests(unittest.TestCase):
+    def testName(self):
+        self.assertEqual(Query("Aaa").name, "Query")
+
+    def testTableName(self):
+        self.assertEqual(Query("Aaa").build(), {"TableName": "Aaa"})
+
+    def testKeyEq(self):
+        self.assertEqual(
+            Query("Aaa").key_eq("name", 42).build(),
+            {
+                "TableName": "Aaa",
+                "KeyConditions": {"name": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+
+class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+    def setUp(self):
+        self.connection.request(
+            LowVoltage.operations.admin_operations.CreateTable("Aaa")
+                .hash_key("h", _atyp.STRING)
+                .range_key("r", _atyp.NUMBER)
+                .provisioned_throughput(1, 2)
+        )
+
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 41, "v": 0}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 44, "v": 1}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "r": 42, "v": 2}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "r": 42, "v": 3}))
+
+    def tearDown(self):
+        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+
+    def testSimpleQuery(self):
+        r = self.connection.request(
+            Query("Aaa").key_eq("h", "1")
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(r.count, 1)
+            self.assertEqual(r.items[0], {"h": "1", "r": 42, "v": 2})
+            self.assertEqual(r.last_evaluated_key, None)
+            self.assertEqual(r.scanned_count, 1)
 
 
 class Scan(_Operation, ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin, ReturnConsumedCapacityMixin):

@@ -37,6 +37,7 @@ from LowVoltage.operations.batch_operations import (
     BatchGetItemUnitTests, BatchGetItemIntegTests,
     BatchWriteItemUnitTests, BatchWriteItemIntegTests,
     ScanUnitTests, ScanIntegTests,
+    QueryUnitTests, QueryIntegTests,
 )
 
 from LowVoltage.tests.exploration import *
