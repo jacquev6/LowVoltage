@@ -401,6 +401,7 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 # - LastEvaluatedKey: @todo
 # - ScannedCount: @todo
 
+
 class Scan(_Operation, ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin, ReturnConsumedCapacityMixin):
     class Result(object):
         def __init__(
@@ -599,6 +600,18 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.items[0], {"h": "2", "v": 2})
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 1)
+
+    def testFilteredScan(self):
+        r = self.connection.request(
+            Scan("Aaa").filter_expression("v>:v").expression_attribute_value("v", 1).project("h")
+        )
+
+        with cover("r", r) as r:
+            self.assertEqual(r.count, 2)
+            self.assertEqual(r.items[0], {"h": "3"})
+            self.assertEqual(r.items[1], {"h": "2"})
+            self.assertEqual(r.last_evaluated_key, None)
+            self.assertEqual(r.scanned_count, 4)
 
 
 if __name__ == "__main__":
