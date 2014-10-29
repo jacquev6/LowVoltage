@@ -20,7 +20,9 @@ import LowVoltage.exceptions as _exn
 from LowVoltage.tests.cover import cover
 
 
-class BatchGetItem(_Operation, ReturnConsumedCapacityMixin):
+class BatchGetItem(_Operation,
+    ReturnConsumedCapacityMixin,
+):
     class Result(object):
         def __init__(
             self,
@@ -216,7 +218,9 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.unprocessed_keys, {})
 
 
-class BatchWriteItem(_Operation, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin):
+class BatchWriteItem(_Operation,
+    ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
+):
     class Result(object):
         def __init__(
             self,
@@ -376,7 +380,10 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
 
-class Query(_Operation):
+class Query(_Operation,
+    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin,
+    ReturnConsumedCapacityMixin,
+):
     class Result(object):
         def __init__(
             self,
@@ -400,34 +407,130 @@ class Query(_Operation):
 
     def __init__(self, table_name):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_RequestParameters
-        # - KeyConditions: @todo
+        # - KeyConditions: done
         # - TableName: done
         # - AttributesToGet: deprecated
         # - ConditionalOperator: deprecated
-        # - ConsistentRead: @todo
-        # - ExclusiveStartKey: @todo
-        # - ExpressionAttributeNames: @todo
-        # - ExpressionAttributeValues: @todo
-        # - FilterExpression: @todo
-        # - IndexName: @todo
-        # - Limit: @todo
-        # - ProjectionExpression: @todo
+        # - ConsistentRead: done
+        # - ExclusiveStartKey: done
+        # - ExpressionAttributeNames: done
+        # - ExpressionAttributeValues: done
+        # - FilterExpression: done
+        # - IndexName: done
+        # - Limit: done
+        # - ProjectionExpression: done
         # - QueryFilter: deprecated
-        # - ReturnConsumedCapacity: @todo
-        # - ScanIndexForward: @todo
-        # - Select: @todo
+        # - ReturnConsumedCapacity: done
+        # - ScanIndexForward: done
+        # - Select: done
         super(Query, self).__init__("Query")
+        ExpressionAttributeNamesMixin.__init__(self)
+        ExpressionAttributeValuesMixin.__init__(self)
+        ProjectionExpressionMixin.__init__(self)
+        ReturnConsumedCapacityMixin.__init__(self)
+        FilterExpressionMixin.__init__(self)
         self.__table_name = table_name
         self.__conditions = {}
+        self.__exclusive_start_key = None
+        self.__limit = None
+        self.__select = None
+        self.__consistent_read = None
+        self.__index_name = None
+        self.__scan_index_forward = None
 
     def build(self):
         data = {"TableName": self.__table_name}
+        data.update(self._build_expression_attribute_names())
+        data.update(self._build_expression_attribute_values())
+        data.update(self._build_projection_expression())
+        data.update(self._build_return_consumed_capacity())
+        data.update(self._build_filter_expression())
         if self.__conditions:
             data["KeyConditions"] = self.__conditions
+        if self.__exclusive_start_key:
+            data["ExclusiveStartKey"] = _convert_dict_to_db(self.__exclusive_start_key)
+        if self.__limit:
+            data["Limit"] = self.__limit
+        if self.__select:
+            data["Select"] = self.__select
+        if self.__consistent_read is not None:
+            data["ConsistentRead"] = self.__consistent_read
+        if self.__index_name:
+            data["IndexName"] = self.__index_name
+        if self.__scan_index_forward is not None:
+            data["ScanIndexForward"] = self.__scan_index_forward
         return data
 
     def key_eq(self, name, value):
         self.__conditions[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [_convert_value_to_db(value)]}
+        return self
+
+    def key_le(self, name, value):
+        self.__conditions[name] = {"ComparisonOperator": "LE", "AttributeValueList": [_convert_value_to_db(value)]}
+        return self
+
+    def key_lt(self, name, value):
+        self.__conditions[name] = {"ComparisonOperator": "LT", "AttributeValueList": [_convert_value_to_db(value)]}
+        return self
+
+    def key_ge(self, name, value):
+        self.__conditions[name] = {"ComparisonOperator": "GE", "AttributeValueList": [_convert_value_to_db(value)]}
+        return self
+
+    def key_gt(self, name, value):
+        self.__conditions[name] = {"ComparisonOperator": "GT", "AttributeValueList": [_convert_value_to_db(value)]}
+        return self
+
+    def key_begins_with(self, name, value):
+        self.__conditions[name] = {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [_convert_value_to_db(value)]}
+        return self
+
+    def key_between(self, name, lo, hi):
+        self.__conditions[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [_convert_value_to_db(lo), _convert_value_to_db(hi)]}
+        return self
+
+    def exclusive_start_key(self, key):
+        self.__exclusive_start_key = key
+        return self
+
+    def limit(self, limit):
+        self.__limit = limit
+        return self
+
+    def select_count(self):
+        self.__select = "COUNT"
+        return self
+
+    def select_all_attributes(self):
+        self.__select = "ALL_ATTRIBUTES"
+        return self
+
+    def select_all_projected_attributes(self):
+        self.__select = "ALL_PROJECTED_ATTRIBUTES"
+        return self
+
+    def select_specific_attributes(self):
+        self.__select = "SPECIFIC_ATTRIBUTES"
+        return self
+
+    def consistent_read_true(self):
+        self.__consistent_read = True
+        return self
+
+    def consistent_read_false(self):
+        self.__consistent_read = False
+        return self
+
+    def index_name(self, name):
+        self.__index_name = name
+        return self
+
+    def scan_index_forward_true(self):
+        self.__scan_index_forward = True
+        return self
+
+    def scan_index_forward_false(self):
+        self.__scan_index_forward = False
         return self
 
 
@@ -447,6 +550,98 @@ class QueryUnitTests(unittest.TestCase):
             }
         )
 
+    def testKeyLe(self):
+        self.assertEqual(
+            Query("Aaa").key_le("name", 42).build(),
+            {
+                "TableName": "Aaa",
+                "KeyConditions": {"name": {"ComparisonOperator": "LE", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testKeyLt(self):
+        self.assertEqual(
+            Query("Aaa").key_lt("name", 42).build(),
+            {
+                "TableName": "Aaa",
+                "KeyConditions": {"name": {"ComparisonOperator": "LT", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testKeyGe(self):
+        self.assertEqual(
+            Query("Aaa").key_ge("name", 42).build(),
+            {
+                "TableName": "Aaa",
+                "KeyConditions": {"name": {"ComparisonOperator": "GE", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testKeyGt(self):
+        self.assertEqual(
+            Query("Aaa").key_gt("name", 42).build(),
+            {
+                "TableName": "Aaa",
+                "KeyConditions": {"name": {"ComparisonOperator": "GT", "AttributeValueList": [{"N": "42"}]}},
+            }
+        )
+
+    def testKeyBeginsWith(self):
+        self.assertEqual(
+            Query("Aaa").key_begins_with("name", "prefix").build(),
+            {
+                "TableName": "Aaa",
+                "KeyConditions": {"name": {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [{"S": "prefix"}]}},
+            }
+        )
+
+    def testKeyBetween(self):
+        self.assertEqual(
+            Query("Aaa").key_between("name", 42, 44).build(),
+            {
+                "TableName": "Aaa",
+                "KeyConditions": {"name": {"ComparisonOperator": "BETWEEN", "AttributeValueList": [{"N": "42"}, {"N": "44"}]}},
+            }
+        )
+
+    def testExclusiveStartKey(self):
+        self.assertEqual(Query("Aaa").exclusive_start_key({"h": "v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
+
+    def testLimit(self):
+        self.assertEqual(Query("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
+
+    def testSelect(self):
+        self.assertEqual(Query("Aaa").select_all_attributes().build(), {"TableName": "Aaa", "Select": "ALL_ATTRIBUTES"})
+        self.assertEqual(Query("Aaa").select_all_projected_attributes().build(), {"TableName": "Aaa", "Select": "ALL_PROJECTED_ATTRIBUTES"})
+        self.assertEqual(Query("Aaa").select_count().build(), {"TableName": "Aaa", "Select": "COUNT"})
+        self.assertEqual(Query("Aaa").select_specific_attributes().build(), {"TableName": "Aaa", "Select": "SPECIFIC_ATTRIBUTES"})
+
+    def testExpressionAttributeName(self):
+        self.assertEqual(Query("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
+
+    def testExpressionAttributeValue(self):
+        self.assertEqual(Query("Aaa").expression_attribute_value("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
+
+    def testProject(self):
+        self.assertEqual(Query("Aaa").project("a").build(), {"TableName": "Aaa", "ProjectionExpression": "a"})
+
+    def testReturnConsumedCapacityNone(self):
+        self.assertEqual(Query("Aaa").return_consumed_capacity_none().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "NONE"})
+
+    def testFilterExpression(self):
+        self.assertEqual(Query("Aaa").filter_expression("a=b").build(), {"TableName": "Aaa", "FilterExpression": "a=b"})
+
+    def testConsistentRead(self):
+        self.assertEqual(Query("Aaa").consistent_read_true().build(), {"TableName": "Aaa", "ConsistentRead": True})
+        self.assertEqual(Query("Aaa").consistent_read_false().build(), {"TableName": "Aaa", "ConsistentRead": False})
+
+    def testIndexName(self):
+        self.assertEqual(Query("Aaa").index_name("foo").build(), {"TableName": "Aaa", "IndexName": "foo"})
+
+    def testScanIndexForward(self):
+        self.assertEqual(Query("Aaa").scan_index_forward_true().build(), {"TableName": "Aaa", "ScanIndexForward": True})
+        self.assertEqual(Query("Aaa").scan_index_forward_false().build(), {"TableName": "Aaa", "ScanIndexForward": False})
+
 
 class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
@@ -458,7 +653,10 @@ class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 41, "v": 0}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 44, "v": 1}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 42, "v": 1}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 43, "v": 2}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 44, "v": 3}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 45, "v": 4}))
         self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "r": 42, "v": 2}))
         self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "r": 42, "v": 3}))
 
@@ -476,8 +674,28 @@ class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 1)
 
+    def testComplexQuery(self):
+        r = self.connection.request(
+            Query("Aaa").key_eq("h", "0").key_between("r", 42, 44)
+                .scan_index_forward_false()
+                .project("r", "v")
+                .filter_expression("#p<>:v")
+                .expression_attribute_name("p", "v")
+                .expression_attribute_value("v", 2)
+                .limit(2)
+        )
 
-class Scan(_Operation, ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin, ReturnConsumedCapacityMixin):
+        with cover("r", r) as r:
+            self.assertEqual(r.count, 1)
+            self.assertEqual(r.items[0], {"r": 44, "v": 3})
+            self.assertEqual(r.last_evaluated_key, {"h": "0", "r": 43})
+            self.assertEqual(r.scanned_count, 2)
+
+
+class Scan(_Operation,
+    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin,
+    ReturnConsumedCapacityMixin,
+):
     class Result(object):
         def __init__(
             self,
