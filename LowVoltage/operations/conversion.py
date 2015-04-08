@@ -56,7 +56,7 @@ def _convert_db_to_value(value):
     if "S" in value:
         return value["S"]
     elif "B" in value:
-        return bytes(base64.b64decode(value["B"]))
+        return bytes(base64.b64decode(value["B"].encode("utf8")))
     elif "BOOL" in value:
         return value["BOOL"]
     elif "N" in value:
@@ -68,7 +68,7 @@ def _convert_db_to_value(value):
     elif "SS" in value:
         return set(value["SS"])
     elif "BS" in value:
-        return set(bytes(base64.b64decode(v)) for v in value["BS"])
+        return set(bytes(base64.b64decode(v.encode("utf8"))) for v in value["BS"])
     elif "L" in value:
         return [_convert_db_to_value(v) for v in value["L"]]
     elif "M" in value:
