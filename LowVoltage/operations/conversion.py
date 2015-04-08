@@ -15,16 +15,10 @@ def _convert_dict_to_db(attributes):
     }
 
 
-if sys.hexversion < 0x03000000:
-    BINARY_TYPE = str
-else:
-    BINARY_TYPE = bytes
-
-
 def _convert_value_to_db(value):
     if isinstance(value, unicode):
         return {"S": value}
-    elif isinstance(value, BINARY_TYPE):
+    elif isinstance(value, bytes):
         return {"B": base64.b64encode(value).decode("utf8")}
     elif isinstance(value, bool):
         return {"BOOL": value}
@@ -39,7 +33,7 @@ def _convert_value_to_db(value):
             return {"NS": [str(n) for n in value]}
         elif all(isinstance(v, unicode) for v in value):
             return {"SS": [s for s in value]}
-        elif all(isinstance(v, BINARY_TYPE) for v in value):
+        elif all(isinstance(v, bytes) for v in value):
             return {"BS": [base64.b64encode(b).decode("utf8") for b in value]}
         else:
             raise TypeError
