@@ -2,7 +2,9 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
+import base64
 import numbers
+import sys
 import unittest
 
 
@@ -13,9 +15,17 @@ def _convert_dict_to_db(attributes):
     }
 
 
+if sys.hexversion < 0x03000000:
+    BINARY_TYPE = str
+else:
+    BINARY_TYPE = bytes
+
+
 def _convert_value_to_db(value):
-    if isinstance(value, basestring):
+    if isinstance(value, unicode):
         return {"S": value}
+    elif isinstance(value, BINARY_TYPE):
+        return {"B": base64.b64encode(value).decode("utf8")}
     elif isinstance(value, bool):
         return {"BOOL": value}
     elif isinstance(value, numbers.Integral):
@@ -27,8 +37,10 @@ def _convert_value_to_db(value):
             raise TypeError
         elif all(isinstance(v, numbers.Integral) for v in value):
             return {"NS": [str(n) for n in value]}
-        elif all(isinstance(v, basestring) for v in value):
-            return {"SS": list(value)}
+        elif all(isinstance(v, unicode) for v in value):
+            return {"SS": [s for s in value]}
+        elif all(isinstance(v, BINARY_TYPE) for v in value):
+            return {"BS": [base64.b64encode(b).decode("utf8") for b in value]}
         else:
             raise TypeError
     elif isinstance(value, list):
@@ -49,6 +61,8 @@ def _convert_db_to_dict(attributes):
 def _convert_db_to_value(value):
     if "S" in value:
         return value["S"]
+    elif "B" in value:
+        return bytes(base64.b64decode(value["B"]))
     elif "BOOL" in value:
         return value["BOOL"]
     elif "N" in value:
@@ -58,7 +72,9 @@ def _convert_db_to_value(value):
     elif "NS" in value:
         return set(int(v) for v in value["NS"])
     elif "SS" in value:
-        return set(v for v in value["SS"])
+        return set(value["SS"])
+    elif "BS" in value:
+        return set(bytes(base64.b64decode(v)) for v in value["BS"])
     elif "L" in value:
         return [_convert_db_to_value(v) for v in value["L"]]
     elif "M" in value:
@@ -69,14 +85,16 @@ def _convert_db_to_value(value):
 
 class ConversionUnitTests(unittest.TestCase):
     def testConvertValueToDb(self):
-        self.assertEqual(_convert_value_to_db("foo"), {"S": "foo"})
+        self.assertEqual(_convert_value_to_db(u"éoà"), {"S": u"éoà"})
+        self.assertEqual(_convert_value_to_db(b"\xFF\x00\xAB"), {"B": u"/wCr"})
         self.assertEqual(_convert_value_to_db(True), {"BOOL": True})
         self.assertEqual(_convert_value_to_db(False), {"BOOL": False})
         self.assertEqual(_convert_value_to_db(42), {"N": "42"})
         self.assertEqual(_convert_value_to_db(None), {"NULL": True})
         self.assertIn(_convert_value_to_db(set([42, 43])), [{"NS": ["42", "43"]}, {"NS": ["43", "42"]}])
         self.assertIn(_convert_value_to_db(frozenset([42, 43])), [{"NS": ["42", "43"]}, {"NS": ["43", "42"]}])
-        self.assertIn(_convert_value_to_db(set(["foo", "bar"])), [{"SS": ["foo", "bar"]}, {"SS": ["bar", "foo"]}])
+        self.assertIn(_convert_value_to_db(set([u"éoà", u"bar"])), [{"SS": [u"éoà", u"bar"]}, {"SS": [u"bar", u"éoà"]}])
+        self.assertIn(_convert_value_to_db(set([b"\xFF\x00\xAB", b"bar"])), [{"BS": [u"/wCr", u"YmFy"]}, {"BS": [u"YmFy", u"/wCr"]}])
         self.assertEqual(_convert_value_to_db([True, 42]), {"L": [{"BOOL": True}, {"N": "42"}]})
         self.assertEqual(_convert_value_to_db({"a": True, "b": 42}), {"M": {"a": {"BOOL": True}, "b": {"N": "42"}}})
         with self.assertRaises(TypeError):
@@ -89,13 +107,15 @@ class ConversionUnitTests(unittest.TestCase):
             _convert_value_to_db((1, 2))
 
     def testConvertDbToValue(self):
-        self.assertEqual(_convert_db_to_value({"S": "foo"}), "foo")
+        self.assertEqual(_convert_db_to_value({"S": u"éoà"}), u"éoà")
+        self.assertEqual(_convert_db_to_value({"B": u"/wCr"}), b"\xFF\x00\xAB")
         self.assertEqual(_convert_db_to_value({"BOOL": True}), True)
         self.assertEqual(_convert_db_to_value({"BOOL": False}), False)
         self.assertEqual(_convert_db_to_value({"N": "42"}), 42)
         self.assertEqual(_convert_db_to_value({"NULL": True}), None)
         self.assertEqual(_convert_db_to_value({"NS": ["42", "43"]}), set([42, 43]))
-        self.assertEqual(_convert_db_to_value({"SS": ["foo", "bar"]}), set(["foo", "bar"]))
+        self.assertEqual(_convert_db_to_value({"SS": [u"éoà", u"bar"]}), set([u"éoà", u"bar"]))
+        self.assertEqual(_convert_db_to_value({"BS": [u"/wCr", u"YmFy"]}), set([b"\xFF\x00\xAB", b"bar"]))
         self.assertEqual(_convert_db_to_value({"L": [{"BOOL": True}, {"N": "42"}]}), [True, 42])
         self.assertEqual(_convert_db_to_value({"M": {"a": {"BOOL": True}, "b": {"N": "42"}}}), {"a": True, "b": 42})
         with self.assertRaises(TypeError):

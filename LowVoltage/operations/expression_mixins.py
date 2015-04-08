@@ -35,13 +35,13 @@ class ExpressionAttributeValuesMixinUnitTests(unittest.TestCase):
     def testValues(self):
         self.assertEqual(
             ExpressionAttributeValuesMixin()
-                .expression_attribute_value("n1", "v1")
-                .expression_attribute_value("n2", "v2")
+                .expression_attribute_value("n1", u"v1")
+                .expression_attribute_value("n2", 42)
                 ._build_expression_attribute_values(),
             {
                 "ExpressionAttributeValues": {
                     ":n1": {"S": "v1"},
-                    ":n2": {"S": "v2"},
+                    ":n2": {"N": "42"},
                 },
             }
         )

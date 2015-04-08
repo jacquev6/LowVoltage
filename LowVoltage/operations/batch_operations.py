@@ -118,7 +118,7 @@ class BatchGetItemUnitTests(unittest.TestCase):
 
     def testKeys(self):
         self.assertEqual(
-            BatchGetItem().table("Table2").keys({"hash": "h21"}).table("Table1").keys({"hash": "h11"}, {"hash": "h12"}).table("Table2").keys([{"hash": "h22"}, {"hash": "h23"}]).build(),
+            BatchGetItem().table("Table2").keys({"hash": u"h21"}).table("Table1").keys({"hash": u"h11"}, {"hash": u"h12"}).table("Table2").keys([{"hash": u"h22"}, {"hash": u"h23"}]).build(),
             {
                 "RequestItems": {
                     "Table1": {
@@ -188,28 +188,28 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
 
     def testSimpleBatchGet(self):
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "a": "xxx"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "a": "yyy"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "3", "a": "zzz"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "a": "yyy"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"3", "a": "zzz"}))
 
-        r = self.connection.request(BatchGetItem().table("Aaa").keys({"h": "1"}, {"h": "2"}, {"h": "3"}))
+        r = self.connection.request(BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
         with cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.responses.keys(), ["Aaa"])
             self.assertEqual(
                 sorted(r.responses["Aaa"], key=lambda i: i["h"]),
-                [{"h": "1", "a": "xxx"}, {"h": "2", "a": "yyy"}, {"h": "3", "a": "zzz"}]
+                [{"h": u"1", "a": "xxx"}, {"h": u"2", "a": "yyy"}, {"h": u"3", "a": "zzz"}]
             )
             self.assertEqual(r.unprocessed_keys, {})
 
     def testBatchGetWithProjections(self):
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "a": "a1", "b": "b1", "c": "c1"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "a": "a2", "b": "b2", "c": "c2"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "3", "a": "a3", "b": "b3", "c": "c3"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "a": "a1", "b": "b1", "c": "c1"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "a": "a2", "b": "b2", "c": "c2"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"3", "a": "a3", "b": "b3", "c": "c3"}))
 
         r = self.connection.request(
-            BatchGetItem().table("Aaa").keys({"h": "1"}, {"h": "2"}, {"h": "3"}).expression_attribute_name("p", "b").project("h").project("a", ["#p"])
+            BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}).expression_attribute_name("p", "b").project("h").project("a", ["#p"])
         )
 
         with cover("r", r) as r:
@@ -217,7 +217,7 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.responses.keys(), ["Aaa"])
             self.assertEqual(
                 sorted(r.responses["Aaa"], key=lambda i: i["h"]),
-                [{"h": "1", "a": "a1", "b": "b1"}, {"h": "2", "a": "a2", "b": "b2"}, {"h": "3", "a": "a3", "b": "b3"}]
+                [{"h": u"1", "a": "a1", "b": "b1"}, {"h": u"2", "a": "a2", "b": "b2"}, {"h": u"3", "a": "a3", "b": "b3"}]
             )
             self.assertEqual(r.unprocessed_keys, {})
 
@@ -324,7 +324,7 @@ class BatchWriteItemUnitTests(unittest.TestCase):
 
     def testDelete(self):
         self.assertEqual(
-            BatchWriteItem().table("Table").delete({"hash": "h1"}).table("Table").delete([{"hash": "h2"}]).build(),
+            BatchWriteItem().table("Table").delete({"hash": u"h1"}).table("Table").delete([{"hash": u"h2"}]).build(),
             {
                 "RequestItems": {
                     "Table": [
@@ -337,7 +337,7 @@ class BatchWriteItemUnitTests(unittest.TestCase):
 
     def testPut(self):
         self.assertEqual(
-            BatchWriteItem().table("Table").put({"hash": "h1"}, [{"hash": "h2"}]).build(),
+            BatchWriteItem().table("Table").put({"hash": u"h1"}, [{"hash": u"h2"}]).build(),
             {
                 "RequestItems": {
                     "Table": [
@@ -361,7 +361,7 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def testSimpleBatchPut(self):
         r = self.connection.request(
             BatchWriteItem().table("Aaa")
-                .put({"h": "1", "a": "xxx"}, {"h": "2", "a": "yyy"}, {"h": "3", "a": "zzz"})
+                .put({"h": u"1", "a": "xxx"}, {"h": u"2", "a": "yyy"}, {"h": u"3", "a": "zzz"})
         )
 
         with cover("r", r) as r:
@@ -370,16 +370,16 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.unprocessed_items, {})
 
         self.assertEqual(
-            self.connection.request(LowVoltage.operations.item_operations.GetItem("Aaa", {"h": "1"})).item,
+            self.connection.request(LowVoltage.operations.item_operations.GetItem("Aaa", {"h": u"1"})).item,
             {"h": "1", "a": "xxx"}
         )
 
     def testSimpleBatchDelete(self):
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "a": "xxx"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "a": "yyy"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "3", "a": "zzz"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "a": "yyy"}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"3", "a": "zzz"}))
 
-        r = self.connection.request(BatchWriteItem().table("Aaa").delete({"h": "1"}, {"h": "2"}, {"h": "3"}))
+        r = self.connection.request(BatchWriteItem().table("Aaa").delete({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
         with cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
@@ -387,7 +387,7 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.unprocessed_items, {})
 
         self.assertEqual(
-            self.connection.request(LowVoltage.operations.item_operations.GetItem("Aaa", {"h": "1"})).item,
+            self.connection.request(LowVoltage.operations.item_operations.GetItem("Aaa", {"h": u"1"})).item,
             None
         )
 
@@ -601,7 +601,7 @@ class QueryUnitTests(unittest.TestCase):
 
     def testKeyBeginsWith(self):
         self.assertEqual(
-            Query("Aaa").key_begins_with("name", "prefix").build(),
+            Query("Aaa").key_begins_with("name", u"prefix").build(),
             {
                 "TableName": "Aaa",
                 "KeyConditions": {"name": {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [{"S": "prefix"}]}},
@@ -618,7 +618,7 @@ class QueryUnitTests(unittest.TestCase):
         )
 
     def testExclusiveStartKey(self):
-        self.assertEqual(Query("Aaa").exclusive_start_key({"h": "v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
+        self.assertEqual(Query("Aaa").exclusive_start_key({"h": u"v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
 
     def testLimit(self):
         self.assertEqual(Query("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
@@ -633,7 +633,7 @@ class QueryUnitTests(unittest.TestCase):
         self.assertEqual(Query("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
 
     def testExpressionAttributeValue(self):
-        self.assertEqual(Query("Aaa").expression_attribute_value("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
+        self.assertEqual(Query("Aaa").expression_attribute_value("n", u"p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
 
     def testProject(self):
         self.assertEqual(Query("Aaa").project("a").build(), {"TableName": "Aaa", "ProjectionExpression": "a"})
@@ -665,20 +665,20 @@ class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
                 .provisioned_throughput(1, 2)
         )
 
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 41, "v": 0}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 42, "v": 1}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 43, "v": 2}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 44, "v": 3}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "r": 45, "v": 4}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "r": 42, "v": 2}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "r": 42, "v": 3}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 41, "v": 0}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 42, "v": 1}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 43, "v": 2}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 44, "v": 3}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 45, "v": 4}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "r": 42, "v": 2}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "r": 42, "v": 3}))
 
     def tearDown(self):
         self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
 
     def testSimpleQuery(self):
         r = self.connection.request(
-            Query("Aaa").key_eq("h", "1")
+            Query("Aaa").key_eq("h", u"1")
         )
 
         with cover("r", r) as r:
@@ -690,7 +690,7 @@ class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
     def testComplexQuery(self):
         r = self.connection.request(
-            Query("Aaa").key_eq("h", "0").key_between("r", 42, 44)
+            Query("Aaa").key_eq("h", u"0").key_between("r", 42, 44)
                 .scan_index_forward_false()
                 .project("r", "v")
                 .filter_expression("#p<>:v")
@@ -703,7 +703,7 @@ class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
             self.assertEqual(r.items[0], {"r": 44, "v": 3})
-            self.assertEqual(r.last_evaluated_key, {"h": "0", "r": 43})
+            self.assertEqual(r.last_evaluated_key, {"h": u"0", "r": 43})
             self.assertEqual(r.scanned_count, 2)
 
 
@@ -819,7 +819,7 @@ class ScanUnitTests(unittest.TestCase):
         self.assertEqual(Scan("Aaa").segment(1, 2).build(), {"TableName": "Aaa", "Segment": 1, "TotalSegments": 2})
 
     def testExclusiveStartKey(self):
-        self.assertEqual(Scan("Aaa").exclusive_start_key({"h": "v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
+        self.assertEqual(Scan("Aaa").exclusive_start_key({"h": u"v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
 
     def testLimit(self):
         self.assertEqual(Scan("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
@@ -833,7 +833,7 @@ class ScanUnitTests(unittest.TestCase):
         self.assertEqual(Scan("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
 
     def testExpressionAttributeValue(self):
-        self.assertEqual(Scan("Aaa").expression_attribute_value("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
+        self.assertEqual(Scan("Aaa").expression_attribute_value("n", u"p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
 
     def testProject(self):
         self.assertEqual(Scan("Aaa").project("a").build(), {"TableName": "Aaa", "ProjectionExpression": "a"})
@@ -851,10 +851,10 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
         )
 
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "0", "v": 0}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "1", "v": 1}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "2", "v": 2}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": "3", "v": 3}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "v": 0}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "v": 1}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "v": 2}))
+        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"3", "v": 3}))
 
     def tearDown(self):
         self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
@@ -868,7 +868,7 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 4)
             items = sorted((r.items[i] for i in range(4)), key=lambda i: i["h"])
-            self.assertEqual(items, [{"h": "0", "v": 0}, {"h": "1", "v": 1}, {"h": "2", "v": 2}, {"h": "3", "v": 3}])
+            self.assertEqual(items, [{"h": u"0", "v": 0}, {"h": u"1", "v": 1}, {"h": u"2", "v": 2}, {"h": u"3", "v": 3}])
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 4)
 
@@ -878,40 +878,40 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             Scan("Aaa").segment(0, 2).limit(1)
         )
         r02 = self.connection.request(
-            Scan("Aaa").segment(0, 2).exclusive_start_key({"h": "1"})
+            Scan("Aaa").segment(0, 2).exclusive_start_key({"h": u"1"})
         )
         r11 = self.connection.request(
             Scan("Aaa").segment(1, 2).limit(1)
         )
         r12 = self.connection.request(
-            Scan("Aaa").segment(1, 2).exclusive_start_key({"h": "0"})
+            Scan("Aaa").segment(1, 2).exclusive_start_key({"h": u"0"})
         )
 
         with cover("r01", r01) as r:
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
-            self.assertEqual(r.items[0], {"h": "1", "v": 1})
-            self.assertEqual(r.last_evaluated_key, {"h": "1"})
+            self.assertEqual(r.items[0], {"h": u"1", "v": 1})
+            self.assertEqual(r.last_evaluated_key, {"h": u"1"})
             self.assertEqual(r.scanned_count, 1)
 
         with cover("r02", r02) as r:
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
-            self.assertEqual(r.items[0], {"h": "3", "v": 3})
+            self.assertEqual(r.items[0], {"h": u"3", "v": 3})
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 1)
 
         with cover("r11", r11) as r:
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
-            self.assertEqual(r.items[0], {"h": "0", "v": 0})
-            self.assertEqual(r.last_evaluated_key, {"h": "0"})
+            self.assertEqual(r.items[0], {"h": u"0", "v": 0})
+            self.assertEqual(r.last_evaluated_key, {"h": u"0"})
             self.assertEqual(r.scanned_count, 1)
 
         with cover("r12", r12) as r:
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 1)
-            self.assertEqual(r.items[0], {"h": "2", "v": 2})
+            self.assertEqual(r.items[0], {"h": u"2", "v": 2})
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 1)
 
@@ -923,8 +923,8 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         with cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.count, 2)
-            self.assertEqual(r.items[0], {"h": "3"})
-            self.assertEqual(r.items[1], {"h": "2"})
+            self.assertEqual(r.items[0], {"h": u"3"})
+            self.assertEqual(r.items[1], {"h": u"2"})
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 4)
 

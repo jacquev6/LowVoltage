@@ -93,7 +93,7 @@ class DeleteItemUnitTests(unittest.TestCase):
 
     def testReturnValuesNone(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).return_values_none().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_values_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -103,7 +103,7 @@ class DeleteItemUnitTests(unittest.TestCase):
 
     def testReturnConsumedCapacityNone(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -113,7 +113,7 @@ class DeleteItemUnitTests(unittest.TestCase):
 
     def testReturnItemCollectionMetricsNone(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -123,7 +123,7 @@ class DeleteItemUnitTests(unittest.TestCase):
 
     def testExpressionAttributeValue(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": 42}).expression_attribute_value("v", "value").build(),
+            DeleteItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -162,9 +162,9 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
 
     def testSimpleDelete(self):
-        self.connection.request(PutItem("Aaa", {"h": "simple", "a": "yyy"}))
+        self.connection.request(PutItem("Aaa", {"h": u"simple", "a": "yyy"}))
 
-        r = self.connection.request(DeleteItem("Aaa", {"h": "simple"}))
+        r = self.connection.request(DeleteItem("Aaa", {"h": u"simple"}))
 
         with cover("r", r) as r:
             self.assertEqual(r.attributes, None)
@@ -172,12 +172,12 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.item_collection_metrics, None)
 
     def testReturnOldValues(self):
-        self.connection.request(PutItem("Aaa", {"h": "get", "a": "yyy"}))
+        self.connection.request(PutItem("Aaa", {"h": u"return", "a": "yyy"}))
 
-        r = self.connection.request(DeleteItem("Aaa", {"h": "get"}).return_values_all_old())
+        r = self.connection.request(DeleteItem("Aaa", {"h": u"return"}).return_values_all_old())
 
         with cover("r", r) as r:
-            self.assertEqual(r.attributes, {"h": "get", "a": "yyy"})
+            self.assertEqual(r.attributes, {"h": "return", "a": "yyy"})
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item_collection_metrics, None)
 
@@ -253,7 +253,7 @@ class GetItemUnitTests(unittest.TestCase):
 
     def testReturnConsumedCapacityNone(self):
         self.assertEqual(
-            GetItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
+            GetItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -263,7 +263,7 @@ class GetItemUnitTests(unittest.TestCase):
 
     def testConsistentReadTrue(self):
         self.assertEqual(
-            GetItem("Table", {"hash": "h"}).consistent_read_true().build(),
+            GetItem("Table", {"hash": u"h"}).consistent_read_true().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -273,7 +273,7 @@ class GetItemUnitTests(unittest.TestCase):
 
     def testConsistentReadFalse(self):
         self.assertEqual(
-            GetItem("Table", {"hash": "h"}).consistent_read_false().build(),
+            GetItem("Table", {"hash": u"h"}).consistent_read_false().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -283,7 +283,7 @@ class GetItemUnitTests(unittest.TestCase):
 
     def testProject(self):
         self.assertEqual(
-            GetItem("Table", {"hash": "h"}).project("abc").build(),
+            GetItem("Table", {"hash": u"h"}).project("abc").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -312,18 +312,18 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
 
     def testSimpleGet(self):
-        self.connection.request(PutItem("Aaa", {"h": "get", "a": "yyy"}))
+        self.connection.request(PutItem("Aaa", {"h": u"get", "a": "yyy"}))
 
-        r = self.connection.request(GetItem("Aaa", {"h": "get"}))
+        r = self.connection.request(GetItem("Aaa", {"h": u"get"}))
 
         with cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item, {"h": "get", "a": "yyy"})
 
     def testGetWithProjections(self):
-        self.connection.request(PutItem("Aaa", {"h": "attrs", "a": "yyy", "b": {"c": ["d1", "d2", "d3"]}, "e": 42, "f": "nope"}))
+        self.connection.request(PutItem("Aaa", {"h": u"attrs", "a": "yyy", "b": {"c": ["d1", "d2", "d3"]}, "e": 42, "f": "nope"}))
 
-        r = self.connection.request(GetItem("Aaa", {"h": "attrs"}).project("b.c[1]", "e"))
+        r = self.connection.request(GetItem("Aaa", {"h": u"attrs"}).project("b.c[1]", "e"))
 
         with cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
@@ -392,7 +392,7 @@ class PutItemUnitTests(unittest.TestCase):
 
     def testItem(self):
         self.assertEqual(
-            PutItem("Table", {"hash": "value"}).build(),
+            PutItem("Table", {"hash": u"value"}).build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "value"}},
@@ -401,7 +401,7 @@ class PutItemUnitTests(unittest.TestCase):
 
     def testReturnValuesNone(self):
         self.assertEqual(
-            PutItem("Table", {"hash": "h"}).return_values_none().build(),
+            PutItem("Table", {"hash": u"h"}).return_values_none().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -411,7 +411,7 @@ class PutItemUnitTests(unittest.TestCase):
 
     def testReturnConsumedCapacityNone(self):
         self.assertEqual(
-            PutItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
+            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -421,7 +421,7 @@ class PutItemUnitTests(unittest.TestCase):
 
     def testReturnItemCollectionMetricsNone(self):
         self.assertEqual(
-            PutItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
+            PutItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -431,7 +431,7 @@ class PutItemUnitTests(unittest.TestCase):
 
     def testExpressionAttributeValue(self):
         self.assertEqual(
-            PutItem("Table", {"hash": 42}).expression_attribute_value("v", "value").build(),
+            PutItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
             {
                 "TableName": "Table",
                 "Item": {"hash": {"N": "42"}},
@@ -470,55 +470,59 @@ class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
 
     def testSimplePut(self):
-        r = self.connection.request(PutItem("Aaa", {"h": "simple"}))
+        r = self.connection.request(PutItem("Aaa", {"h": u"simple"}))
 
         with cover("r", r) as r:
             self.assertEqual(r.attributes, None)
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item_collection_metrics, None)
 
-        self.assertEqual(self.connection.request(GetItem("Aaa", {"h": "simple"})).item, {"h": "simple"})
+        self.assertEqual(self.connection.request(GetItem("Aaa", {"h": u"simple"})).item, {"h": u"simple"})
 
     def testPutAllTypes(self):
         # @todo B and BS
         self.connection.request(PutItem("Aaa", {
-            "h": "all",
-            "s": "foo",
-            "b1": True,
-            "b2": False,
-            "n": 42,
+            "h": u"all",
+            "string": u"àoé",
+            "binary": b"\xFF\x00\xFF",
+            "binary set": set([b"\xFF", b"\xAB"]),
+            "bool 1": True,
+            "bool 2": False,
+            "number": 42,
             "null": None,
-            "ns": set([42, 43]),
-            "ss": set(["foo", "bar"]),
-            "l": [True, 42],
-            "m": {"a": True, "b": 42},
+            "number set": set([42, 43]),
+            "string set": set([u"éoà", u"bar"]),
+            "list": [True, 42],
+            "map": {"a": True, "b": 42},
         }))
 
         self.assertEqual(
-            self.connection.request(GetItem("Aaa", {"h": "all"})).item,
+            self.connection.request(GetItem("Aaa", {"h": u"all"})).item,
             {
-                "h": "all",
-                "s": "foo",
-                "b1": True,
-                "b2": False,
-                "n": 42,
+                "h": u"all",
+                "string": u"àoé",
+                "binary": b"\xFF\x00\xFF",
+                "binary set": set([b"\xFF", b"\xAB"]),
+                "bool 1": True,
+                "bool 2": False,
+                "number": 42,
                 "null": None,
-                "ns": set([42, 43]),
-                "ss": set(["foo", "bar"]),
-                "l": [True, 42],
-                "m": {"a": True, "b": 42},
+                "number set": set([42, 43]),
+                "string set": set([u"éoà", u"bar"]),
+                "list": [True, 42],
+                "map": {"a": True, "b": 42},
             }
         )
 
     def testReturnOldValues(self):
-        self.connection.request(PutItem("Aaa", {"h": "return", "a": "yyy"}))
+        self.connection.request(PutItem("Aaa", {"h": u"return", "a": b"yyy"}))
 
         r = self.connection.request(
-            PutItem("Aaa", {"h": "return", "b": "xxx"}).return_values_all_old()
+            PutItem("Aaa", {"h": u"return", "b": b"xxx"}).return_values_all_old()
         )
 
         with cover("r", r) as r:
-            self.assertEqual(r.attributes, {"h": "return", "a": "yyy"})
+            self.assertEqual(r.attributes, {"h": u"return", "a": b"yyy"})
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item_collection_metrics, None)
 
@@ -722,7 +726,7 @@ class UpdateItemUnitTests(unittest.TestCase):
 
     def testExpressionAttributeValue(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).expression_attribute_value("v", "value").build(),
+            UpdateItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -752,7 +756,7 @@ class UpdateItemUnitTests(unittest.TestCase):
 
     def testReturnValuesNone(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_values_none().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_values_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -762,7 +766,7 @@ class UpdateItemUnitTests(unittest.TestCase):
 
     def testReturnConsumedCapacityNone(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_consumed_capacity_none().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -772,7 +776,7 @@ class UpdateItemUnitTests(unittest.TestCase):
 
     def testReturnItemCollectionMetricsNone(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": "h"}).return_item_collection_metrics_none().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -792,7 +796,7 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
     def testSet(self):
         r = self.connection.request(
-            UpdateItem("Aaa", {"h": "set"})
+            UpdateItem("Aaa", {"h": u"set"})
                 .set("a", "v")
                 .set("#p", "w")
                 .expression_attribute_value("v", "aaa")
@@ -806,7 +810,7 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.item_collection_metrics, None)
 
         self.assertEqual(
-            self.connection.request(GetItem("Aaa", {"h": "set"})).item,
+            self.connection.request(GetItem("Aaa", {"h": u"set"})).item,
             {"h": "set", "a": "aaa", "b": "bbb"}
         )
 
@@ -815,7 +819,7 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             PutItem(
                 "Aaa",
                 {
-                    "h": "complex",
+                    "h": u"complex",
                     "a": "a",
                     "b": "b",
                     "c": "c",
@@ -828,7 +832,7 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         r = self.connection.request(
-            UpdateItem("Aaa", {"h": "complex"})
+            UpdateItem("Aaa", {"h": u"complex"})
                 .set("a", "s")
                 .set("b", "i")
                 .remove("c")
@@ -845,7 +849,7 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(
                 r.attributes,
                 {
-                    "h": "complex",
+                    "h": u"complex",
                     "a": set([42, 43]),
                     "b": 52,
                     "d": set([41, 42, 43]),
@@ -858,10 +862,10 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.item_collection_metrics, None)
 
     def testConditionExpression(self):
-        self.connection.request(PutItem("Aaa", {"h": "expr", "a": 42, "b": 42}))
+        self.connection.request(PutItem("Aaa", {"h": u"expr", "a": 42, "b": 42}))
 
         r = self.connection.request(
-            UpdateItem("Aaa", {"h": "expr"})
+            UpdateItem("Aaa", {"h": u"expr"})
                 .set("checked", "true")
                 .expression_attribute_value("true", True)
                 .condition_expression("a=b")
@@ -871,7 +875,7 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         with cover("r", r) as r:
             self.assertEqual(
                 r.attributes,
-                {"h": "expr", "a": 42, "b": 42, "checked": True}
+                {"h": u"expr", "a": 42, "b": 42, "checked": True}
             )
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item_collection_metrics, None)
