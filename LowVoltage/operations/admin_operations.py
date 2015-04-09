@@ -2,6 +2,7 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
+import datetime
 import unittest
 
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
@@ -415,6 +416,7 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
         with cover("r", r) as r:
+            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
             self.assertEqual(r.table_description.global_secondary_indexes, None)
@@ -422,8 +424,8 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
             self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
             self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, 0.)
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, 0.)
+            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
             self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
             self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
             self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
@@ -443,6 +445,7 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         _fix_order_for_tests(r.table_description)
 
         with cover("r", r) as r:
+            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
             self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
@@ -464,8 +467,8 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
             self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
             self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, 0.)
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, 0.)
+            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
             self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
             self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
             self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
@@ -482,6 +485,7 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         _fix_order_for_tests(r.table_description)
 
         with cover("r", r) as r:
+            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
             self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "r")
@@ -504,8 +508,8 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[1].key_type, "RANGE")
             self.assertEqual(r.table_description.local_secondary_indexes[0].projection.non_key_attributes, None)
             self.assertEqual(r.table_description.local_secondary_indexes[0].projection.projection_type, "ALL")
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, 0.)
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, 0.)
+            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
             self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
             self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
             self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
@@ -525,6 +529,7 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         _fix_order_for_tests(r.table_description)
 
         with cover("r", r) as r:
+            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
             self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
@@ -547,8 +552,8 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
             self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
             self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, 0.)
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, 0.)
+            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
             self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
             self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
             self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
@@ -639,6 +644,7 @@ class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         r = self.connection.request(DeleteTable("Aaa"))
 
         with cover("r", r) as r:
+            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
             self.assertEqual(r.table_description.global_secondary_indexes, None)
@@ -646,8 +652,8 @@ class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
             self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
             self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, 0.)
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, 0.)
+            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
             self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
             self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
             self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
@@ -698,6 +704,7 @@ class DescribeTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         r = self.connection.request(DescribeTable("Aaa"))
 
         with cover("r", r) as r:
+            self.assertDateTimeIsReasonable(r.table.creation_date_time)
             self.assertEqual(r.table.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table.attribute_definitions[0].attribute_type, "S")
             self.assertEqual(r.table.global_secondary_indexes, None)
@@ -705,8 +712,8 @@ class DescribeTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table.key_schema[0].attribute_name, "h")
             self.assertEqual(r.table.key_schema[0].key_type, "HASH")
             self.assertEqual(r.table.local_secondary_indexes, None)
-            self.assertEqual(r.table.provisioned_throughput.last_decrease_date_time, 0.)
-            self.assertEqual(r.table.provisioned_throughput.last_increase_date_time, 0.)
+            self.assertEqual(r.table.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+            self.assertEqual(r.table.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
             self.assertEqual(r.table.provisioned_throughput.number_of_decreases_today, 0)
             self.assertEqual(r.table.provisioned_throughput.read_capacity_units, 1)
             self.assertEqual(r.table.provisioned_throughput.write_capacity_units, 2)
@@ -946,6 +953,7 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         _fix_order_for_tests(r.table_description)
 
         with cover("r", r) as r:
+            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
             self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
@@ -967,8 +975,8 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
             self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
             self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, 0.)
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, 0.)
+            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
             self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
             self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 2)
             self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 4)
@@ -984,6 +992,7 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         _fix_order_for_tests(r.table_description)
 
         with cover("r", r) as r:
+            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
             self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
@@ -1005,8 +1014,8 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
             self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
             self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, 0.)
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, 0.)
+            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
             self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
             self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
             self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)

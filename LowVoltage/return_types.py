@@ -2,6 +2,8 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
+import datetime
+
 from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 
 
@@ -22,7 +24,7 @@ class TableDescription:
     ):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html
         self.attribute_definitions = None if AttributeDefinitions is None else [AttributeDefinition(**d) for d in AttributeDefinitions]
-        # self.creation_date_time = CreationDateTime  # @todo datetime
+        self.creation_date_time = None if CreationDateTime is None else datetime.datetime.utcfromtimestamp(CreationDateTime)
         self.global_secondary_indexes = None if GlobalSecondaryIndexes is None else [GlobalSecondaryIndexDescription(**d) for d in GlobalSecondaryIndexes]
         self.item_count = None if ItemCount is None else long(ItemCount)
         self.key_schema = None if KeySchema is None else [KeySchemaElement(**e) for e in KeySchema]
@@ -90,8 +92,8 @@ class ProvisionedThroughputDescription:
         **dummy
     ):
         # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughputDescription.html
-        self.last_decrease_date_time = LastDecreaseDateTime  # @todo datetime
-        self.last_increase_date_time = LastIncreaseDateTime  # @todo datetime
+        self.last_decrease_date_time = None if LastDecreaseDateTime is None else datetime.datetime.utcfromtimestamp(LastDecreaseDateTime)
+        self.last_increase_date_time = None if LastIncreaseDateTime is None else datetime.datetime.utcfromtimestamp(LastIncreaseDateTime)
         self.number_of_decreases_today = NumberOfDecreasesToday
         self.read_capacity_units = ReadCapacityUnits
         self.write_capacity_units = WriteCapacityUnits

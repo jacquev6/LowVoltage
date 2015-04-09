@@ -2,6 +2,7 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
+import datetime
 import glob
 import io
 import os
@@ -51,9 +52,16 @@ class DynamoDbLocal(object):  # pragma no cover (Test code)
 
 
 class TestCase(unittest.TestCase):
+    before_start = datetime.datetime.utcnow()
+    after_end = before_start + datetime.timedelta(minutes=10)
+
     @classmethod
     def setUpClass(cls):
         cls.connection = LowVoltage.Connection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
+
+    def assertDateTimeIsReasonable(self, t):
+        self.assertGreaterEqual(t, self.before_start)
+        self.assertLessEqual(t, self.after_end)
 
 
 def main(*args, **kwds):  # pragma no cover (Test code)

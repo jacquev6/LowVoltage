@@ -3,6 +3,7 @@
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
 import collections
+import datetime
 import numbers
 import unittest
 
@@ -70,7 +71,7 @@ class CoverList(_Cover):
 
 
 def cover(prefix, anything):
-    if isinstance(anything, (bool, numbers.Number, basestring, type(None), dict)):
+    if isinstance(anything, (bool, numbers.Number, basestring, type(None), dict, datetime.datetime)):
         return anything
     elif isinstance(anything, list):
         return CoverList(prefix, anything)
