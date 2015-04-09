@@ -1,16 +1,20 @@
-LowVoltage is a Python (2 and 3) client for DynamoDB that doesn't hide any feature of the API.
-
-This library is at a very early stage. You may not want to use it yet.
+LowVoltage is a standalone Python (2 and 3) client for DynamoDB that doesn't hide any feature of the API.
 
 Tenets
 ======
 
-With LowVoltage, you should:
+- Users should be able to do everything that is permited by `the API <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference>`__.
+- Users should never risk a typo: we provide symbols for all DynamoDB constants.
+- Users should never have to use deprecated API parameters.
 
-- be able to do everything that is permited by `the API <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference>`__
-- never have to type a literal for a DynamoDB constant (@todo rephrase: we provide constants and methods for everything that is not variable in all API calls. We also provide builders for expressions, etc. so that the user never has to provide a string. But he can.)
-- never have to use deprecated API parameters
-- chose what level of abstraction you want to use (@todo link to the doc of different levels of abstraction)
+Todo
+====
+
+- docs
+- retry with exponential back-off
+- retry batch gets and deletes
+- create builder for attribute paths
+- improve builder for expressions
 
 Status
 ======
