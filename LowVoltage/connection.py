@@ -35,35 +35,17 @@ class Connection(object):
         self.__host = urlparse.urlparse(self.__endpoint).hostname
         self.__session = requests.Session()
 
-    def request(self, operation, payload=None):
-        if isinstance(operation, basestring):
-            if isinstance(payload, basestring):
-                return self._request_raw(operation, payload)
-            elif isinstance(payload, dict):
-                return self._request_json(operation, payload)
+    def request(self, operation):
+        if isinstance(operation, (_Operation, _OperationProxy)):
+            payload = json.dumps(operation.build())
+            headers = self._sign(datetime.datetime.utcnow(), operation.name, payload)
+            r = self.__session.post(self.__endpoint, data=payload, headers=headers)
+            if r.status_code == 200:
+                return operation.Result(**r.json())
             else:
-                raise TypeError("When 'operation' is a string, 'payload' should be a string or a dict")
-        elif isinstance(operation, (_Operation, _OperationProxy)):
-            if payload is None:
-                return self._request_operation(operation)
-            else:
-                raise TypeError("When 'operation' is an Operation, 'payload' should be None")
+                self._raise(r)
         else:
-            raise TypeError("'operation' should be an Operation or a string")
-
-    def _request_operation(self, operation):
-        return operation.Result(**self._request_json(operation.name, operation.build()))
-
-    def _request_json(self, operation, payload):
-        return json.loads(self._request_raw(operation, json.dumps(payload)))
-
-    def _request_raw(self, operation, payload):
-        headers = self._sign(datetime.datetime.utcnow(), operation, payload)
-        r = self.__session.post(self.__endpoint, data=payload, headers=headers)
-        if r.status_code == 200:
-            return r.text
-        else:
-            self._raise(r)
+            raise TypeError
 
     def _raise(self, r):
         try:
@@ -72,7 +54,7 @@ class Connection(object):
         except ValueError:
             data = r.text
             typ = None
-        if r.status_code == 400:
+        if 400 <= r.status_code < 500:
             if typ is None:
                 raise _exn.ClientError(data)
             elif typ.endswith("ResourceNotFoundException"):
@@ -91,7 +73,7 @@ class Connection(object):
                 raise _exn.ResourceInUseException(data)
             else:
                 raise _exn.ClientError(data)
-        elif r.status_code == 500:
+        elif 500 <= r.status_code < 600:
             raise _exn.ServerError(data)
         else:
             raise _exn.UnknownError(r.status_code, r.text)
@@ -183,19 +165,8 @@ class ConnectionUnitTests(unittest.TestCase):
         )
 
     def testBadOperation(self):
-        with self.assertRaises(TypeError) as catcher:
-            self.connection.request(42, {})
-        self.assertEqual(catcher.exception.args, ("'operation' should be an Operation or a string",))
-
-    def testBadPayload(self):
-        with self.assertRaises(TypeError) as catcher:
-            self.connection.request("Operation", 42)
-        self.assertEqual(catcher.exception.args, ("When 'operation' is a string, 'payload' should be a string or a dict",))
-
-    def testPayloadWithOperation(self):
-        with self.assertRaises(TypeError) as catcher:
-            self.connection.request(_Operation("Foo"), "")
-        self.assertEqual(catcher.exception.args, ("When 'operation' is an Operation, 'payload' should be None",))
+        with self.assertRaises(TypeError):
+            self.connection.request(42)
 
     def testUnknownError(self):
         with self.assertRaises(_exn.UnknownError) as catcher:
@@ -277,26 +248,12 @@ class ConnectionIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         def build(self):
             return {}
 
-    def test_request_with_text_payload(self):
-        self.assertEqual(self.connection.request("ListTables", "{}"), '{"TableNames":[]}')
-
-    def test_request_with_dict_payload(self):
-        self.assertEqual(self.connection.request("ListTables", {}), {"TableNames": []})
-
-    def test_request_with_operation(self):
+    def test_request(self):
         r = self.connection.request(self.TestOperation("ListTables"))
         self.assertIsInstance(r, self.TestOperation.Result)
         self.assertEqual(r.kwds, {"TableNames": []})
 
-    def test_error_with_text_payload(self):
-        with self.assertRaises(_exn.ClientError):
-            self.connection.request("UnexistingOperation", "{}")
-
-    def test_error_with_dict_payload(self):
-        with self.assertRaises(_exn.ClientError):
-            self.connection.request("UnexistingOperation", {})
-
-    def test_error_with_operation(self):
+    def test_error(self):
         with self.assertRaises(_exn.ClientError):
             self.connection.request(self.TestOperation("UnexistingOperation"))
 

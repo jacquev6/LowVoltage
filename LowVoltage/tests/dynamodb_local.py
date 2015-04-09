@@ -9,7 +9,6 @@ import os
 import stat
 import subprocess
 import tarfile
-import time
 import unittest
 
 import requests
@@ -34,17 +33,6 @@ class DynamoDbLocal(object):  # pragma no cover (Test code)
             cwd=".dynamodblocal",
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-
-        cnx = LowVoltage.Connection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
-
-        for i in range(10):
-            try:
-                cnx.request("ListTables", {})
-                break
-            except requests.ConnectionError:
-                time.sleep(1)
-        else:
-            raise Exception("Unable to connect to DynamoDBLocal")
 
     def __exit__(self, *dummy):
         self.__process.kill()
