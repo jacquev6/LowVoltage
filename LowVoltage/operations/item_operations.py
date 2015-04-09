@@ -480,18 +480,17 @@ class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         self.assertEqual(self.connection.request(GetItem("Aaa", {"h": u"simple"})).item, {"h": u"simple"})
 
     def testPutAllTypes(self):
-        # @todo B and BS
         self.connection.request(PutItem("Aaa", {
             "h": u"all",
+            "number": 42,
             "string": u"àoé",
             "binary": b"\xFF\x00\xFF",
-            "binary set": set([b"\xFF", b"\xAB"]),
             "bool 1": True,
             "bool 2": False,
-            "number": 42,
             "null": None,
             "number set": set([42, 43]),
             "string set": set([u"éoà", u"bar"]),
+            "binary set": set([b"\xFF", b"\xAB"]),
             "list": [True, 42],
             "map": {"a": True, "b": 42},
         }))
@@ -500,15 +499,15 @@ class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.connection.request(GetItem("Aaa", {"h": u"all"})).item,
             {
                 "h": u"all",
+                "number": 42,
                 "string": u"àoé",
                 "binary": b"\xFF\x00\xFF",
-                "binary set": set([b"\xFF", b"\xAB"]),
                 "bool 1": True,
                 "bool 2": False,
-                "number": 42,
                 "null": None,
                 "number set": set([42, 43]),
                 "string set": set([u"éoà", u"bar"]),
+                "binary set": set([b"\xFF", b"\xAB"]),
                 "list": [True, 42],
                 "map": {"a": True, "b": 42},
             }
