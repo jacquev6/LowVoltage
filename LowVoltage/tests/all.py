@@ -2,7 +2,14 @@
 
 # Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
 
-from LowVoltage.connection import ConnectionUnitTests, ConnectionIntegTests
+from LowVoltage.connection import (
+    BasicConnectionUnitTests, BasicConnectionIntegTests,
+    RetryingConnectionUnitTests, RetryingConnectionIntegTests
+)
+from LowVoltage.policies import (
+    FailFastErrorPolicyUnitTests,
+    ExponentialBackoffErrorPolicyUnitTests,
+)
 from LowVoltage.operations.expressions import ConditionExpressionUnitTests
 from LowVoltage.operations.conversion import ConversionUnitTests
 

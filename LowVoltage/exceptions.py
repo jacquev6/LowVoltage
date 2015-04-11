@@ -14,6 +14,10 @@ class ServerError(Error):
     pass
 
 
+class NetworkError(Error):
+    pass
+
+
 class ClientError(Error):
     pass
 

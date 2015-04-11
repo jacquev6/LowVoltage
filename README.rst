@@ -11,8 +11,11 @@ Todo
 ====
 
 - docs
-- retry with exponential back-off
-- retry batch gets and deletes
+- retry failed operations with exponential back-off (network, server, throttling)
+- wait until CreateTable, DeleteTable, UpdateTable are done
+- process UnprocessedXxx in BatchGetItems and BatchWriteItems
+- paginate ListTables, Scan, Query
+- ease parallel Scan
 - create builder for attribute paths
 - improve builder for expressions
 

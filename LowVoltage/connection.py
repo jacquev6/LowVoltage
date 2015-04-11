@@ -8,11 +8,14 @@ import hmac
 import json
 import unittest
 import urlparse
+import time
 
 import requests
+import MockMockMock
 
 from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
 import LowVoltage.exceptions as _exn
+import LowVoltage.policies as _pol
 import LowVoltage.tests.dynamodb_local
 
 
@@ -24,28 +27,34 @@ class StaticCredentials(object):
         return self.__credentials
 
 
-class Connection(object):
-    def __init__(self, region, credentials, endpoint=None):
+class BasicConnection(object):
+    def __init__(self, region, credentials, endpoint):
         self.__region = region
         self.__credentials = credentials
-        if endpoint is None:
-            self.__endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)  # pragma no cover (Covered by optional integ tests)
-        else:
-            self.__endpoint = endpoint
+        self.__endpoint = endpoint
         self.__host = urlparse.urlparse(self.__endpoint).hostname
         self.__session = requests.Session()
 
     def request(self, operation):
-        if isinstance(operation, (_Operation, _OperationProxy)):
-            payload = json.dumps(operation.build())
-            headers = self._sign(datetime.datetime.utcnow(), operation.name, payload)
-            r = self.__session.post(self.__endpoint, data=payload, headers=headers)
-            if r.status_code == 200:
-                return operation.Result(**r.json())
-            else:
-                self._raise(r)
-        else:
+        if not isinstance(operation, (_Operation, _OperationProxy)):
             raise TypeError
+
+        payload = json.dumps(operation.build())
+        headers = self._sign(datetime.datetime.utcnow(), operation.name, payload)
+        try:
+            r = self.__session.post(self.__endpoint, data=payload, headers=headers)
+        except requests.exceptions.RequestException as e:
+            raise _exn.NetworkError(e)
+        except Exception as e:
+            raise _exn.UnknownError(e)
+        if r.status_code == 200:
+            try:
+                data = r.json()
+            except ValueError:
+                raise ServerError(r.text)
+            return operation.Result(**data)
+        else:
+            self._raise(r)
 
     def _raise(self, r):
         try:
@@ -140,7 +149,7 @@ class Connection(object):
         return headers
 
 
-class ConnectionUnitTests(unittest.TestCase):
+class BasicConnectionUnitTests(unittest.TestCase):
     class FakeResponse(object):
         def __init__(self, status_code, text):
             self.status_code = status_code
@@ -150,7 +159,7 @@ class ConnectionUnitTests(unittest.TestCase):
             return json.loads(self.text)
 
     def setUp(self):
-        self.connection = Connection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
+        self.connection = BasicConnection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
     def testSign(self):
         self.assertEqual(
@@ -239,7 +248,80 @@ class ConnectionUnitTests(unittest.TestCase):
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceInUseException", "Message": "tralala"},))
 
 
-class ConnectionIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+class BasicConnectionIntegTests(unittest.TestCase):
+    class TestOperation(_Operation):
+        def build(self):
+            return {}
+
+    def test_network_error(self):
+        connection = BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/")
+        with self.assertRaises(_exn.NetworkError):
+            connection.request(self.TestOperation("ListTables"))
+
+
+class RetryingConnection:
+    def __init__(self, connection, error_policy):
+        self.__connection = connection
+        self.__error_policy = error_policy
+
+    def request(self, operation):
+        errors = 0
+        while True:
+            try:
+                return self.__connection.request(operation)
+            except _exn.Error as e:
+                errors += 1
+                delay = self.__error_policy.get_retry_delay_on_exception(operation, e, errors)
+                if delay is None:
+                    raise
+                else:
+                    time.sleep(delay)
+
+
+class RetryingConnectionUnitTests(unittest.TestCase):
+    def setUp(self):
+        self.mocks = MockMockMock.Engine()
+        self.policy = self.mocks.create("policy")
+        self.basic_connection = self.mocks.create("connection")
+        self.connection = RetryingConnection(self.basic_connection.object, self.policy.object)
+        self.operation = object()
+        self.response = object()
+
+    def tearDown(self):
+        self.mocks.tearDown()
+
+    def test_unknown_exception_is_passed_through(self):
+        exception = Exception()
+        self.basic_connection.expect.request(self.operation).andRaise(exception)
+        with self.assertRaises(Exception) as catcher:
+            self.connection.request(self.operation)
+        self.assertIs(catcher.exception, exception)
+
+    def test_known_error_is_retried_until_success(self):
+        exception = _exn.Error()
+        self.basic_connection.expect.request(self.operation).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 1).andReturn(0)
+        self.basic_connection.expect.request(self.operation).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 2).andReturn(0)
+        self.basic_connection.expect.request(self.operation).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 3).andReturn(0)
+        self.basic_connection.expect.request(self.operation).andReturn(self.response)
+        self.assertIs(self.connection.request(self.operation), self.response)
+
+    def test_known_error_is_retried_then_raised(self):
+        exception = _exn.Error()
+        self.basic_connection.expect.request(self.operation).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 1).andReturn(0)
+        self.basic_connection.expect.request(self.operation).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 2).andReturn(0)
+        self.basic_connection.expect.request(self.operation).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 3).andReturn(None)
+        with self.assertRaises(_exn.Error) as catcher:
+            self.connection.request(self.operation)
+        self.assertIs(catcher.exception, exception)
+
+
+class RetryingConnectionIntegTests(unittest.TestCase):
     class TestOperation(_Operation):
         class Result(object):
             def __init__(self, **kwds):
@@ -248,14 +330,35 @@ class ConnectionIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
         def build(self):
             return {}
 
+    @classmethod
+    def setUpClass(cls):
+        cls.connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffErrorPolicy(1, 2, 5))
+
     def test_request(self):
         r = self.connection.request(self.TestOperation("ListTables"))
         self.assertIsInstance(r, self.TestOperation.Result)
         self.assertEqual(r.kwds, {"TableNames": []})
 
-    def test_error(self):
+    def test_client_error(self):
         with self.assertRaises(_exn.ClientError):
             self.connection.request(self.TestOperation("UnexistingOperation"))
+
+    def test_network_error(self):
+        connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/"), _pol.ExponentialBackoffErrorPolicy(0, 1, 4))
+        with self.assertRaises(_exn.NetworkError):
+            connection.request(self.TestOperation("ListTables"))
+
+
+def make_connection(region, credentials, endpoint=None, error_policy=None):
+    # @todo Maybe allow injection of the Requests session to tweek low-level parameters (connection timeout, etc.)?
+    if endpoint is None:
+        endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)
+    if error_policy is None:
+        error_policy = _pol.ExponentialBackoffErrorPolicy(1, 2, 5)
+    return RetryingConnection(
+        BasicConnection(region, credentials, endpoint),
+        error_policy
+    )
 
 
 if __name__ == "__main__":

@@ -29,6 +29,7 @@ class DynamoDbLocal(object):  # pragma no cover (Test code)
                 os.chmod(f, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)
 
         self.__process = subprocess.Popen(
+            # ["sleep 7; java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -inMemory -port 65432"],
             ["java", "-Djava.library.path=./DynamoDBLocal_lib", "-jar", "DynamoDBLocal.jar", "-inMemory", "-port", "65432"],
             cwd=".dynamodblocal",
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -45,13 +46,8 @@ class TestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.connection = LowVoltage.Connection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
+        cls.connection = LowVoltage.make_connection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
     def assertDateTimeIsReasonable(self, t):
         self.assertGreaterEqual(t, self.before_start)
         self.assertLessEqual(t, self.after_end)
-
-
-def main(*args, **kwds):  # pragma no cover (Test code)
-    with DynamoDbLocal():
-        unittest.main(*args, **kwds)
