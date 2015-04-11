@@ -8,7 +8,7 @@ import exceptions as _exn
 
 
 class FailFastErrorPolicy(object):
-    def get_retry_delay_on_exception(self, operation, exception, errors):
+    def get_retry_delay_on_exception(self, action, exception, errors):
         return None
 
 
@@ -26,7 +26,7 @@ class ExponentialBackoffErrorPolicy(object):
         self.__multiplier = multiplier
         self.__max_tries = max_tries
 
-    def get_retry_delay_on_exception(self, operation, exception, errors):
+    def get_retry_delay_on_exception(self, action, exception, errors):
         # @todo Should we wait different times for different errors?
         if errors >= self.__max_tries or not isinstance(exception, (_exn.ServerError, _exn.NetworkError, _exn.ProvisionedThroughputExceededException)):
             return None

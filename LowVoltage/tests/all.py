@@ -10,16 +10,16 @@ from LowVoltage.policies import (
     FailFastErrorPolicyUnitTests,
     ExponentialBackoffErrorPolicyUnitTests,
 )
-from LowVoltage.operations.expressions import ConditionExpressionUnitTests
-from LowVoltage.operations.conversion import ConversionUnitTests
+from LowVoltage.actions.expressions import ConditionExpressionUnitTests
+from LowVoltage.actions.conversion import ConversionUnitTests
 
-from LowVoltage.operations.return_mixins import (
+from LowVoltage.actions.return_mixins import (
     ReturnValuesMixinUnitTests,
     ReturnOldValuesMixinUnitTests,
     ReturnConsumedCapacityMixinUnitTests,
     ReturnItemCollectionMetricsMixinUnitTests,
 )
-from LowVoltage.operations.expression_mixins import (
+from LowVoltage.actions.expression_mixins import (
     ExpressionAttributeNamesMixinUnitTests,
     ExpressionAttributeValuesMixinUnitTests,
     ConditionExpressionMixinUnitTests,
@@ -27,20 +27,20 @@ from LowVoltage.operations.expression_mixins import (
     FilterExpressionMixinUnitTests,
 )
 
-from LowVoltage.operations.admin_operations import (
+from LowVoltage.actions.admin_actions import (
     CreateTableUnitTests, CreateTableIntegTests, CreateTableErrorTests,
     DeleteTableUnitTests, DeleteTableIntegTests,
     DescribeTableUnitTests, DescribeTableIntegTests,
     ListTablesUnitTests, ListTablesIntegTests,
     UpdateTableUnitTests, UpdateTableIntegTests,
 )
-from LowVoltage.operations.item_operations import (
+from LowVoltage.actions.item_actions import (
     DeleteItemUnitTests, DeleteItemIntegTests,
     GetItemUnitTests, GetItemIntegTests,
     PutItemUnitTests, PutItemIntegTests,
     UpdateItemUnitTests, UpdateItemIntegTests,
 )
-from LowVoltage.operations.batch_operations import (
+from LowVoltage.actions.batch_actions import (
     BatchGetItemUnitTests, BatchGetItemIntegTests,
     BatchWriteItemUnitTests, BatchWriteItemIntegTests,
     ScanUnitTests, ScanIntegTests,

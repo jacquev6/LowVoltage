@@ -5,7 +5,7 @@
 import datetime
 import unittest
 
-from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
+from LowVoltage.actions.action import Action as _Action, ActionProxy as _ActionProxy
 import LowVoltage.return_types as _rtyp
 import LowVoltage.attribute_types as _atyp
 import LowVoltage.tests.dynamodb_local
@@ -17,7 +17,7 @@ def _fix_order_for_tests(d):
     d.attribute_definitions = sorted(d.attribute_definitions, key=lambda d: d.attribute_name)
 
 
-class CreateTable(_Operation):
+class CreateTable(_Action):
     class Result(object):
         def __init__(
             self,
@@ -73,27 +73,27 @@ class CreateTable(_Operation):
             data["LocalSecondaryIndexes"] = [i._build() for i in self.__lsis.itervalues()]
         return data
 
-    class _Index(_OperationProxy):
-        def __init__(self, operation, name):
-            super(CreateTable._Index, self).__init__(operation)
+    class _Index(_ActionProxy):
+        def __init__(self, action, name):
+            super(CreateTable._Index, self).__init__(action)
             self.__name = name
             self.__hash_key = None
             self.__range_key = None
             self.__projection = None
 
         def table(self):
-            return self._operation
+            return self._action
 
         def hash_key(self, name, typ=None):
             self.__hash_key = name
             if typ is not None:
-                self._operation.attribute_definition(name, typ)
+                self._action.attribute_definition(name, typ)
             return self
 
         def range_key(self, name, typ=None):
             self.__range_key = name
             if typ is not None:
-                self._operation.attribute_definition(name, typ)
+                self._action.attribute_definition(name, typ)
             return self
 
         def project_all(self):
@@ -605,7 +605,7 @@ class CreateTableErrorTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
 
-class DeleteTable(_Operation):
+class DeleteTable(_Action):
     class Result(object):
         def __init__(
             self,
@@ -662,7 +662,7 @@ class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.table_status, "ACTIVE")
 
 
-class DescribeTable(_Operation):
+class DescribeTable(_Action):
     class Result(object):
         def __init__(
             self,
@@ -722,7 +722,7 @@ class DescribeTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table.table_status, "ACTIVE")
 
 
-class ListTables(_Operation):
+class ListTables(_Action):
     class Result(object):
         def __init__(
             self,
@@ -809,7 +809,7 @@ class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_names[2], "Ccc")
 
 
-class UpdateTable(_Operation):
+class UpdateTable(_Action):
     class Result(object):
         def __init__(
             self,
@@ -844,15 +844,15 @@ class UpdateTable(_Operation):
             data["GlobalSecondaryIndexUpdates"] = [{"Update": i._build()} for i in self.__gsis.itervalues()]
         return data
 
-    class _IndexWithThroughput(_OperationProxy):
-        def __init__(self, operation, name):
-            super(UpdateTable._IndexWithThroughput, self).__init__(operation)
+    class _IndexWithThroughput(_ActionProxy):
+        def __init__(self, action, name):
+            super(UpdateTable._IndexWithThroughput, self).__init__(action)
             self.__name = name
             self.__read_capacity_units = None
             self.__write_capacity_units = None
 
         def table(self):
-            return self._operation
+            return self._action
 
         def provisioned_throughput(self, read_capacity_units, write_capacity_units):
             self.__read_capacity_units = read_capacity_units

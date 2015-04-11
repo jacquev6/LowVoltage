@@ -11,7 +11,7 @@ Todo
 ====
 
 - docs
-- retry failed operations with exponential back-off (network, server, throttling)
+- retry failed actions with exponential back-off (network, server, throttling)
 - wait until CreateTable, DeleteTable, UpdateTable are done
 - process UnprocessedXxx in BatchGetItems and BatchWriteItems
 - paginate ListTables, Scan, Query

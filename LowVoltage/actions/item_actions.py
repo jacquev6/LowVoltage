@@ -4,25 +4,25 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation as _Operation
-from LowVoltage.operations.return_mixins import (
+from LowVoltage.actions.action import Action as _Action
+from LowVoltage.actions.return_mixins import (
     ReturnValuesMixin, ReturnOldValuesMixin,
     ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
 )
-from LowVoltage.operations.expression_mixins import (
+from LowVoltage.actions.expression_mixins import (
     ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin,
     ConditionExpressionMixin, ProjectionExpressionMixin,
 )
-from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
+from LowVoltage.actions.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
-import LowVoltage.operations.admin_operations
+import LowVoltage.actions.admin_actions
 import LowVoltage.return_types as _rtyp
 import LowVoltage.attribute_types as _atyp
 import LowVoltage.exceptions as _exn
 from LowVoltage.tests.cover import cover
 
 
-class DeleteItem(_Operation,
+class DeleteItem(_Action,
     ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
     ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
 ):
@@ -155,11 +155,11 @@ class DeleteItemUnitTests(unittest.TestCase):
 class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            LowVoltage.actions.admin_actions.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
-        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+        self.connection.request(LowVoltage.actions.admin_actions.DeleteTable("Aaa"))
 
     def testSimpleDelete(self):
         self.connection.request(PutItem("Aaa", {"h": u"simple", "a": "yyy"}))
@@ -182,7 +182,7 @@ class DeleteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.item_collection_metrics, None)
 
 
-class GetItem(_Operation,
+class GetItem(_Action,
     ReturnConsumedCapacityMixin, ExpressionAttributeNamesMixin, ProjectionExpressionMixin,
 ):
     class Result(object):
@@ -305,11 +305,11 @@ class GetItemUnitTests(unittest.TestCase):
 class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            LowVoltage.actions.admin_actions.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
-        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+        self.connection.request(LowVoltage.actions.admin_actions.DeleteTable("Aaa"))
 
     def testSimpleGet(self):
         self.connection.request(PutItem("Aaa", {"h": u"get", "a": "yyy"}))
@@ -330,7 +330,7 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.item, {"b": {"c": ["d2"]}, "e": 42})
 
 
-class PutItem(_Operation,
+class PutItem(_Action,
     ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
     ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
 ):
@@ -463,11 +463,11 @@ class PutItemUnitTests(unittest.TestCase):
 class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            LowVoltage.actions.admin_actions.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
-        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+        self.connection.request(LowVoltage.actions.admin_actions.DeleteTable("Aaa"))
 
     def testSimplePut(self):
         r = self.connection.request(PutItem("Aaa", {"h": u"simple"}))
@@ -526,7 +526,7 @@ class PutItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.item_collection_metrics, None)
 
 
-class UpdateItem(_Operation,
+class UpdateItem(_Action,
     ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
     ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
 ):
@@ -787,11 +787,11 @@ class UpdateItemUnitTests(unittest.TestCase):
 class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            LowVoltage.actions.admin_actions.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
-        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+        self.connection.request(LowVoltage.actions.admin_actions.DeleteTable("Aaa"))
 
     def testSet(self):
         r = self.connection.request(

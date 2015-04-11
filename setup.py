@@ -26,7 +26,7 @@ if __name__ == "__main__":
         url="http://jacquev6.github.io/LowVoltage",
         packages=[
             "LowVoltage",
-            "LowVoltage.operations",
+            "LowVoltage.actions",
             "LowVoltage.tests",
         ],
         classifiers=[

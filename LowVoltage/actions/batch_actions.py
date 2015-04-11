@@ -4,23 +4,23 @@
 
 import unittest
 
-from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
-from LowVoltage.operations.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
-from LowVoltage.operations.expression_mixins import (
+from LowVoltage.actions.action import Action as _Action, ActionProxy as _ActionProxy
+from LowVoltage.actions.return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from LowVoltage.actions.expression_mixins import (
     ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin,
     ProjectionExpressionMixin, FilterExpressionMixin,
 )
-from LowVoltage.operations.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
+from LowVoltage.actions.conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 import LowVoltage.tests.dynamodb_local
-import LowVoltage.operations.admin_operations
-import LowVoltage.operations.item_operations
+import LowVoltage.actions.admin_actions
+import LowVoltage.actions.item_actions
 import LowVoltage.return_types as _rtyp
 import LowVoltage.attribute_types as _atyp
 import LowVoltage.exceptions as _exn
 from LowVoltage.tests.cover import cover
 
 
-class BatchGetItem(_Operation,
+class BatchGetItem(_Action,
     ReturnConsumedCapacityMixin,
 ):
     class Result(object):
@@ -59,9 +59,9 @@ class BatchGetItem(_Operation,
             data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
         return data
 
-    class _Table(_OperationProxy, ExpressionAttributeNamesMixin, ProjectionExpressionMixin):
-        def __init__(self, operation, name):
-            super(BatchGetItem._Table, self).__init__(operation)
+    class _Table(_ActionProxy, ExpressionAttributeNamesMixin, ProjectionExpressionMixin):
+        def __init__(self, action, name):
+            super(BatchGetItem._Table, self).__init__(action)
             ExpressionAttributeNamesMixin.__init__(self)
             ProjectionExpressionMixin.__init__(self)
             self.__consistent_read = None
@@ -181,16 +181,16 @@ class BatchGetItemUnitTests(unittest.TestCase):
 class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            LowVoltage.actions.admin_actions.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
-        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+        self.connection.request(LowVoltage.actions.admin_actions.DeleteTable("Aaa"))
 
     def testSimpleBatchGet(self):
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "a": "yyy"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"3", "a": "zzz"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"2", "a": "yyy"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"3", "a": "zzz"}))
 
         r = self.connection.request(BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
@@ -204,9 +204,9 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.unprocessed_keys, {})
 
     def testBatchGetWithProjections(self):
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "a": "a1", "b": "b1", "c": "c1"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "a": "a2", "b": "b2", "c": "c2"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"3", "a": "a3", "b": "b3", "c": "c3"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"1", "a": "a1", "b": "b1", "c": "c1"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"2", "a": "a2", "b": "b2", "c": "c2"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"3", "a": "a3", "b": "b3", "c": "c3"}))
 
         r = self.connection.request(
             BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}).expression_attribute_name("p", "b").project("h").project("a", ["#p"])
@@ -222,7 +222,7 @@ class BatchGetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.unprocessed_keys, {})
 
 
-class BatchWriteItem(_Operation,
+class BatchWriteItem(_Action,
     ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
 ):
     class Result(object):
@@ -261,9 +261,9 @@ class BatchWriteItem(_Operation,
             data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
         return data
 
-    class _Table(_OperationProxy):
-        def __init__(self, operation, name):
-            super(BatchWriteItem._Table, self).__init__(operation)
+    class _Table(_ActionProxy):
+        def __init__(self, action, name):
+            super(BatchWriteItem._Table, self).__init__(action)
             self.__delete = []
             self.__put = []
 
@@ -352,11 +352,11 @@ class BatchWriteItemUnitTests(unittest.TestCase):
 class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            LowVoltage.actions.admin_actions.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
-        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+        self.connection.request(LowVoltage.actions.admin_actions.DeleteTable("Aaa"))
 
     def testSimpleBatchPut(self):
         r = self.connection.request(
@@ -370,14 +370,14 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.unprocessed_items, {})
 
         self.assertEqual(
-            self.connection.request(LowVoltage.operations.item_operations.GetItem("Aaa", {"h": u"1"})).item,
+            self.connection.request(LowVoltage.actions.item_actions.GetItem("Aaa", {"h": u"1"})).item,
             {"h": "1", "a": "xxx"}
         )
 
     def testSimpleBatchDelete(self):
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "a": "yyy"}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"3", "a": "zzz"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"2", "a": "yyy"}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"3", "a": "zzz"}))
 
         r = self.connection.request(BatchWriteItem().table("Aaa").delete({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
@@ -387,12 +387,12 @@ class BatchWriteItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.unprocessed_items, {})
 
         self.assertEqual(
-            self.connection.request(LowVoltage.operations.item_operations.GetItem("Aaa", {"h": u"1"})).item,
+            self.connection.request(LowVoltage.actions.item_actions.GetItem("Aaa", {"h": u"1"})).item,
             None
         )
 
 
-class Query(_Operation,
+class Query(_Action,
     ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin,
     ReturnConsumedCapacityMixin,
 ):
@@ -659,22 +659,22 @@ class QueryUnitTests(unittest.TestCase):
 class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            LowVoltage.operations.admin_operations.CreateTable("Aaa")
+            LowVoltage.actions.admin_actions.CreateTable("Aaa")
                 .hash_key("h", _atyp.STRING)
                 .range_key("r", _atyp.NUMBER)
                 .provisioned_throughput(1, 2)
         )
 
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 41, "v": 0}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 42, "v": 1}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 43, "v": 2}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 44, "v": 3}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "r": 45, "v": 4}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "r": 42, "v": 2}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "r": 42, "v": 3}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"0", "r": 41, "v": 0}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"0", "r": 42, "v": 1}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"0", "r": 43, "v": 2}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"0", "r": 44, "v": 3}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"0", "r": 45, "v": 4}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"1", "r": 42, "v": 2}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"2", "r": 42, "v": 3}))
 
     def tearDown(self):
-        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+        self.connection.request(LowVoltage.actions.admin_actions.DeleteTable("Aaa"))
 
     def testSimpleQuery(self):
         r = self.connection.request(
@@ -707,7 +707,7 @@ class QueryIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.scanned_count, 2)
 
 
-class Scan(_Operation,
+class Scan(_Action,
     ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin,
     ReturnConsumedCapacityMixin,
 ):
@@ -848,16 +848,16 @@ class ScanUnitTests(unittest.TestCase):
 class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
-            LowVoltage.operations.admin_operations.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            LowVoltage.actions.admin_actions.CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
         )
 
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"0", "v": 0}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"1", "v": 1}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"2", "v": 2}))
-        self.connection.request(LowVoltage.operations.item_operations.PutItem("Aaa", {"h": u"3", "v": 3}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"0", "v": 0}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"1", "v": 1}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"2", "v": 2}))
+        self.connection.request(LowVoltage.actions.item_actions.PutItem("Aaa", {"h": u"3", "v": 3}))
 
     def tearDown(self):
-        self.connection.request(LowVoltage.operations.admin_operations.DeleteTable("Aaa"))
+        self.connection.request(LowVoltage.actions.admin_actions.DeleteTable("Aaa"))
 
     def testSimpleScan(self):
         r = self.connection.request(

@@ -13,7 +13,7 @@ import time
 import requests
 import MockMockMock
 
-from LowVoltage.operations.operation import Operation as _Operation, OperationProxy as _OperationProxy
+from LowVoltage.actions.action import Action as _Action, ActionProxy as _ActionProxy
 import LowVoltage.exceptions as _exn
 import LowVoltage.policies as _pol
 import LowVoltage.tests.dynamodb_local
@@ -35,12 +35,12 @@ class BasicConnection(object):
         self.__host = urlparse.urlparse(self.__endpoint).hostname
         self.__session = requests.Session()
 
-    def request(self, operation):
-        if not isinstance(operation, (_Operation, _OperationProxy)):
+    def request(self, action):
+        if not isinstance(action, (_Action, _ActionProxy)):
             raise TypeError
 
-        payload = json.dumps(operation.build())
-        headers = self._sign(datetime.datetime.utcnow(), operation.name, payload)
+        payload = json.dumps(action.build())
+        headers = self._sign(datetime.datetime.utcnow(), action.name, payload)
         try:
             r = self.__session.post(self.__endpoint, data=payload, headers=headers)
         except requests.exceptions.RequestException as e:
@@ -52,7 +52,7 @@ class BasicConnection(object):
                 data = r.json()
             except ValueError:
                 raise ServerError(r.text)
-            return operation.Result(**data)
+            return action.Result(**data)
         else:
             self._raise(r)
 
@@ -87,10 +87,10 @@ class BasicConnection(object):
         else:
             raise _exn.UnknownError(r.status_code, r.text)
 
-    def _sign(self, now, operation, payload):
+    def _sign(self, now, action, payload):
         # http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
         assert isinstance(now, datetime.datetime)
-        assert isinstance(operation, basestring)
+        assert isinstance(action, basestring)
         assert isinstance(payload, basestring)
 
         timestamp = now.strftime("%Y%m%dT%H%M%SZ")
@@ -99,7 +99,7 @@ class BasicConnection(object):
         headers = {
             "Content-Type": "application/x-amz-json-1.0",
             "X-Amz-Date": timestamp,
-            "X-Amz-Target": "DynamoDB_20120810.{}".format(operation),
+            "X-Amz-Target": "DynamoDB_20120810.{}".format(action),
             "Host": self.__host,
         }
 
@@ -173,7 +173,7 @@ class BasicConnectionUnitTests(unittest.TestCase):
             }
         )
 
-    def testBadOperation(self):
+    def testBadAction(self):
         with self.assertRaises(TypeError):
             self.connection.request(42)
 
@@ -249,14 +249,14 @@ class BasicConnectionUnitTests(unittest.TestCase):
 
 
 class BasicConnectionIntegTests(unittest.TestCase):
-    class TestOperation(_Operation):
+    class TestAction(_Action):
         def build(self):
             return {}
 
     def test_network_error(self):
         connection = BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/")
         with self.assertRaises(_exn.NetworkError):
-            connection.request(self.TestOperation("ListTables"))
+            connection.request(self.TestAction("ListTables"))
 
 
 class RetryingConnection:
@@ -264,14 +264,14 @@ class RetryingConnection:
         self.__connection = connection
         self.__error_policy = error_policy
 
-    def request(self, operation):
+    def request(self, action):
         errors = 0
         while True:
             try:
-                return self.__connection.request(operation)
+                return self.__connection.request(action)
             except _exn.Error as e:
                 errors += 1
-                delay = self.__error_policy.get_retry_delay_on_exception(operation, e, errors)
+                delay = self.__error_policy.get_retry_delay_on_exception(action, e, errors)
                 if delay is None:
                     raise
                 else:
@@ -284,7 +284,7 @@ class RetryingConnectionUnitTests(unittest.TestCase):
         self.policy = self.mocks.create("policy")
         self.basic_connection = self.mocks.create("connection")
         self.connection = RetryingConnection(self.basic_connection.object, self.policy.object)
-        self.operation = object()
+        self.action = object()
         self.response = object()
 
     def tearDown(self):
@@ -292,37 +292,37 @@ class RetryingConnectionUnitTests(unittest.TestCase):
 
     def test_unknown_exception_is_passed_through(self):
         exception = Exception()
-        self.basic_connection.expect.request(self.operation).andRaise(exception)
+        self.basic_connection.expect.request(self.action).andRaise(exception)
         with self.assertRaises(Exception) as catcher:
-            self.connection.request(self.operation)
+            self.connection.request(self.action)
         self.assertIs(catcher.exception, exception)
 
     def test_known_error_is_retried_until_success(self):
         exception = _exn.Error()
-        self.basic_connection.expect.request(self.operation).andRaise(exception)
-        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 1).andReturn(0)
-        self.basic_connection.expect.request(self.operation).andRaise(exception)
-        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 2).andReturn(0)
-        self.basic_connection.expect.request(self.operation).andRaise(exception)
-        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 3).andReturn(0)
-        self.basic_connection.expect.request(self.operation).andReturn(self.response)
-        self.assertIs(self.connection.request(self.operation), self.response)
+        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.action, exception, 1).andReturn(0)
+        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.action, exception, 2).andReturn(0)
+        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.action, exception, 3).andReturn(0)
+        self.basic_connection.expect.request(self.action).andReturn(self.response)
+        self.assertIs(self.connection.request(self.action), self.response)
 
     def test_known_error_is_retried_then_raised(self):
         exception = _exn.Error()
-        self.basic_connection.expect.request(self.operation).andRaise(exception)
-        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 1).andReturn(0)
-        self.basic_connection.expect.request(self.operation).andRaise(exception)
-        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 2).andReturn(0)
-        self.basic_connection.expect.request(self.operation).andRaise(exception)
-        self.policy.expect.get_retry_delay_on_exception(self.operation, exception, 3).andReturn(None)
+        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.action, exception, 1).andReturn(0)
+        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.action, exception, 2).andReturn(0)
+        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.policy.expect.get_retry_delay_on_exception(self.action, exception, 3).andReturn(None)
         with self.assertRaises(_exn.Error) as catcher:
-            self.connection.request(self.operation)
+            self.connection.request(self.action)
         self.assertIs(catcher.exception, exception)
 
 
 class RetryingConnectionIntegTests(unittest.TestCase):
-    class TestOperation(_Operation):
+    class TestAction(_Action):
         class Result(object):
             def __init__(self, **kwds):
                 self.kwds = kwds
@@ -335,18 +335,18 @@ class RetryingConnectionIntegTests(unittest.TestCase):
         cls.connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffErrorPolicy(1, 2, 5))
 
     def test_request(self):
-        r = self.connection.request(self.TestOperation("ListTables"))
-        self.assertIsInstance(r, self.TestOperation.Result)
+        r = self.connection.request(self.TestAction("ListTables"))
+        self.assertIsInstance(r, self.TestAction.Result)
         self.assertEqual(r.kwds, {"TableNames": []})
 
     def test_client_error(self):
         with self.assertRaises(_exn.ClientError):
-            self.connection.request(self.TestOperation("UnexistingOperation"))
+            self.connection.request(self.TestAction("UnexistingAction"))
 
     def test_network_error(self):
         connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/"), _pol.ExponentialBackoffErrorPolicy(0, 1, 4))
         with self.assertRaises(_exn.NetworkError):
-            connection.request(self.TestOperation("ListTables"))
+            connection.request(self.TestAction("ListTables"))
 
 
 def make_connection(region, credentials, endpoint=None, error_policy=None):

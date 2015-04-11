@@ -4,7 +4,7 @@
 
 import unittest
 
-from LowVoltage.operations.conversion import _convert_value_to_db
+from LowVoltage.actions.conversion import _convert_value_to_db
 
 
 class ExpressionAttributeValuesMixin(object):

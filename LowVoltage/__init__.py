@@ -4,5 +4,5 @@
 
 from connection import make_connection, StaticCredentials
 from policies import *
-from operations import *
+from actions import *
 from exceptions import *
