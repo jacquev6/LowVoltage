@@ -329,6 +329,14 @@ class GetItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item, {"b": {"c": ["d2"]}, "e": 42})
 
+    def test_unexisting_table(self):
+        with self.assertRaises(_exn.ResourceNotFoundException):
+            self.connection.request(GetItem("Bbb", {}))
+
+    def test_bad_key_type(self):
+        with self.assertRaises(_exn.ValidationException):
+            self.connection.request(GetItem("Aaa", {"h": 42}))
+
 
 class PutItem(_Action,
     ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,

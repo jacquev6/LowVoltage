@@ -101,19 +101,18 @@ class CoverSimpleAttributesUnitTests(unittest.TestCase):
             self.assertEqual(u.b, 42)
             self.assertEqual(u.c, "abc")
 
-    def testDontCoverAttribute(self):
+    def test_not_covered_attributes_raise(self):
         with self.assertRaises(NotCovered) as catcher:
             with cover("data", self.data) as u:
                 u.b
         self.assertEqual(catcher.exception.args, (["data.a", "data.c"],))
 
-    def testException(self):
-        class Foo(Exception):
-            pass
-
-        with self.assertRaises(Foo) as catcher:
+    def test_exception_goes_through(self):
+        exception = Exception()
+        with self.assertRaises(Exception) as catcher:
             with cover("data", self.data) as u:
-                raise Foo
+                raise exception
+        self.assertIs(catcher.exception, exception)
 
 
 class CoverObjectAttributesUnitTests(unittest.TestCase):

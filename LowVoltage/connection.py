@@ -64,24 +64,11 @@ class BasicConnection(object):
             data = r.text
             typ = None
         if 400 <= r.status_code < 500:
-            if typ is None:
-                raise _exn.ClientError(data)
-            elif typ.endswith("ResourceNotFoundException"):
-                raise _exn.ResourceNotFoundException(data)
-            elif typ.endswith("ValidationException"):
-                raise _exn.ValidationException(data)
-            elif typ.endswith("ConditionalCheckFailedException"):
-                raise _exn.ConditionalCheckFailedException(data)
-            elif typ.endswith("ItemCollectionSizeLimitExceededException"):
-                raise _exn.ItemCollectionSizeLimitExceededException(data)
-            elif typ.endswith("ProvisionedThroughputExceededException"):
-                raise _exn.ProvisionedThroughputExceededException(data)
-            elif typ.endswith("LimitExceededException"):
-                raise _exn.LimitExceededException(data)
-            elif typ.endswith("ResourceInUseException"):
-                raise _exn.ResourceInUseException(data)
-            else:
-                raise _exn.ClientError(data)
+            if typ is not None:
+                for suffix, cls in _exn.client_errors:
+                    if typ.endswith(suffix):
+                        raise cls(data)
+            raise _exn.UnknownClientError(data)
         elif 500 <= r.status_code < 600:
             raise _exn.ServerError(data)
         else:
@@ -327,8 +314,12 @@ class RetryingConnectionIntegTests(unittest.TestCase):
             def __init__(self, **kwds):
                 self.kwds = kwds
 
+        def __init__(self, name, payload={}):
+            _Action.__init__(self, name)
+            self.__payload = payload
+
         def build(self):
-            return {}
+            return self.__payload
 
     @classmethod
     def setUpClass(cls):
@@ -340,13 +331,17 @@ class RetryingConnectionIntegTests(unittest.TestCase):
         self.assertEqual(r.kwds, {"TableNames": []})
 
     def test_client_error(self):
-        with self.assertRaises(_exn.ClientError):
+        with self.assertRaises(_exn.InvalidAction):
             self.connection.request(self.TestAction("UnexistingAction"))
 
     def test_network_error(self):
         connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/"), _pol.ExponentialBackoffErrorPolicy(0, 1, 4))
         with self.assertRaises(_exn.NetworkError):
             connection.request(self.TestAction("ListTables"))
+
+    def test_unexisting_table(self):
+        with self.assertRaises(_exn.ResourceNotFoundException):
+            self.connection.request(self.TestAction("GetItem", {"TableName": "Bbb"}))
 
 
 def make_connection(region, credentials, endpoint=None, error_policy=None):
