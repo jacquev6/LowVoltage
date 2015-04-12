@@ -28,7 +28,7 @@ class ExponentialBackoffErrorPolicy(object):
 
     def get_retry_delay_on_exception(self, action, exception, errors):
         # @todo Should we wait different times for different errors?
-        if errors >= self.__max_tries or not isinstance(exception, (_exn.ServerError, _exn.NetworkError, _exn.ProvisionedThroughputExceededException)):
+        if errors >= self.__max_tries or not exception.retryable:
             return None
         else:
             return self.__first_wait * (self.__multiplier ** (errors - 1))
