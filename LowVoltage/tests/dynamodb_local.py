@@ -1,6 +1,6 @@
-# -*- coding: utf-8 -*-
+# coding: utf8
 
-# Copyright 2013-2014 Vincent Jacques <vincent@vincent-jacques.net>
+# Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import datetime
 import glob
