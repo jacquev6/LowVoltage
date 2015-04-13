@@ -18,6 +18,8 @@ Todo
 - ease parallel Scan
 - create builder for attribute paths
 - improve builder for expressions
+- metrics
+- debug logging
 
 Status
 ======
