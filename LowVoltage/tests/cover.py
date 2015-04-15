@@ -180,7 +180,3 @@ class CoverListUnitTests(unittest.TestCase):
                 u[1]
                 u[2]
         self.assertEqual(catcher.exception.args, (["data[2].a"],))
-
-
-if __name__ == "__main__":
-    unittest.main()  # pragma no cover (Test code)

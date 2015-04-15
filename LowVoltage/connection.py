@@ -20,6 +20,8 @@ import LowVoltage.tests.dynamodb_local
 
 
 class StaticCredentials(object):
+    """The simplest credential provider: a constant key/secret pair"""
+
     def __init__(self, key, secret):
         self.__credentials = (key, secret)
 
@@ -28,6 +30,8 @@ class StaticCredentials(object):
 
 
 class BasicConnection(object):
+    """Connection class responsible for signing and sending requests"""
+
     def __init__(self, region, credentials, endpoint):
         self.__region = region
         self.__credentials = credentials
@@ -247,6 +251,8 @@ class BasicConnectionIntegTests(unittest.TestCase):
 
 
 class RetryingConnection:
+    """Connection decorator retrying failed requests (due to network, server and throtling errors)"""
+
     def __init__(self, connection, error_policy):
         self.__connection = connection
         self.__error_policy = error_policy
@@ -345,6 +351,8 @@ class RetryingConnectionIntegTests(unittest.TestCase):
 
 
 def make_connection(region, credentials, endpoint=None, error_policy=None):
+    """Create a connection, using all decorators (RetryingConnection and CompletingConnection on top of a BasicConnection)"""
+
     # @todo Maybe allow injection of the Requests session to tweek low-level parameters (connection timeout, etc.)?
     if endpoint is None:
         endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)
@@ -354,7 +362,3 @@ def make_connection(region, credentials, endpoint=None, error_policy=None):
         BasicConnection(region, credentials, endpoint),
         error_policy
     )
-
-
-if __name__ == "__main__":
-    LowVoltage.tests.dynamodb_local.main()  # pragma no cover (Test code)

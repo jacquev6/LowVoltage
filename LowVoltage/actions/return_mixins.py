@@ -184,7 +184,3 @@ class ReturnItemCollectionMetricsMixinUnitTests(unittest.TestCase):
             ReturnItemCollectionMetricsMixin().return_item_collection_metrics_none()._build_return_item_collection_metrics(),
             {"ReturnItemCollectionMetrics": "NONE"}
         )
-
-
-if __name__ == "__main__":
-    unittest.main()  # pragma no cover (Test code)

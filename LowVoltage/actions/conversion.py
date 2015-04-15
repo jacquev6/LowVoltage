@@ -126,7 +126,3 @@ class ConversionUnitTests(unittest.TestCase):
     def testConvertDbToDict(self):
         self.assertEqual(_convert_db_to_dict({}), {})
         self.assertEqual(_convert_db_to_dict({"a": {"N": "42"}}), {"a": 42})
-
-
-if __name__ == "__main__":
-    unittest.main()  # pragma no cover (Test code)

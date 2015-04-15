@@ -927,7 +927,3 @@ class ScanIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.items[1], {"h": u"2"})
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 4)
-
-
-if __name__ == "__main__":
-    LowVoltage.tests.dynamodb_local.main()  # pragma no cover (Test code)

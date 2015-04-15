@@ -181,7 +181,3 @@ class ProjectionExpressionMixinUnitTests(unittest.TestCase):
                 "ProjectionExpression": "a, b, c",
             }
         )
-
-
-if __name__ == "__main__":
-    unittest.main()  # pragma no cover (Test code)

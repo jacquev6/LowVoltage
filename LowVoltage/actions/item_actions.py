@@ -886,7 +886,3 @@ class UpdateItemIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             )
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item_collection_metrics, None)
-
-
-if __name__ == "__main__":
-    LowVoltage.tests.dynamodb_local.main()  # pragma no cover (Test code)

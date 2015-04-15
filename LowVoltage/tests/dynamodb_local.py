@@ -51,3 +51,5 @@ class TestCase(unittest.TestCase):
     def assertDateTimeIsReasonable(self, t):
         self.assertGreaterEqual(t, self.before_start)
         self.assertLessEqual(t, self.after_end)
+
+# @todo class TestCaseWithTable to factorize setUp and tearDown

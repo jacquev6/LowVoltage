@@ -248,7 +248,3 @@ class ConditionExpressionUnitTests(unittest.TestCase):
             BeginsWith("a", Attr("b"))
         with self.assertRaises(TypeError):
             BeginsWith(Attr("a"), "b")
-
-
-if __name__ == "__main__":
-    unittest.main()  # pragma no cover (Test code)

@@ -1022,7 +1022,3 @@ class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.table_name, "Aaa")
             self.assertEqual(r.table_description.table_size_bytes, 0)
             self.assertEqual(r.table_description.table_status, "ACTIVE")
-
-
-if __name__ == "__main__":
-    LowVoltage.tests.dynamodb_local.main()  # pragma no cover (Test code)
