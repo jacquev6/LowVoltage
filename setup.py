@@ -3,6 +3,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+import os
 import setuptools
 import setuptools.command.test
 
@@ -11,9 +12,15 @@ version = "0.1.0"
 
 class TestCommand(setuptools.command.test.test):
     def run_tests(self, *args, **kwds):
-        import LowVoltage.tests.dynamodb_local
-        with LowVoltage.tests.dynamodb_local.DynamoDbLocal():
+        import LowVoltage.testing.dynamodb_local
+        with LowVoltage.testing.dynamodb_local.DynamoDbLocal():
             setuptools.command.test.test.run_tests(self, *args, **kwds)
+
+
+def find_packages(directory):
+    for dirpath, dirnames, filenames in os.walk(directory):
+        if "__init__.py" in filenames:
+            yield dirpath.replace("/", ".")
 
 
 setuptools.setup(
@@ -23,11 +30,7 @@ setuptools.setup(
     author="Vincent Jacques",
     author_email="vincent@vincent-jacques.net",
     url="http://jacquev6.github.io/LowVoltage",
-    packages=[
-        "LowVoltage",
-        "LowVoltage.actions",
-        "LowVoltage.tests",
-    ],
+    packages=sorted(find_packages("LowVoltage")),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved",
@@ -42,7 +45,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.4",
         "Environment :: Web Environment",
     ],
-    test_suite="LowVoltage.tests.all",
+    test_suite="LowVoltage.tests",
     use_2to3=True,
     cmdclass={"test": TestCommand},
 )

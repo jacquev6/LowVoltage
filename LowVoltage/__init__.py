@@ -6,5 +6,4 @@ from connection import make_connection, StaticCredentials
 from policies import *
 from actions import *
 from exceptions import *
-from return_types import *
 from attribute_types import *

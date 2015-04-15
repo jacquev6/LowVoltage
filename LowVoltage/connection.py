@@ -13,10 +13,10 @@ import time
 import requests
 import MockMockMock
 
-from LowVoltage.actions.action import Action as _Action, ActionProxy as _ActionProxy
+from LowVoltage.actions.action import Action as Action, ActionProxy as ActionProxy
 import LowVoltage.exceptions as _exn
 import LowVoltage.policies as _pol
-import LowVoltage.tests.dynamodb_local
+import LowVoltage.testing.dynamodb_local
 
 
 class StaticCredentials(object):
@@ -40,7 +40,7 @@ class BasicConnection(object):
         self.__session = requests.Session()
 
     def request(self, action):
-        if not isinstance(action, (_Action, _ActionProxy)):
+        if not isinstance(action, (Action, ActionProxy)):
             raise TypeError
 
         payload = json.dumps(action.build())
@@ -240,7 +240,7 @@ class BasicConnectionUnitTests(unittest.TestCase):
 
 
 class BasicConnectionIntegTests(unittest.TestCase):
-    class TestAction(_Action):
+    class TestAction(Action):
         def build(self):
             return {}
 
@@ -315,13 +315,13 @@ class RetryingConnectionUnitTests(unittest.TestCase):
 
 
 class RetryingConnectionIntegTests(unittest.TestCase):
-    class TestAction(_Action):
+    class TestAction(Action):
         class Result(object):
             def __init__(self, **kwds):
                 self.kwds = kwds
 
         def __init__(self, name, payload={}):
-            _Action.__init__(self, name)
+            Action.__init__(self, name)
             self.__payload = payload
 
         def build(self):

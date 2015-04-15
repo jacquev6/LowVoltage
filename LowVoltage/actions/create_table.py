@@ -5,28 +5,26 @@
 import datetime
 import unittest
 
-from LowVoltage.actions.action import Action as _Action, ActionProxy as _ActionProxy
-import LowVoltage.return_types as _rtyp
-import LowVoltage.attribute_types as _atyp
-import LowVoltage.tests.dynamodb_local
-from LowVoltage.tests.cover import cover
-import LowVoltage.exceptions as _exn
+import LowVoltage as _lv
+import LowVoltage.testing as _tst
+from .action import Action, ActionProxy
+from .return_types import TableDescription_, _is_dict
 
 
-def _fix_order_for_tests(d):
-    d.attribute_definitions = sorted(d.attribute_definitions, key=lambda d: d.attribute_name)
+class CreateTable(Action):
+    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_RequestParameters"""
 
-
-class CreateTable(_Action):
     class Result(object):
+        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_ResponseElements"""
+
         def __init__(
             self,
             TableDescription=None,
             **dummy
         ):
-            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_ResponseElements
-            # - TableDescription: done
-            self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
+            self.table_description = None
+            if _is_dict(TableDescription):  # pragma no branch (Defensive code)
+                self.table_description = TableDescription_(**TableDescription)
 
     def __init__(self, table_name):
         super(CreateTable, self).__init__("CreateTable")
@@ -40,13 +38,6 @@ class CreateTable(_Action):
         self.__lsis = {}
 
     def build(self):
-        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_RequestParameters
-        # - AttributeDefinitions: done
-        # - KeySchema: done
-        # - ProvisionedThroughput: done
-        # - TableName: done
-        # - GlobalSecondaryIndexes: done
-        # - LocalSecondaryIndexes: done
         data = {"TableName": self.__table_name}
         schema = []
         if self.__hash_key:
@@ -73,7 +64,7 @@ class CreateTable(_Action):
             data["LocalSecondaryIndexes"] = [i._build() for i in self.__lsis.itervalues()]
         return data
 
-    class _Index(_ActionProxy):
+    class _Index(ActionProxy):
         def __init__(self, action, name):
             super(CreateTable._Index, self).__init__(action)
             self.__name = name
@@ -200,7 +191,7 @@ class CreateTableUnitTests(unittest.TestCase):
 
     def testHashKeyWithType(self):
         self.assertEqual(
-            CreateTable("Foo").hash_key("h", _atyp.STRING).build(),
+            CreateTable("Foo").hash_key("h", _lv.STRING).build(),
             {
                 "TableName": "Foo",
                 "AttributeDefinitions": [{"AttributeName": "h", "AttributeType": "S"}],
@@ -210,7 +201,7 @@ class CreateTableUnitTests(unittest.TestCase):
 
     def testAttributeDefinition(self):
         self.assertEqual(
-            CreateTable("Foo").attribute_definition("h", _atyp.STRING).build(),
+            CreateTable("Foo").attribute_definition("h", _lv.STRING).build(),
             {
                 "TableName": "Foo",
                 "AttributeDefinitions": [{"AttributeName": "h", "AttributeType": "S"}],
@@ -228,7 +219,7 @@ class CreateTableUnitTests(unittest.TestCase):
 
     def testRangeKeyWithType(self):
         self.assertEqual(
-            CreateTable("Foo").range_key("r", _atyp.STRING).build(),
+            CreateTable("Foo").range_key("r", _lv.STRING).build(),
             {
                 "TableName": "Foo",
                 "AttributeDefinitions": [{"AttributeName": "r", "AttributeType": "S"}],
@@ -287,7 +278,7 @@ class CreateTableUnitTests(unittest.TestCase):
 
     def testGlobalSecondaryIndexHashKeyWithType(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").hash_key("hh", _atyp.STRING).build(),
+            CreateTable("Foo").global_secondary_index("foo").hash_key("hh", _lv.STRING).build(),
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -299,7 +290,7 @@ class CreateTableUnitTests(unittest.TestCase):
 
     def testGlobalSecondaryIndexRangeKeyWithType(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").range_key("rr", _atyp.STRING).build(),
+            CreateTable("Foo").global_secondary_index("foo").range_key("rr", _lv.STRING).build(),
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -365,7 +356,7 @@ class CreateTableUnitTests(unittest.TestCase):
 
     def testImplicitBackToTableAfterGsi(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").attribute_definition("bar", _atyp.NUMBER).build(),
+            CreateTable("Foo").global_secondary_index("foo").attribute_definition("bar", _lv.NUMBER).build(),
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [{"IndexName": "foo"}],
@@ -406,16 +397,16 @@ class CreateTableUnitTests(unittest.TestCase):
         )
 
 
-class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
+class CreateTableIntegTests(_tst.dynamodb_local.TestCase):
     def tearDown(self):
-        self.connection.request(DeleteTable("Aaa"))
+        self.connection.request(_lv.DeleteTable("Aaa"))
 
     def testSimplestTable(self):
         r = self.connection.request(
-            CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
 
-        with cover("r", r) as r:
+        with _tst.cover("r", r) as r:
             self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
@@ -435,16 +426,16 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
     def testSimpleGlobalSecondaryIndex(self):
         r = self.connection.request(
-            CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
                 .global_secondary_index("the_gsi")
-                .hash_key("hh", _atyp.STRING)
+                .hash_key("hh", _lv.STRING)
                 .project_all()
                 .provisioned_throughput(3, 4)
         )
 
-        _fix_order_for_tests(r.table_description)
+        _tst.fix_table_description(r.table_description)
 
-        with cover("r", r) as r:
+        with _tst.cover("r", r) as r:
             self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
@@ -478,13 +469,13 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
     def testSimpleLocalSecondaryIndex(self):
         r = self.connection.request(
-            CreateTable("Aaa").hash_key("h", _atyp.STRING).range_key("r", _atyp.STRING).provisioned_throughput(1, 2)
-                .local_secondary_index("the_lsi").hash_key("h").range_key("rr", _atyp.STRING).project_all()
+            _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).range_key("r", _lv.STRING).provisioned_throughput(1, 2)
+                .local_secondary_index("the_lsi").hash_key("h").range_key("rr", _lv.STRING).project_all()
         )
 
-        _fix_order_for_tests(r.table_description)
+        _tst.fix_table_description(r.table_description)
 
-        with cover("r", r) as r:
+        with _tst.cover("r", r) as r:
             self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
@@ -519,16 +510,16 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
 
     def testGlobalSecondaryIndexWithProjection(self):
         r = self.connection.request(
-            CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
+            _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
                 .global_secondary_index("the_gsi")
-                .hash_key("hh", _atyp.STRING)
+                .hash_key("hh", _lv.STRING)
                 .project("toto", "titi")
                 .provisioned_throughput(3, 4)
         )
 
-        _fix_order_for_tests(r.table_description)
+        _tst.fix_table_description(r.table_description)
 
-        with cover("r", r) as r:
+        with _tst.cover("r", r) as r:
             self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
             self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
@@ -562,12 +553,12 @@ class CreateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.table_status, "ACTIVE")
 
 
-class CreateTableErrorTests(LowVoltage.tests.dynamodb_local.TestCase):
+class CreateTableErrorTests(_tst.dynamodb_local.TestCase):
     def testDefineUnusedAttribute(self):
-        with self.assertRaises(_exn.ValidationException) as catcher:
+        with self.assertRaises(_lv.ValidationException) as catcher:
             self.connection.request(
-                CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
-                    .attribute_definition("x", _atyp.STRING)
+                _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
+                    .attribute_definition("x", _lv.STRING)
             )
         self.assertEqual(
             catcher.exception.args,
@@ -578,10 +569,10 @@ class CreateTableErrorTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
     def testDontDefineKeyAttribute(self):
-        with self.assertRaises(_exn.ValidationException) as catcher:
+        with self.assertRaises(_lv.ValidationException) as catcher:
             self.connection.request(
-                CreateTable("Aaa").hash_key("h").provisioned_throughput(1, 2)
-                    .attribute_definition("x", _atyp.STRING)
+                _lv.CreateTable("Aaa").hash_key("h").provisioned_throughput(1, 2)
+                    .attribute_definition("x", _lv.STRING)
             )
         self.assertEqual(
             catcher.exception.args,
@@ -592,9 +583,9 @@ class CreateTableErrorTests(LowVoltage.tests.dynamodb_local.TestCase):
         )
 
     def testDontDefineAnyAttribute(self):
-        with self.assertRaises(_exn.ValidationException) as catcher:
+        with self.assertRaises(_lv.ValidationException) as catcher:
             self.connection.request(
-                CreateTable("Aaa").hash_key("h").provisioned_throughput(1, 2)
+                _lv.CreateTable("Aaa").hash_key("h").provisioned_throughput(1, 2)
             )
         self.assertEqual(
             catcher.exception.args,
@@ -603,422 +594,3 @@ class CreateTableErrorTests(LowVoltage.tests.dynamodb_local.TestCase):
                 "Message": "No Attribute Schema Defined",
             },)
         )
-
-
-class DeleteTable(_Action):
-    class Result(object):
-        def __init__(
-            self,
-            TableDescription=None,
-            **dummy
-        ):
-            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_ResponseElements
-            # - TableDescription: done
-            self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
-
-    def __init__(self, table_name):
-        super(DeleteTable, self).__init__("DeleteTable")
-        self.__table_name = table_name
-
-    def build(self):
-        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_RequestParameters
-        # - TableName: done
-        return {"TableName": self.__table_name}
-
-
-class DeleteTableUnitTests(unittest.TestCase):
-    def testName(self):
-        self.assertEqual(DeleteTable("Foo").name, "DeleteTable")
-
-    def testBuild(self):
-        self.assertEqual(DeleteTable("Foo").build(), {"TableName": "Foo"})
-
-
-class DeleteTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
-    def setUp(self):
-        self.connection.request(
-            CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
-        )
-
-    def test(self):
-        r = self.connection.request(DeleteTable("Aaa"))
-
-        with cover("r", r) as r:
-            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
-            self.assertEqual(r.table_description.global_secondary_indexes, None)
-            self.assertEqual(r.table_description.item_count, 0)
-            self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
-            self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
-            self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
-            self.assertEqual(r.table_description.table_name, "Aaa")
-            self.assertEqual(r.table_description.table_size_bytes, 0)
-            self.assertEqual(r.table_description.table_status, "ACTIVE")
-
-
-class DescribeTable(_Action):
-    class Result(object):
-        def __init__(
-            self,
-            Table=None,
-            **dummy
-        ):
-            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_ResponseElements
-            # - Table: done
-            self.table = None if Table is None else _rtyp.TableDescription(**Table)
-
-    def __init__(self, table_name):
-        super(DescribeTable, self).__init__("DescribeTable")
-        self.__table_name = table_name
-
-    def build(self):
-        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_RequestParameters
-        # - TableName: done
-        return {"TableName": self.__table_name}
-
-
-class DescribeTableUnitTests(unittest.TestCase):
-    def testName(self):
-        self.assertEqual(DescribeTable("Foo").name, "DescribeTable")
-
-    def testBuild(self):
-        self.assertEqual(DescribeTable("Foo").build(), {"TableName": "Foo"})
-
-
-class DescribeTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
-    def setUp(self):
-        self.connection.request(
-            CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
-        )
-
-    def tearDown(self):
-        self.connection.request(DeleteTable("Aaa"))
-
-    def test(self):
-        r = self.connection.request(DescribeTable("Aaa"))
-
-        with cover("r", r) as r:
-            self.assertDateTimeIsReasonable(r.table.creation_date_time)
-            self.assertEqual(r.table.attribute_definitions[0].attribute_name, "h")
-            self.assertEqual(r.table.attribute_definitions[0].attribute_type, "S")
-            self.assertEqual(r.table.global_secondary_indexes, None)
-            self.assertEqual(r.table.item_count, 0)
-            self.assertEqual(r.table.key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table.key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table.local_secondary_indexes, None)
-            self.assertEqual(r.table.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table.provisioned_throughput.number_of_decreases_today, 0)
-            self.assertEqual(r.table.provisioned_throughput.read_capacity_units, 1)
-            self.assertEqual(r.table.provisioned_throughput.write_capacity_units, 2)
-            self.assertEqual(r.table.table_name, "Aaa")
-            self.assertEqual(r.table.table_size_bytes, 0)
-            self.assertEqual(r.table.table_status, "ACTIVE")
-
-
-class ListTables(_Action):
-    class Result(object):
-        def __init__(
-            self,
-            LastEvaluatedTableName=None,
-            TableNames=None,
-            **dummy
-        ):
-            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_ResponseElements
-            # - LastEvaluatedTableName: done
-            # - TableNames: done
-            self.last_evaluated_table_name = LastEvaluatedTableName
-            self.table_names = TableNames
-
-    def __init__(self):
-        super(ListTables, self).__init__("ListTables")
-        self.__limit = None
-        self.__exclusive_start_table_name = None
-
-    def build(self):
-        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_RequestParameters
-        # - ExclusiveStartTableName: done
-        # - Limit: done
-        data = {}
-        if self.__limit:
-            data["Limit"] = str(self.__limit)
-        if self.__exclusive_start_table_name:
-            data["ExclusiveStartTableName"] = self.__exclusive_start_table_name
-        return data
-
-    def limit(self, limit):
-        self.__limit = limit
-        return self
-
-    def exclusive_start_table_name(self, table_name):
-        self.__exclusive_start_table_name = table_name
-        return self
-
-
-class ListTablesUnitTests(unittest.TestCase):
-    def testName(self):
-        self.assertEqual(ListTables().name, "ListTables")
-
-    def testNoArguments(self):
-        self.assertEqual(ListTables().build(), {})
-
-    def testLimit(self):
-        self.assertEqual(ListTables().limit(42).build(), {"Limit": "42"})
-
-    def testExclusiveStartTableName(self):
-        self.assertEqual(ListTables().exclusive_start_table_name("Bar").build(), {"ExclusiveStartTableName": "Bar"})
-
-
-class ListTablesIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
-    def setUp(self):
-        self.connection.request(
-            CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
-        )
-        self.connection.request(
-            CreateTable("Bbb").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
-        )
-        self.connection.request(
-            CreateTable("Ccc").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
-        )
-
-    def tearDown(self):
-        self.connection.request(DeleteTable("Aaa"))
-        self.connection.request(DeleteTable("Bbb"))
-        self.connection.request(DeleteTable("Ccc"))
-
-    def testAllArguments(self):
-        r = self.connection.request(ListTables().exclusive_start_table_name("Aaa").limit(1))
-
-        with cover("r", r) as r:
-            self.assertEqual(r.last_evaluated_table_name, "Bbb")
-            self.assertEqual(r.table_names[0], "Bbb")
-
-    def testNoArguments(self):
-        r = self.connection.request(ListTables())
-
-        with cover("r", r) as r:
-            self.assertEqual(r.last_evaluated_table_name, None)
-            self.assertEqual(r.table_names[0], "Aaa")
-            self.assertEqual(r.table_names[1], "Bbb")
-            self.assertEqual(r.table_names[2], "Ccc")
-
-
-class UpdateTable(_Action):
-    class Result(object):
-        def __init__(
-            self,
-            TableDescription=None,
-            **dummy
-        ):
-            # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_ResponseElements
-            # - TableDescription: done
-            self.table_description = None if TableDescription is None else _rtyp.TableDescription(**TableDescription)
-
-    def __init__(self, table_name):
-        super(UpdateTable, self).__init__("UpdateTable")
-        self.__table_name = table_name
-        self.__read_capacity_units = None
-        self.__write_capacity_units = None
-        self.__gsis = {}
-
-    def build(self):
-        # http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_RequestParameters
-        # - TableName: done
-        # - GlobalSecondaryIndexUpdates: done
-        # - ProvisionedThroughput: done
-        data = {"TableName": self.__table_name}
-        throughput = {}
-        if self.__read_capacity_units:
-            throughput["ReadCapacityUnits"] = self.__read_capacity_units
-        if self.__write_capacity_units:
-            throughput["WriteCapacityUnits"] = self.__write_capacity_units
-        if throughput:
-            data["ProvisionedThroughput"] = throughput
-        if self.__gsis:
-            data["GlobalSecondaryIndexUpdates"] = [{"Update": i._build()} for i in self.__gsis.itervalues()]
-        return data
-
-    class _IndexWithThroughput(_ActionProxy):
-        def __init__(self, action, name):
-            super(UpdateTable._IndexWithThroughput, self).__init__(action)
-            self.__name = name
-            self.__read_capacity_units = None
-            self.__write_capacity_units = None
-
-        def table(self):
-            return self._action
-
-        def provisioned_throughput(self, read_capacity_units, write_capacity_units):
-            self.__read_capacity_units = read_capacity_units
-            self.__write_capacity_units = write_capacity_units
-            return self
-
-        def _build(self):
-            data = {"IndexName": self.__name}
-            throughput = {}
-            if self.__read_capacity_units:
-                throughput["ReadCapacityUnits"] = self.__read_capacity_units
-            if self.__write_capacity_units:
-                throughput["WriteCapacityUnits"] = self.__write_capacity_units
-            if throughput:
-                data["ProvisionedThroughput"] = throughput
-            return data
-
-    def provisioned_throughput(self, read_capacity_units, write_capacity_units):
-        self.__read_capacity_units = read_capacity_units
-        self.__write_capacity_units = write_capacity_units
-        return self
-
-    def global_secondary_index(self, name):
-        if name not in self.__gsis:
-            self.__gsis[name] = self._IndexWithThroughput(self, name)
-        return self.__gsis[name]
-
-
-class UpdateTableUnitTests(unittest.TestCase):
-    def testName(self):
-        self.assertEqual(UpdateTable("Foo").name, "UpdateTable")
-
-    def testNoArguments(self):
-        self.assertEqual(UpdateTable("Foo").build(), {"TableName": "Foo"})
-
-    def testThroughput(self):
-        self.assertEqual(
-            UpdateTable("Foo").provisioned_throughput(42, 43).build(),
-            {
-                "TableName": "Foo",
-                "ProvisionedThroughput": {"ReadCapacityUnits": 42, "WriteCapacityUnits": 43},
-            }
-        )
-
-    def testGsi(self):
-        self.assertEqual(
-            UpdateTable("Foo").global_secondary_index("the_gsi").build(),
-            {
-                "TableName": "Foo",
-                "GlobalSecondaryIndexUpdates": [
-                    {"Update": {"IndexName": "the_gsi"}},
-                ],
-            }
-        )
-
-    def testGsiprovisioned_Throughput(self):
-        self.assertEqual(
-            UpdateTable("Foo").global_secondary_index("the_gsi").provisioned_throughput(42, 43).build(),
-            {
-                "TableName": "Foo",
-                "GlobalSecondaryIndexUpdates": [
-                    {"Update": {"IndexName": "the_gsi", "ProvisionedThroughput": {"ReadCapacityUnits": 42, "WriteCapacityUnits": 43}}},
-                ],
-            }
-        )
-
-    def testBackToGsiAfterBackToTable(self):
-        self.assertEqual(
-            UpdateTable("Foo").global_secondary_index("the_gsi").table().provisioned_throughput(12, 13).global_secondary_index("the_gsi").provisioned_throughput(42, 43).build(),
-            {
-                "TableName": "Foo",
-                "GlobalSecondaryIndexUpdates": [
-                    {"Update": {"IndexName": "the_gsi", "ProvisionedThroughput": {"ReadCapacityUnits": 42, "WriteCapacityUnits": 43}}},
-                ],
-                "ProvisionedThroughput": {"ReadCapacityUnits": 12, "WriteCapacityUnits": 13},
-            }
-        )
-
-
-class UpdateTableIntegTests(LowVoltage.tests.dynamodb_local.TestCase):
-    def setUp(self):
-        self.connection.request(
-            CreateTable("Aaa").hash_key("h", _atyp.STRING).provisioned_throughput(1, 2)
-                .global_secondary_index("the_gsi")
-                .hash_key("hh", _atyp.STRING)
-                .project_all()
-                .provisioned_throughput(3, 4)
-        )
-
-    def tearDown(self):
-        self.connection.request(DeleteTable("Aaa"))
-
-    def testThroughput(self):
-        r = self.connection.request(
-            UpdateTable("Aaa").provisioned_throughput(2, 4)
-        )
-
-        _fix_order_for_tests(r.table_description)
-
-        with cover("r", r) as r:
-            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "ALL")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_decrease_date_time, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_increase_date_time, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 3)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 4)
-            self.assertEqual(r.table_description.item_count, 0)
-            self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
-            self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 2)
-            self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 4)
-            self.assertEqual(r.table_description.table_name, "Aaa")
-            self.assertEqual(r.table_description.table_size_bytes, 0)
-            self.assertEqual(r.table_description.table_status, "ACTIVE")
-
-    def testGsiprovisioned_Throughput(self):
-        r = self.connection.request(
-            UpdateTable("Aaa").global_secondary_index("the_gsi").provisioned_throughput(6, 8)
-        )
-
-        _fix_order_for_tests(r.table_description)
-
-        with cover("r", r) as r:
-            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "ALL")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_decrease_date_time, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_increase_date_time, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 6)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 8)
-            self.assertEqual(r.table_description.item_count, 0)
-            self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
-            self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
-            self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
-            self.assertEqual(r.table_description.table_name, "Aaa")
-            self.assertEqual(r.table_description.table_size_bytes, 0)
-            self.assertEqual(r.table_description.table_status, "ACTIVE")
