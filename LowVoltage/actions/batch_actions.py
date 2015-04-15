@@ -39,9 +39,10 @@ class BatchGetItem(_Action,
             self.responses = None if Responses is None else {t: [_convert_db_to_dict(v) for v in vs] for t, vs in Responses.iteritems()}
             self.unprocessed_keys = UnprocessedKeys
 
-    def __init__(self):
+    def __init__(self, previous_unprocessed_keys=None):
         super(BatchGetItem, self).__init__("BatchGetItem")
         ReturnConsumedCapacityMixin.__init__(self)
+        self.__previous_unprocessed_keys = previous_unprocessed_keys
         self.__tables = {}
 
     def build(self):
@@ -55,6 +56,8 @@ class BatchGetItem(_Action,
         # - ReturnConsumedCapacity: done
         data = {}
         data.update(self._build_return_consumed_capacity())
+        if self.__previous_unprocessed_keys:
+            data["RequestItems"] = self.__previous_unprocessed_keys
         if self.__tables:
             data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
         return data

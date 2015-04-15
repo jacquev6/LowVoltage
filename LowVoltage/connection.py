@@ -350,15 +350,78 @@ class RetryingConnectionIntegTests(unittest.TestCase):
             self.connection.request(self.TestAction("GetItem", {"TableName": "Bbb"}))
 
 
+class CompletingConnection:
+    """Connection decorator completing batch actions (UnprocessedKeys and UnprocessedItems)"""
+
+    def __init__(self, connection):
+        self.__connection = connection
+
+    def request(self, action):
+        r = self.__connection.request(action)
+        # @todo Put this logic in BatchGetItem itself
+        if isinstance(action, (LowVoltage.BatchGetItem, LowVoltage.BatchGetItem._Table)):
+            while r.unprocessed_keys != {}:
+                r2 = self.__connection.request(LowVoltage.BatchGetItem(r.unprocessed_keys))
+                for table, items in r2.responses.iteritems():
+                    l = r.responses.setdefault(table, [])
+                    l += items
+                r.unprocessed_keys = r2.unprocessed_keys
+        return r
+
+
+class CompletingConnectionIntegTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.base_connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffErrorPolicy(1, 2, 5))
+        cls.connection = CompletingConnection(cls.base_connection)
+
+    def setUp(self):
+        self.connection.request(
+            LowVoltage.CreateTable("Aaa").hash_key("h", LowVoltage.STRING).provisioned_throughput(1, 2)
+        )
+
+    def tearDown(self):
+        self.connection.request(LowVoltage.DeleteTable("Aaa"))
+
+    def test_complete_batch_get(self):
+        for i in range(100):
+            self.connection.request(LowVoltage.PutItem("Aaa", {"h": unicode(i), "xs": "x" * 300000}))
+
+        batch_get = LowVoltage.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100))
+
+        r = self.base_connection.request(batch_get)
+        self.assertEqual(len(r.unprocessed_keys["Aaa"]["Keys"]), 45)
+        self.assertEqual(len(r.responses["Aaa"]), 55)
+
+        r = self.connection.request(batch_get)
+        self.assertEqual(r.unprocessed_keys, {})
+        self.assertEqual(len(r.responses["Aaa"]), 100)
+
+
+class WaitingConnection:
+    """Connection decorator waiting until admin actions are done (until table's state is ACTIVE)"""
+
+    def __init__(self, connection):
+        self.__connection = connection
+
+    def request(self, action):
+        # @todo Implement (should wait until CreateTable, UpdateTable and DeleteTable's effect is applied)
+        return self.__connection.request(action)
+
+
 def make_connection(region, credentials, endpoint=None, error_policy=None):
-    """Create a connection, using all decorators (RetryingConnection and CompletingConnection on top of a BasicConnection)"""
+    """Create a connection, using all decorators (RetryingConnection, CompletingConnection, WaitingConnection on top of a BasicConnection)"""
 
     # @todo Maybe allow injection of the Requests session to tweek low-level parameters (connection timeout, etc.)?
     if endpoint is None:
         endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)
     if error_policy is None:
         error_policy = _pol.ExponentialBackoffErrorPolicy(1, 2, 5)
-    return RetryingConnection(
-        BasicConnection(region, credentials, endpoint),
-        error_policy
+    return WaitingConnection(
+        CompletingConnection(
+            RetryingConnection(
+                BasicConnection(region, credentials, endpoint),
+                error_policy
+            )
+        )
     )
