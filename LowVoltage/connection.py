@@ -250,7 +250,7 @@ class BasicConnectionIntegTests(unittest.TestCase):
             connection.request(self.TestAction("ListTables"))
 
 
-class RetryingConnection:
+class RetryingConnection(object):
     """Connection decorator retrying failed requests (due to network, server and throtling errors)"""
 
     def __init__(self, connection, error_policy):
@@ -350,7 +350,7 @@ class RetryingConnectionIntegTests(unittest.TestCase):
             self.connection.request(self.TestAction("GetItem", {"TableName": "Bbb"}))
 
 
-class CompletingConnection:
+class CompletingConnection(object):
     """Connection decorator completing batch actions (UnprocessedKeys and UnprocessedItems)"""
 
     def __init__(self, connection):
@@ -470,7 +470,7 @@ class CompletingConnectionIntegTests(unittest.TestCase):
         self.assertEqual(len(r.responses["Aaa"]), 100)
 
 
-class WaitingConnection:
+class WaitingConnection(object):
     """Connection decorator waiting until admin actions are done (until table's state is ACTIVE)"""
 
     def __init__(self, connection):

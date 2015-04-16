@@ -35,7 +35,7 @@ def _is_list_of_float(l):
     return isinstance(l, list) and all(_is_float(e) for e in l)
 
 
-class TableDescription_:
+class TableDescription_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html"""
 
     def __init__(
@@ -93,7 +93,7 @@ class TableDescription_:
             self.table_status = TableStatus
 
 
-class AttributeDefinition_:
+class AttributeDefinition_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeDefinition.html"""
 
     def __init__(
@@ -110,7 +110,7 @@ class AttributeDefinition_:
             self.attribute_type = AttributeType
 
 
-class GlobalSecondaryIndexDescription_:
+class GlobalSecondaryIndexDescription_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GlobalSecondaryIndexDescription.html"""
 
     def __init__(
@@ -153,7 +153,7 @@ class GlobalSecondaryIndexDescription_:
             self.provisioned_throughput = ProvisionedThroughputDescription_(**ProvisionedThroughput)
 
 
-class Projection_:
+class Projection_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Projection.html"""
 
     def __init__(
@@ -171,7 +171,7 @@ class Projection_:
             self.projection_type = ProjectionType
 
 
-class ProvisionedThroughputDescription_:
+class ProvisionedThroughputDescription_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughputDescription.html"""
 
     def __init__(
@@ -204,7 +204,7 @@ class ProvisionedThroughputDescription_:
             self.write_capacity_units = long(WriteCapacityUnits)
 
 
-class KeySchemaElement_:
+class KeySchemaElement_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_KeySchemaElement.html"""
 
     def __init__(
@@ -222,7 +222,7 @@ class KeySchemaElement_:
             self.key_type = KeyType
 
 
-class LocalSecondaryIndexDescription_:
+class LocalSecondaryIndexDescription_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_LocalSecondaryIndexDescription.html"""
 
     def __init__(
@@ -260,7 +260,7 @@ class LocalSecondaryIndexDescription_:
             self.projection = Projection_(**Projection)
 
 
-class ConsumedCapacity_:
+class ConsumedCapacity_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ConsumedCapacity.html"""
 
     def __init__(
@@ -293,7 +293,7 @@ class ConsumedCapacity_:
             self.table_name = TableName
 
 
-class Capacity_:
+class Capacity_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Capacity.html"""
 
     def __init__(
@@ -306,7 +306,7 @@ class Capacity_:
             self.capacity_units = float(CapacityUnits)
 
 
-class ItemCollectionMetrics_:
+class ItemCollectionMetrics_(object):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ItemCollectionMetrics.html"""
 
     def __init__(

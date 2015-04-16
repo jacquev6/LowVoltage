@@ -5,7 +5,7 @@
 import unittest
 
 
-class _Boolean:
+class _Boolean(object):
     def __and__(self, other):
         return _BooleanExpression(self, "AND", other)
 
@@ -58,7 +58,7 @@ class _ComparisonExpression(_Boolean):
         return "{}{}{}".format(self.__left.atom(), self.__operator, self.__right.atom())
 
 
-class _Atom:
+class _Atom(object):
     def __eq__(self, other):
         return _ComparisonExpression(self, "=", other)
 
