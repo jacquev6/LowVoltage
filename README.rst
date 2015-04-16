@@ -11,9 +11,9 @@ Todo
 ====
 
 - docs
-- retry failed actions with exponential back-off (network, server, throttling)
+- credential provider for AWS's AIM roles
+- credential provider for classical AWS environment variables
 - wait until CreateTable, DeleteTable, UpdateTable are done
-- process UnprocessedXxx in BatchGetItems and BatchWriteItems
 - paginate ListTables, Scan, Query
 - ease parallel Scan
 - create builder for attribute paths
