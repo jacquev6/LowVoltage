@@ -239,7 +239,7 @@ class BasicConnectionUnitTests(unittest.TestCase):
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceInUseException", "Message": "tralala"},))
 
 
-class BasicConnectionIntegTests(unittest.TestCase):
+class BasicConnectionLocalIntegTests(unittest.TestCase):
     class TestAction(Action):
         def build(self):
             return {}
@@ -314,7 +314,7 @@ class RetryingConnectionUnitTests(unittest.TestCase):
         self.assertIs(catcher.exception, exception)
 
 
-class RetryingConnectionIntegTests(unittest.TestCase):
+class RetryingConnectionLocalIntegTests(unittest.TestCase):
     class TestAction(Action):
         class Result(object):
             def __init__(self, **kwds):
@@ -441,7 +441,7 @@ class CompletingConnectionUnitTests(unittest.TestCase):
         )
 
 
-class CompletingConnectionIntegTests(unittest.TestCase):
+class CompletingConnectionLocalIntegTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.base_connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffErrorPolicy(1, 2, 5))

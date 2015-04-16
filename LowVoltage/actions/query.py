@@ -272,7 +272,7 @@ class QueryUnitTests(unittest.TestCase):
         self.assertEqual(Query("Aaa").scan_index_forward_false().build(), {"TableName": "Aaa", "ScanIndexForward": False})
 
 
-class QueryIntegTests(_tst.dynamodb_local.TestCase):
+class QueryLocalIntegTests(_tst.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
             _lv.CreateTable("Aaa")

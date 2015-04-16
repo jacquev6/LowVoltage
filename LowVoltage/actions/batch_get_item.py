@@ -213,7 +213,7 @@ class BatchGetItemUnitTests(unittest.TestCase):
         self.assertEqual(r.unprocessed_keys, 2)
 
 
-class BatchGetItemIntegTests(_tst.dynamodb_local.TestCase):
+class BatchGetItemLocalIntegTests(_tst.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)

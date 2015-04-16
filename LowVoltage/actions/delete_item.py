@@ -140,7 +140,7 @@ class DeleteItemUnitTests(unittest.TestCase):
         )
 
 
-class DeleteItemIntegTests(_tst.dynamodb_local.TestCase):
+class DeleteItemLocalIntegTests(_tst.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)

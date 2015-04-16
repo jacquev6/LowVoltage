@@ -45,7 +45,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.4",
         "Environment :: Web Environment",
     ],
-    test_suite="LowVoltage.tests",
+    test_suite="LowVoltage.tests.local",
     use_2to3=True,
     cmdclass={"test": TestCommand},
 )

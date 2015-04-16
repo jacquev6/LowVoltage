@@ -181,7 +181,7 @@ class BatchWriteItemUnitTests(unittest.TestCase):
         self.assertEqual(r.unprocessed_items, 3)
 
 
-class BatchWriteItemIntegTests(_tst.dynamodb_local.TestCase):
+class BatchWriteItemLocalIntegTests(_tst.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)

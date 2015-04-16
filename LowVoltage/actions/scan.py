@@ -148,7 +148,7 @@ class ScanUnitTests(unittest.TestCase):
         self.assertEqual(Scan("Aaa").filter_expression("a=b").build(), {"TableName": "Aaa", "FilterExpression": "a=b"})
 
 
-class ScanIntegTests(_tst.dynamodb_local.TestCase):
+class ScanLocalIntegTests(_tst.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)

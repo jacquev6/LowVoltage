@@ -266,7 +266,7 @@ class UpdateItemUnitTests(unittest.TestCase):
         )
 
 
-class UpdateItemIntegTests(_tst.dynamodb_local.TestCase):
+class UpdateItemLocalIntegTests(_tst.dynamodb_local.TestCase):
     def setUp(self):
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
