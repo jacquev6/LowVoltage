@@ -358,15 +358,87 @@ class CompletingConnection:
 
     def request(self, action):
         r = self.__connection.request(action)
-        # @todo Put this logic in BatchGetItem itself
-        if isinstance(action, (LowVoltage.BatchGetItem, LowVoltage.BatchGetItem._Table)):
-            while r.unprocessed_keys != {}:
-                r2 = self.__connection.request(LowVoltage.BatchGetItem(r.unprocessed_keys))
-                for table, items in r2.responses.iteritems():
-                    l = r.responses.setdefault(table, [])
-                    l += items
-                r.unprocessed_keys = r2.unprocessed_keys
+        if action.is_completable:
+            next_action = action.get_completion_action(r)
+            while next_action is not None:
+                next_response = self.__connection.request(next_action)
+                action.complete_response(r, next_response)
+                next_action = action.get_completion_action(r)
         return r
+
+
+class CompletingConnectionUnitTests(unittest.TestCase):
+    def setUp(self):
+        self.mocks = MockMockMock.Engine()
+        self.base_connection = self.mocks.create("base_connection")
+        self.action = self.mocks.create("action")
+        self.connection = CompletingConnection(self.base_connection.object)
+
+    def tearDown(self):
+        self.mocks.tearDown()
+
+    def test_dont_complete_uncompletable_action(self):
+        r = object()
+        self.base_connection.expect.request(self.action.object).andReturn(r)
+        self.action.expect.is_completable.andReturn(False)
+
+        self.assertIs(
+            self.connection.request(self.action.object),
+            r
+        )
+
+    def test_try_to_complete_action(self):
+        r = object()
+        self.base_connection.expect.request(self.action.object).andReturn(r)
+        self.action.expect.is_completable.andReturn(True)
+        self.action.expect.get_completion_action(r).andReturn(None)
+
+        self.assertIs(
+            self.connection.request(self.action.object),
+            r
+        )
+
+    def test_complete_action_once(self):
+        r1 = object()
+        self.base_connection.expect.request(self.action.object).andReturn(r1)
+        self.action.expect.is_completable.andReturn(True)
+        a2 = object()
+        self.action.expect.get_completion_action(r1).andReturn(a2)
+        r2 = object()
+        self.base_connection.expect.request(a2).andReturn(r2)
+        self.action.expect.complete_response(r1, r2)
+        self.action.expect.get_completion_action(r1).andReturn(None)
+
+        self.assertIs(
+            self.connection.request(self.action.object),
+            r1
+        )
+
+    def test_complete_several_times(self):
+        r1 = object()
+        self.base_connection.expect.request(self.action.object).andReturn(r1)
+        self.action.expect.is_completable.andReturn(True)
+        a2 = object()
+        self.action.expect.get_completion_action(r1).andReturn(a2)
+        r2 = object()
+        self.base_connection.expect.request(a2).andReturn(r2)
+        self.action.expect.complete_response(r1, r2)
+        a3 = object()
+        self.action.expect.get_completion_action(r1).andReturn(a3)
+        r3 = object()
+        self.base_connection.expect.request(a3).andReturn(r3)
+        self.action.expect.complete_response(r1, r3)
+        a4 = object()
+        self.action.expect.get_completion_action(r1).andReturn(a4)
+        r4 = object()
+        self.base_connection.expect.request(a4).andReturn(r4)
+        self.action.expect.complete_response(r1, r4)
+        self.action.expect.get_completion_action(r1).andReturn(None)
+
+        self.assertIs(
+            self.connection.request(self.action.object),
+            r1
+        )
 
 
 class CompletingConnectionIntegTests(unittest.TestCase):
@@ -409,19 +481,24 @@ class WaitingConnection:
         return self.__connection.request(action)
 
 
-def make_connection(region, credentials, endpoint=None, error_policy=None):
+def make_connection(
+    region,
+    credentials,
+    endpoint=None,
+    error_policy=_pol.ExponentialBackoffErrorPolicy(1, 2, 5),
+    complete_batches=True,
+    wait_for_tables=True,
+):
     """Create a connection, using all decorators (RetryingConnection, CompletingConnection, WaitingConnection on top of a BasicConnection)"""
-
     # @todo Maybe allow injection of the Requests session to tweek low-level parameters (connection timeout, etc.)?
+
     if endpoint is None:
         endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)
-    if error_policy is None:
-        error_policy = _pol.ExponentialBackoffErrorPolicy(1, 2, 5)
-    return WaitingConnection(
-        CompletingConnection(
-            RetryingConnection(
-                BasicConnection(region, credentials, endpoint),
-                error_policy
-            )
-        )
-    )
+    connection = BasicConnection(region, credentials, endpoint)
+    if error_policy is not None:
+        connection = RetryingConnection(connection, error_policy)
+    if complete_batches:
+        connection = RetryingConnection(connection)
+    if wait_for_tables:
+        connection = WaitingConnection(connection)
+    return connection

@@ -3,6 +3,9 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 class Action(object):
+    is_completable = False
+    is_waitable = False
+
     def __init__(self, action):
         self.__action = action
 
@@ -17,3 +20,11 @@ class ActionProxy(object):
 
     def __getattr__(self, name):
         return getattr(self._action, name)
+
+
+class CompletableAction(Action):
+    is_completable = True
+
+
+class WaitableAction(Action):
+    is_waitable = True

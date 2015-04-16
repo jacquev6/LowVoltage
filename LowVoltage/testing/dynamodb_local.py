@@ -47,10 +47,12 @@ class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.connection = LowVoltage.make_connection(
-            "us-west-2",
-            LowVoltage.StaticCredentials("DummyKey", "DummySecret"),
-            "http://localhost:65432/",
-            LowVoltage.ExponentialBackoffErrorPolicy(1, 1, 3),
+                "us-west-2",
+                LowVoltage.StaticCredentials("DummyKey", "DummySecret"),
+                "http://localhost:65432/",
+                error_policy=LowVoltage.ExponentialBackoffErrorPolicy(1, 1, 3),
+                complete_batches=False,
+                wait_for_tables=True,
         )
 
     def assertDateTimeIsReasonable(self, t):

@@ -148,7 +148,7 @@ class UpdateTableIntegTests(_tst.dynamodb_local.TestCase):
 
     def testThroughput(self):
         r = self.connection.request(
-            UpdateTable("Aaa").provisioned_throughput(2, 4)
+            _lv.UpdateTable("Aaa").provisioned_throughput(2, 4)
         )
 
         _tst.fix_table_description(r.table_description)
@@ -187,7 +187,7 @@ class UpdateTableIntegTests(_tst.dynamodb_local.TestCase):
 
     def testGsiprovisioned_Throughput(self):
         r = self.connection.request(
-            UpdateTable("Aaa").global_secondary_index("the_gsi").provisioned_throughput(6, 8)
+            _lv.UpdateTable("Aaa").global_secondary_index("the_gsi").provisioned_throughput(6, 8)
         )
 
         _tst.fix_table_description(r.table_description)

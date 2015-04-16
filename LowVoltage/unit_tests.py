@@ -7,7 +7,7 @@ import unittest
 from .actions.unit_tests import *
 from .testing.unit_tests import *
 
-from .connection import BasicConnectionUnitTests, RetryingConnectionUnitTests
+from .connection import BasicConnectionUnitTests, RetryingConnectionUnitTests, CompletingConnectionUnitTests
 from .policies import ExponentialBackoffErrorPolicyUnitTests, FailFastErrorPolicyUnitTests
 
 

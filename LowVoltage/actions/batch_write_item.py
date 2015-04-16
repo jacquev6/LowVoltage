@@ -4,15 +4,17 @@
 
 import unittest
 
+import MockMockMock
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
-from .action import Action, ActionProxy
+from .action import CompletableAction, ActionProxy
 from .conversion import _convert_dict_to_db
 from .return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
 
 
-class BatchWriteItem(Action,
+class BatchWriteItem(CompletableAction,
     ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_RequestParameters"""
@@ -37,16 +39,19 @@ class BatchWriteItem(Action,
 
             self.unprocessed_items = UnprocessedItems
 
-    def __init__(self):
+    def __init__(self, previous_unprocessed_items=None):
         super(BatchWriteItem, self).__init__("BatchWriteItem")
         ReturnConsumedCapacityMixin.__init__(self)
         ReturnItemCollectionMetricsMixin.__init__(self)
+        self.__previous_unprocessed_items = previous_unprocessed_items
         self.__tables = {}
 
     def build(self):
         data = {}
         data.update(self._build_return_consumed_capacity())
         data.update(self._build_return_item_collection_metrics())
+        if self.__previous_unprocessed_items:
+            data["RequestItems"] = self.__previous_unprocessed_items
         if self.__tables:
             data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
         return data
@@ -84,8 +89,25 @@ class BatchWriteItem(Action,
             self.__tables[name] = self._Table(self, name)
         return self.__tables[name]
 
+    def get_completion_action(self, r):
+        if _is_dict(r.unprocessed_items) and len(r.unprocessed_items) != 0:
+            return BatchWriteItem(r.unprocessed_items)
+        else:
+            return None
+
+    def complete_response(self, r1, r2):
+        r1.consumed_capacity = r2.consumed_capacity  # @todo Should we merge those? (Maybe add them?)
+        r1.item_collection_metrics = r2.item_collection_metrics  # @todo Make sure that the newer one superceeds the older one.
+        r1.unprocessed_items = r2.unprocessed_items
+
 
 class BatchWriteItemUnitTests(unittest.TestCase):
+    def setUp(self):
+        self.mocks = MockMockMock.Engine()
+
+    def tearDown(self):
+        self.mocks.tearDown()
+
     def testName(self):
         self.assertEqual(BatchWriteItem().name, "BatchWriteItem")
 
@@ -138,6 +160,26 @@ class BatchWriteItemUnitTests(unittest.TestCase):
             }
         )
 
+    def test_no_completion_action(self):
+        self.assertIsNone(
+            BatchWriteItem().get_completion_action(BatchWriteItem.Result(UnprocessedItems={}))
+        )
+
+    def test_completion_action(self):
+        a = BatchWriteItem().get_completion_action(BatchWriteItem.Result(UnprocessedItems={"Foo": {}}))
+        self.assertEqual(a.build(), {"RequestItems": {"Foo": {}}})
+
+    def test_complete_response(self):
+        r = BatchWriteItem.Result(UnprocessedItems={})
+        r2 = self.mocks.create("r2")
+        r2.expect.consumed_capacity.andReturn(1)
+        r2.expect.item_collection_metrics.andReturn(2)
+        r2.expect.unprocessed_items.andReturn(3)
+        BatchWriteItem().complete_response(r, r2.object)
+        self.assertEqual(r.consumed_capacity, 1)
+        self.assertEqual(r.item_collection_metrics, 2)
+        self.assertEqual(r.unprocessed_items, 3)
+
 
 class BatchWriteItemIntegTests(_tst.dynamodb_local.TestCase):
     def setUp(self):
@@ -180,3 +222,16 @@ class BatchWriteItemIntegTests(_tst.dynamodb_local.TestCase):
             self.connection.request(_lv.GetItem("Aaa", {"h": u"1"})).item,
             None
         )
+
+    def test_write_without_unprocessed_items(self):
+        for i in range(25):
+            self.connection.request(_lv.PutItem("Aaa", {"h": unicode(i)}))
+
+        action = _lv.BatchWriteItem().table("Aaa").delete({"h": unicode(i)} for i in range(25))
+        r = self.connection.request(action)
+        self.assertEqual(r.unprocessed_items, {})
+
+        self.assertEqual(action.is_completable, True)
+        self.assertIsNone(action.get_completion_action(r))
+
+    # #todo I don't know if we can write a test_write_with_unprocessed_items because I don't know how to make DynamoDB return some UnprocessedItems on demand.
