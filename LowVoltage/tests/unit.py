@@ -7,8 +7,7 @@ import unittest
 from LowVoltage.actions.tests.unit import *
 from LowVoltage.testing.tests.unit import *
 from LowVoltage.policies.tests.unit import *
-
-from LowVoltage.connection import BasicConnectionUnitTests, RetryingConnectionUnitTests, CompletingConnectionUnitTests
+from LowVoltage.connection.tests.unit import *
 
 
 if __name__ == "__main__":  # pragma no branch (Test code)
