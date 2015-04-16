@@ -4,23 +4,10 @@
 
 import unittest
 
-import exceptions as _exn
+import LowVoltage as _lv
 
 
-class FailFastErrorPolicy(object):
-    def get_retry_delay_on_exception(self, action, exception, errors):
-        return None
-
-
-class FailFastErrorPolicyUnitTests(unittest.TestCase):
-    def setUp(self):
-        self.policy = FailFastErrorPolicy()
-
-    def test(self):
-        self.assertIsNone(self.policy.get_retry_delay_on_exception(object(), _exn.ServerError(), 0))
-
-
-class ExponentialBackoffErrorPolicy(object):
+class ExponentialBackoffRetryPolicy(object):
     def __init__(self, first_wait, multiplier, max_tries):
         self.__first_wait = first_wait
         self.__multiplier = multiplier
@@ -34,27 +21,27 @@ class ExponentialBackoffErrorPolicy(object):
             return self.__first_wait * (self.__multiplier ** (errors - 1))
 
 
-class ExponentialBackoffErrorPolicyUnitTests(unittest.TestCase):
+class ExponentialBackoffRetryPolicyUnitTests(unittest.TestCase):
     def setUp(self):
-        self.policy = ExponentialBackoffErrorPolicy(1, 3, 4)
+        self.policy = ExponentialBackoffRetryPolicy(1, 3, 4)
 
     def test_wait_after_first_failure(self):
         self.assertEqual(
-            self.policy.get_retry_delay_on_exception(object(), _exn.ServerError(), 1),
+            self.policy.get_retry_delay_on_exception(object(), _lv.ServerError(), 1),
             1
         )
 
     def test_wait_after_second_failure(self):
         self.assertEqual(
-            self.policy.get_retry_delay_on_exception(object(), _exn.ServerError(), 2),
+            self.policy.get_retry_delay_on_exception(object(), _lv.ServerError(), 2),
             3
         )
 
     def test_wait_after_third_failure(self):
         self.assertEqual(
-            self.policy.get_retry_delay_on_exception(object(), _exn.ServerError(), 3),
+            self.policy.get_retry_delay_on_exception(object(), _lv.ServerError(), 3),
             9
         )
 
     def test_wait_after_fourth_failure(self):
-        self.assertIsNone(self.policy.get_retry_delay_on_exception(object(), _exn.ServerError(), 4))
+        self.assertIsNone(self.policy.get_retry_delay_on_exception(object(), _lv.ServerError(), 4))

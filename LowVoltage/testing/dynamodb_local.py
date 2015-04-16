@@ -50,7 +50,7 @@ class TestCase(unittest.TestCase):
                 "us-west-2",
                 LowVoltage.StaticCredentials("DummyKey", "DummySecret"),
                 "http://localhost:65432/",
-                error_policy=LowVoltage.ExponentialBackoffErrorPolicy(1, 1, 3),
+                retry_policy=LowVoltage.ExponentialBackoffRetryPolicy(1, 1, 3),
                 complete_batches=False,
                 wait_for_tables=True,
         )

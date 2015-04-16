@@ -6,27 +6,19 @@ import datetime
 import hashlib
 import hmac
 import json
+import time
 import unittest
 import urlparse
-import time
 
 import requests
 import MockMockMock
 
-from LowVoltage.actions.action import Action as Action, ActionProxy as ActionProxy
+from LowVoltage.actions.action import Action, ActionProxy
 import LowVoltage.exceptions as _exn
 import LowVoltage.policies as _pol
 import LowVoltage.testing.dynamodb_local
 
 
-class StaticCredentials(object):
-    """The simplest credential provider: a constant key/secret pair"""
-
-    def __init__(self, key, secret):
-        self.__credentials = (key, secret)
-
-    def get(self):
-        return self.__credentials
 
 
 class BasicConnection(object):
@@ -150,7 +142,7 @@ class BasicConnectionUnitTests(unittest.TestCase):
             return json.loads(self.text)
 
     def setUp(self):
-        self.connection = BasicConnection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
+        self.connection = BasicConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
     def testSign(self):
         self.assertEqual(
@@ -245,7 +237,7 @@ class BasicConnectionLocalIntegTests(unittest.TestCase):
             return {}
 
     def test_network_error(self):
-        connection = BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/")
+        connection = BasicConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/")
         with self.assertRaises(_exn.NetworkError):
             connection.request(self.TestAction("ListTables"))
 
@@ -253,9 +245,9 @@ class BasicConnectionLocalIntegTests(unittest.TestCase):
 class RetryingConnection(object):
     """Connection decorator retrying failed requests (due to network, server and throtling errors)"""
 
-    def __init__(self, connection, error_policy):
+    def __init__(self, connection, retry_policy):
         self.__connection = connection
-        self.__error_policy = error_policy
+        self.__retry_policy = retry_policy
 
     def request(self, action):
         errors = 0
@@ -264,7 +256,7 @@ class RetryingConnection(object):
                 return self.__connection.request(action)
             except _exn.Error as e:
                 errors += 1
-                delay = self.__error_policy.get_retry_delay_on_exception(action, e, errors)
+                delay = self.__retry_policy.get_retry_delay_on_exception(action, e, errors)
                 if delay is None:
                     raise
                 else:
@@ -329,7 +321,7 @@ class RetryingConnectionLocalIntegTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffErrorPolicy(1, 2, 5))
+        cls.connection = RetryingConnection(BasicConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffRetryPolicy(1, 2, 5))
 
     def test_request(self):
         r = self.connection.request(self.TestAction("ListTables"))
@@ -341,7 +333,7 @@ class RetryingConnectionLocalIntegTests(unittest.TestCase):
             self.connection.request(self.TestAction("UnexistingAction"))
 
     def test_network_error(self):
-        connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/"), _pol.ExponentialBackoffErrorPolicy(0, 1, 4))
+        connection = RetryingConnection(BasicConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/"), _pol.ExponentialBackoffRetryPolicy(0, 1, 4))
         with self.assertRaises(_exn.NetworkError):
             connection.request(self.TestAction("ListTables"))
 
@@ -444,7 +436,7 @@ class CompletingConnectionUnitTests(unittest.TestCase):
 class CompletingConnectionLocalIntegTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.base_connection = RetryingConnection(BasicConnection("us-west-2", LowVoltage.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffErrorPolicy(1, 2, 5))
+        cls.base_connection = RetryingConnection(BasicConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffRetryPolicy(1, 2, 5))
         cls.connection = CompletingConnection(cls.base_connection)
 
     def setUp(self):
@@ -485,7 +477,7 @@ def make_connection(
     region,
     credentials,
     endpoint=None,
-    error_policy=_pol.ExponentialBackoffErrorPolicy(1, 2, 5),
+    retry_policy=_pol.ExponentialBackoffRetryPolicy(1, 2, 5),
     complete_batches=True,
     wait_for_tables=True,
 ):
@@ -495,10 +487,10 @@ def make_connection(
     if endpoint is None:
         endpoint = "https://dynamodb.{}.amazonaws.com/".format(region)
     connection = BasicConnection(region, credentials, endpoint)
-    if error_policy is not None:
-        connection = RetryingConnection(connection, error_policy)
+    if retry_policy is not None:
+        connection = RetryingConnection(connection, retry_policy)
     if complete_batches:
-        connection = RetryingConnection(connection)
+        connection = CompletingConnection(connection)
     if wait_for_tables:
         connection = WaitingConnection(connection)
     return connection
