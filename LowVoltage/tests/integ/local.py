@@ -7,6 +7,7 @@ import unittest
 import LowVoltage.testing.dynamodb_local
 from LowVoltage.actions.tests.integ.local import *
 from LowVoltage.connection.tests.integ.local import *
+from LowVoltage.iterators.tests.integ.local import *
 
 
 if __name__ == "__main__":  # pragma no branch (Test code)

@@ -8,6 +8,7 @@ from LowVoltage.actions.tests.unit import *
 from LowVoltage.testing.tests.unit import *
 from LowVoltage.policies.tests.unit import *
 from LowVoltage.connection.tests.unit import *
+from LowVoltage.iterators.tests.unit import *
 
 
 if __name__ == "__main__":  # pragma no branch (Test code)
