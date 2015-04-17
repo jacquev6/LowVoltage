@@ -12,10 +12,8 @@ Todo
 
 - docs
 - credential provider for AWS's AIM roles
-- credential provider for classical AWS environment variables
-- wait until CreateTable, DeleteTable, UpdateTable are done
-- paginate ListTables, Scan, Query
-- ease parallel Scan
+- ease batch_get more than 100 items
+- ease batch_write more than 25 items
 - create builder for attribute paths
 - improve builder for expressions
 - metrics

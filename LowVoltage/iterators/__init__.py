@@ -4,3 +4,4 @@
 
 from .list_tables_iterator import ListTablesIterator
 from .query_iterator import QueryIterator
+from .scan_iterator import ScanIterator

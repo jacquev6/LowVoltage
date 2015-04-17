@@ -4,3 +4,4 @@
 
 from ...list_tables_iterator import ListTablesIteratorLocalIntegTests
 from ...query_iterator import QueryIteratorLocalIntegTests
+from ...scan_iterator import ScanIteratorLocalIntegTests
