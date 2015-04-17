@@ -2,4 +2,4 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-from ...list_all_tables import ListAllTablesLocalIntegTests
+from ...list_tables_iterator import ListTablesIteratorLocalIntegTests

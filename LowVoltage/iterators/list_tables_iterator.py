@@ -10,7 +10,7 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 
 
-class ListAllTables(object):
+class ListTablesIterator(object):
     """Make as many ListTables as needed to iterate over all tables"""
     # Don't implement anything else than forward iteration. (Remember PyGithub's PaginatedList; it was too difficult to maintain for niche use-cases)
     # Clients can use raw ListTables actions to implement their specific needs.
@@ -38,7 +38,7 @@ class ListAllTables(object):
                 return self.__current_iter.next()
 
 
-class ListAllTablesUnitTests(unittest.TestCase):
+class ListTablesIteratorUnitTests(unittest.TestCase):
     def setUp(self):
         self.mocks = MockMockMock.Engine()
         self.connection = self.mocks.create("connection")
@@ -60,7 +60,7 @@ class ListAllTablesUnitTests(unittest.TestCase):
         self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=[]))
 
         self.assertEqual(
-            list(ListAllTables(self.connection.object)),
+            list(ListTablesIterator(self.connection.object)),
             []
         )
 
@@ -68,7 +68,7 @@ class ListAllTablesUnitTests(unittest.TestCase):
         self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"]))
 
         self.assertEqual(
-            list(ListAllTables(self.connection.object)),
+            list(ListTablesIterator(self.connection.object)),
             ["A", "B", "C"]
         )
 
@@ -77,7 +77,7 @@ class ListAllTablesUnitTests(unittest.TestCase):
         self.connection.expect.request.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=[]))
 
         self.assertEqual(
-            list(ListAllTables(self.connection.object)),
+            list(ListTablesIterator(self.connection.object)),
             ["A", "B", "C"]
         )
 
@@ -87,12 +87,12 @@ class ListAllTablesUnitTests(unittest.TestCase):
         self.connection.expect.request.withArguments(self.Checker({"ExclusiveStartTableName": "H"})).andReturn(_lv.ListTables.Result(TableNames=["I", "J", "K"]))
 
         self.assertEqual(
-            list(ListAllTables(self.connection.object)),
+            list(ListTablesIterator(self.connection.object)),
             ["A", "B", "C", "E", "F", "G", "I", "J", "K"]
         )
 
 
-class ListAllTablesLocalIntegTests(_tst.dynamodb_local.TestCase):
+class ListTablesIteratorLocalIntegTests(_tst.dynamodb_local.TestCase):
     table_names = ["Tab{:03}".format(i) for i in range(103)]
 
     def setUp(self):
@@ -107,6 +107,6 @@ class ListAllTablesLocalIntegTests(_tst.dynamodb_local.TestCase):
 
     def test(self):
         self.assertEqual(
-            list(_lv.ListAllTables(self.connection)),
+            list(_lv.ListTablesIterator(self.connection)),
             self.table_names
         )
