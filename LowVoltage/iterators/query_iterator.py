@@ -8,34 +8,20 @@ import MockMockMock
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
+from .iterator import Iterator
 
 
-class QueryIterator(object):
-    """Make as many "Query" actions as needed to iterate over the result"""
+class QueryIterator(Iterator):
+    """Make as many "Query" actions as needed to iterate over all matching items"""
 
     def __init__(self, connection, query):
-        self.__connection = connection
-        self.__next_query =  query
-        self.__current_iter = [].__iter__()
-        self.__done = False
+        Iterator.__init__(self, connection, query)
 
-    def __iter__(self):
-        return self
-
-    def next(self):
-        try:
-            return self.__current_iter.next()
-        except StopIteration:
-            if self.__done:
-                raise
-            else:
-                r = self.__connection.request(self.__next_query)
-                if r.last_evaluated_key is None:
-                    self.__done = True
-                else:
-                    self.__next_query.exclusive_start_key(r.last_evaluated_key)
-                self.__current_iter = r.items.__iter__()
-                return self.__current_iter.next()
+    def process(self, action, r):
+        done = r.last_evaluated_key is None
+        action.exclusive_start_key(r.last_evaluated_key)
+        items = r.items
+        return done, action, items
 
 
 class QueryIteratorLocalIntegTests(_tst.dynamodb_local.TestCase):

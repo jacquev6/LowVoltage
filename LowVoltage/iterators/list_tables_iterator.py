@@ -8,34 +8,20 @@ import MockMockMock
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
+from .iterator import Iterator
 
 
-class ListTablesIterator(object):
+class ListTablesIterator(Iterator):
     """Make as many "ListTables" actions as needed to iterate over all tables"""
-    # Don't implement anything else than forward iteration. (Remember PyGithub's PaginatedList; it was too difficult to maintain for niche use-cases)
-    # Clients can use raw ListTables actions to implement their specific needs.
 
     def __init__(self, connection):
-        self.__connection = connection
-        self.__current_iter = [].__iter__()
-        self.__next_start_table = None
-        self.__done = False
+        Iterator.__init__(self, connection, _lv.ListTables())
 
-    def __iter__(self):
-        return self
-
-    def next(self):
-        try:
-            return self.__current_iter.next()
-        except StopIteration:
-            if self.__done:
-                raise
-            else:
-                r = self.__connection.request(_lv.ListTables().exclusive_start_table_name(self.__next_start_table))
-                self.__next_start_table = r.last_evaluated_table_name
-                self.__done = self.__next_start_table is None
-                self.__current_iter = r.table_names.__iter__()
-                return self.__current_iter.next()
+    def process(self, action, r):
+        done = r.last_evaluated_table_name is None
+        action.exclusive_start_table_name(r.last_evaluated_table_name)
+        items = r.table_names
+        return done, action, items
 
 
 class ListTablesIteratorUnitTests(unittest.TestCase):
