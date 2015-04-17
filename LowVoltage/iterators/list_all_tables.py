@@ -4,6 +4,8 @@
 
 import unittest
 
+import MockMockMock
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 
@@ -36,37 +38,75 @@ class ListAllTables(object):
                 return self.__current_iter.next()
 
 
-class ListAllTablesLocalIntegTests(_tst.dynamodb_local.TestCase):
-    def __test(self, tables_count):
-        table_names = ["Tab{:03}".format(i) for i in range(tables_count)]
+class ListAllTablesUnitTests(unittest.TestCase):
+    def setUp(self):
+        self.mocks = MockMockMock.Engine()
+        self.connection = self.mocks.create("connection")
 
-        for t in table_names:
+    def tearDown(self):
+        self.mocks.tearDown()
+
+    class Checker(object):
+        def __init__(self, expected_payload):
+            self.__expected_payload = expected_payload
+
+        def __call__(self, args, kwds):
+            assert len(args) == 1
+            assert len(kwds) == 0
+            action, = args
+            return action.name == "ListTables" and action.build() == self.__expected_payload
+
+    def test_no_tables(self):
+        self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=[]))
+
+        self.assertEqual(
+            list(ListAllTables(self.connection.object)),
+            []
+        )
+
+    def test_one_page(self):
+        self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"]))
+
+        self.assertEqual(
+            list(ListAllTables(self.connection.object)),
+            ["A", "B", "C"]
+        )
+
+    def test_one_page_followed_by_empty_page(self):
+        self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
+        self.connection.expect.request.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=[]))
+
+        self.assertEqual(
+            list(ListAllTables(self.connection.object)),
+            ["A", "B", "C"]
+        )
+
+    def test_several_pages(self):
+        self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
+        self.connection.expect.request.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=["E", "F", "G"], LastEvaluatedTableName="H"))
+        self.connection.expect.request.withArguments(self.Checker({"ExclusiveStartTableName": "H"})).andReturn(_lv.ListTables.Result(TableNames=["I", "J", "K"]))
+
+        self.assertEqual(
+            list(ListAllTables(self.connection.object)),
+            ["A", "B", "C", "E", "F", "G", "I", "J", "K"]
+        )
+
+
+class ListAllTablesLocalIntegTests(_tst.dynamodb_local.TestCase):
+    table_names = ["Tab{:03}".format(i) for i in range(103)]
+
+    def setUp(self):
+        for t in self.table_names:
             self.connection.request(
                 _lv.CreateTable(t).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
             )
 
-        self.assertEqual(
-            list(_lv.ListAllTables(self.connection)),
-            table_names
-        )
-
-        for t in table_names:
+    def tearDown(self):
+        for t in self.table_names:
             self.connection.request(_lv.DeleteTable(t))
 
-    def test_list_0_tables(self):
-        self.__test(0)
-
-    def test_list_99_tables(self):
-        self.__test(99)
-
-    def test_list_100_tables(self):
-        self.__test(100)
-
-    def test_list_101_tables(self):
-        self.__test(101)
-
-    def test_list_102_tables(self):
-        self.__test(102)
-
-    def test_list_250_tables(self):
-        self.__test(250)
+    def test(self):
+        self.assertEqual(
+            list(_lv.ListAllTables(self.connection)),
+            self.table_names
+        )
