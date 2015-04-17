@@ -11,7 +11,7 @@ import LowVoltage.testing as _tst
 
 
 class ListTablesIterator(object):
-    """Make as many ListTables as needed to iterate over all tables"""
+    """Make as many "ListTables" actions as needed to iterate over all tables"""
     # Don't implement anything else than forward iteration. (Remember PyGithub's PaginatedList; it was too difficult to maintain for niche use-cases)
     # Clients can use raw ListTables actions to implement their specific needs.
 
