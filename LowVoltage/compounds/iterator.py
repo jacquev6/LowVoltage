@@ -11,7 +11,7 @@ class Iterator(object):
     def __init__(self, connection, first_action):
         self.__connection = connection
         self.__current_iter = [].__iter__()
-        self.__done = False
+        self.__done = first_action is None
         self.__next_action = first_action
 
     def __iter__(self):
