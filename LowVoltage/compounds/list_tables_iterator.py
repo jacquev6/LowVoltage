@@ -18,10 +18,11 @@ class ListTablesIterator(Iterator):
         Iterator.__init__(self, connection, _lv.ListTables())
 
     def process(self, action, r):
-        done = r.last_evaluated_table_name is None
-        action.exclusive_start_table_name(r.last_evaluated_table_name)
-        items = r.table_names
-        return done, action, items
+        if r.last_evaluated_table_name is None:
+            action = None
+        else:
+            action.exclusive_start_table_name(r.last_evaluated_table_name)
+        return action, r.table_names
 
 
 class ListTablesIteratorUnitTests(unittest.TestCase):

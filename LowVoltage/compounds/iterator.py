@@ -11,7 +11,6 @@ class Iterator(object):
     def __init__(self, connection, first_action):
         self.__connection = connection
         self.__current_iter = [].__iter__()
-        self.__done = first_action is None
         self.__next_action = first_action
 
     def __iter__(self):
@@ -21,12 +20,11 @@ class Iterator(object):
         try:
             return self.__current_iter.next()
         except StopIteration:
-            if self.__done:
+            if self.__next_action is None:
                 raise
             else:
                 r = self.__connection.request(self.__next_action)
-                done, next_action, new_items = self.process(self.__next_action, r)
-                self.__done = done
+                next_action, new_items = self.process(self.__next_action, r)
                 self.__next_action = next_action
                 self.__current_iter = new_items.__iter__()
                 return self.__current_iter.next()

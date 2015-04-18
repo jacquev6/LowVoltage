@@ -27,10 +27,7 @@ class BatchGetItemIterator(Iterator):
             return None
 
     def process(self, action, r):
-        next_action = self.__next_action()
-        done = next_action is None
-        items = r.responses[self.__table]
-        return done, next_action, items
+        return self.__next_action(), r.responses[self.__table]
 
 
 class BatchGetItemIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):

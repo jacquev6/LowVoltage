@@ -28,10 +28,11 @@ class ScanIterator(Iterator):
         Iterator.__init__(self, connection, scan)
 
     def process(self, action, r):
-        done = r.last_evaluated_key is None
-        action.exclusive_start_key(r.last_evaluated_key)
-        items = r.items
-        return done, action, items
+        if r.last_evaluated_key is None:
+            action = None
+        else:
+            action.exclusive_start_key(r.last_evaluated_key)
+        return action, r.items
 
 
 class ScanIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
