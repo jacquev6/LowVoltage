@@ -26,7 +26,7 @@ class DynamoDbLocal(object):  # pragma no cover (Test code)
             tarfile.open(fileobj=io.BytesIO(archive)).extractall(".dynamodblocal")
             # Fix permissions, needed at least when running with Cygwin's Python
             for f in glob.glob(".dynamodblocal/DynamoDBLocal_lib/*"):
-                os.chmod(f, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)
+                os.chmod(f, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
         self.__process = subprocess.Popen(
             # ["sleep 7; java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -inMemory -port 65432"],
@@ -47,12 +47,12 @@ class TestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.connection = LowVoltage.make_connection(
-                "us-west-2",
-                LowVoltage.StaticCredentials("DummyKey", "DummySecret"),
-                "http://localhost:65432/",
-                retry_policy=LowVoltage.ExponentialBackoffRetryPolicy(1, 1, 3),
-                complete_batches=False,
-                wait_for_tables=True,
+            "us-west-2",
+            LowVoltage.StaticCredentials("DummyKey", "DummySecret"),
+            "http://localhost:65432/",
+            retry_policy=LowVoltage.ExponentialBackoffRetryPolicy(1, 1, 3),
+            complete_batches=False,
+            wait_for_tables=True,
         )
 
     def assertDateTimeIsReasonable(self, t):

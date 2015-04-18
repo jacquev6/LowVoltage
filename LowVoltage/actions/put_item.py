@@ -13,9 +13,14 @@ from .return_mixins import ReturnOldValuesMixin, ReturnConsumedCapacityMixin, Re
 from .return_types import ItemCollectionMetrics_, ConsumedCapacity_, _is_dict
 
 
-class PutItem(Action,
-    ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
-    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
+class PutItem(
+    Action,
+    ReturnOldValuesMixin,
+    ReturnConsumedCapacityMixin,
+    ReturnItemCollectionMetricsMixin,
+    ExpressionAttributeNamesMixin,
+    ExpressionAttributeValuesMixin,
+    ConditionExpressionMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_RequestParameters"""
 

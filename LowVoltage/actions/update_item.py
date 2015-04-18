@@ -13,9 +13,14 @@ from .return_mixins import ReturnValuesMixin, ReturnConsumedCapacityMixin, Retur
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
 
 
-class UpdateItem(Action,
-    ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
-    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
+class UpdateItem(
+    Action,
+    ReturnValuesMixin,
+    ReturnConsumedCapacityMixin,
+    ReturnItemCollectionMetricsMixin,
+    ExpressionAttributeNamesMixin,
+    ExpressionAttributeValuesMixin,
+    ConditionExpressionMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_RequestParameters"""
 

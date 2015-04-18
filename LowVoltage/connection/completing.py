@@ -131,4 +131,3 @@ class CompletingConnectionLocalIntegTests(unittest.TestCase):
         r = self.connection.request(batch_get)
         self.assertEqual(r.unprocessed_keys, {})
         self.assertEqual(len(r.responses["Aaa"]), 100)
-

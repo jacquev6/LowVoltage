@@ -14,8 +14,10 @@ from .return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetr
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
 
 
-class BatchWriteItem(CompletableAction,
-    ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
+class BatchWriteItem(
+    CompletableAction,
+    ReturnConsumedCapacityMixin,
+    ReturnItemCollectionMetricsMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_RequestParameters"""
 
@@ -132,7 +134,6 @@ class BatchWriteItemUnitTests(unittest.TestCase):
                 "ReturnItemCollectionMetrics": "NONE",
             }
         )
-
 
     def testDelete(self):
         self.assertEqual(

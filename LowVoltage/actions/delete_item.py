@@ -13,9 +13,14 @@ from .return_mixins import ReturnOldValuesMixin, ReturnConsumedCapacityMixin, Re
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
 
 
-class DeleteItem(Action,
-    ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin,
-    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin,
+class DeleteItem(
+    Action,
+    ReturnOldValuesMixin,
+    ReturnConsumedCapacityMixin,
+    ReturnItemCollectionMetricsMixin,
+    ExpressionAttributeNamesMixin,
+    ExpressionAttributeValuesMixin,
+    ConditionExpressionMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_RequestParameters"""
 

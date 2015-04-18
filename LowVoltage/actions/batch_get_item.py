@@ -15,7 +15,8 @@ from .return_mixins import ReturnConsumedCapacityMixin
 from .return_types import ConsumedCapacity_, _is_dict
 
 
-class BatchGetItem(CompletableAction,
+class BatchGetItem(
+    CompletableAction,
     ReturnConsumedCapacityMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters"""

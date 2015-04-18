@@ -13,8 +13,12 @@ from .return_mixins import ReturnConsumedCapacityMixin
 from .return_types import ConsumedCapacity_, _is_dict, _is_int, _is_list_of_dict
 
 
-class Query(Action,
-    ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin,
+class Query(
+    Action,
+    ExpressionAttributeNamesMixin,
+    ExpressionAttributeValuesMixin,
+    ProjectionExpressionMixin,
+    FilterExpressionMixin,
     ReturnConsumedCapacityMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_RequestParameters"""

@@ -13,8 +13,11 @@ from .return_mixins import ReturnConsumedCapacityMixin
 from .return_types import ConsumedCapacity_, _is_dict
 
 
-class GetItem(Action,
-    ReturnConsumedCapacityMixin, ExpressionAttributeNamesMixin, ProjectionExpressionMixin,
+class GetItem(
+    Action,
+    ReturnConsumedCapacityMixin,
+    ExpressionAttributeNamesMixin,
+    ProjectionExpressionMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_RequestParameters"""
 

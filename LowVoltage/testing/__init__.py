@@ -5,5 +5,6 @@
 import dynamodb_local
 from cover import cover
 
+
 def fix_table_description(d):
     d.attribute_definitions = sorted(d.attribute_definitions, key=lambda d: d.attribute_name)

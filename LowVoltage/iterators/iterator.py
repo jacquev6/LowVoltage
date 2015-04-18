@@ -2,6 +2,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+
 class Iterator(object):
     # Don't implement anything else than a single forward iteration.
     # Remember PyGithub's PaginatedList; it was too difficult to maintain for niche use-cases.
