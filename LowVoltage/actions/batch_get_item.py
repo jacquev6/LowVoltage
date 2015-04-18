@@ -214,15 +214,7 @@ class BatchGetItemUnitTests(unittest.TestCase):
         self.assertEqual(r.unprocessed_keys, 2)
 
 
-class BatchGetItemLocalIntegTests(_tst.dynamodb_local.TestCase):
-    def setUp(self):
-        self.connection.request(
-            _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
-        )
-
-    def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
-
+class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleBatchGet(self):
         self.connection.request(_lv.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
         self.connection.request(_lv.PutItem("Aaa", {"h": u"2", "a": "yyy"}))

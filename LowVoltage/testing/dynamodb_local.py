@@ -40,7 +40,7 @@ class DynamoDbLocal(object):  # pragma no cover (Test code)
         self.__process = None
 
 
-class TestCase(unittest.TestCase):
+class LocalIntegTests(unittest.TestCase):
     before_start = datetime.datetime.utcnow()
     after_end = before_start + datetime.timedelta(minutes=10)
 

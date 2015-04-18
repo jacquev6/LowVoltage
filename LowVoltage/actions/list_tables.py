@@ -66,7 +66,7 @@ class ListTablesUnitTests(unittest.TestCase):
         self.assertEqual(ListTables().exclusive_start_table_name("Bar").build(), {"ExclusiveStartTableName": "Bar"})
 
 
-class ListTablesLocalIntegTests(_tst.dynamodb_local.TestCase):
+class ListTablesLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)

@@ -3,7 +3,8 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import dynamodb_local
-from cover import cover
+from .cover import cover
+from .test_cases import *
 
 
 def fix_table_description(d):

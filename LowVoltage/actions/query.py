@@ -276,15 +276,8 @@ class QueryUnitTests(unittest.TestCase):
         self.assertEqual(Query("Aaa").scan_index_forward_false().build(), {"TableName": "Aaa", "ScanIndexForward": False})
 
 
-class QueryLocalIntegTests(_tst.dynamodb_local.TestCase):
-    def setUp(self):
-        self.connection.request(
-            _lv.CreateTable("Aaa")
-                .hash_key("h", _lv.STRING)
-                .range_key("r", _lv.NUMBER)
-                .provisioned_throughput(1, 2)
-        )
-
+class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
+    def setUpItems(self):
         self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 41, "v": 0}))
         self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 42, "v": 1}))
         self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 43, "v": 2}))
@@ -292,9 +285,6 @@ class QueryLocalIntegTests(_tst.dynamodb_local.TestCase):
         self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 45, "v": 4}))
         self.connection.request(_lv.PutItem("Aaa", {"h": u"1", "r": 42, "v": 2}))
         self.connection.request(_lv.PutItem("Aaa", {"h": u"2", "r": 42, "v": 3}))
-
-    def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
 
     def testSimpleQuery(self):
         r = self.connection.request(

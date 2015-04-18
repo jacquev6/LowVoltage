@@ -152,19 +152,12 @@ class ScanUnitTests(unittest.TestCase):
         self.assertEqual(Scan("Aaa").filter_expression("a=b").build(), {"TableName": "Aaa", "FilterExpression": "a=b"})
 
 
-class ScanLocalIntegTests(_tst.dynamodb_local.TestCase):
-    def setUp(self):
-        self.connection.request(
-            _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
-        )
-
+class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
+    def setUpItems(self):
         self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "v": 0}))
         self.connection.request(_lv.PutItem("Aaa", {"h": u"1", "v": 1}))
         self.connection.request(_lv.PutItem("Aaa", {"h": u"2", "v": 2}))
         self.connection.request(_lv.PutItem("Aaa", {"h": u"3", "v": 3}))
-
-    def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
 
     def testSimpleScan(self):
         r = self.connection.request(

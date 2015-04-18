@@ -42,7 +42,7 @@ class DeleteTableUnitTests(unittest.TestCase):
         self.assertEqual(DeleteTable("Foo").build(), {"TableName": "Foo"})
 
 
-class DeleteTableLocalIntegTests(_tst.dynamodb_local.TestCase):
+class DeleteTableLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)

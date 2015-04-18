@@ -78,7 +78,7 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
         )
 
 
-class ListTablesIteratorLocalIntegTests(_tst.dynamodb_local.TestCase):
+class ListTablesIteratorLocalIntegTests(_tst.LocalIntegTests):
     table_names = ["Tab{:03}".format(i) for i in range(103)]
 
     def setUp(self):

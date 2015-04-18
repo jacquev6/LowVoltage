@@ -34,20 +34,12 @@ class ScanIterator(Iterator):
         return done, action, items
 
 
-class ScanIteratorLocalIntegTests(_tst.dynamodb_local.TestCase):
-    keys = range(15)
+class ScanIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
+    keys = [u"{:03}".format(k) for k in range(15)]
 
-    def setUp(self):
-        self.connection.request(
-            _lv.CreateTable("Aaa")
-                .hash_key("h", _lv.NUMBER)
-                .provisioned_throughput(1, 2)
-        )
+    def setUpItems(self):
         for h in self.keys:
             self.connection.request(_lv.PutItem("Aaa", {"h": h, "xs": "x" * 300000}))  # 300kB items ensure a single Scan will return at most 4 items
-
-    def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
 
     def test_simple_scan(self):
         self.assertEqual(

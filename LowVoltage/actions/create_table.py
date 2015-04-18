@@ -397,7 +397,7 @@ class CreateTableUnitTests(unittest.TestCase):
         )
 
 
-class CreateTableLocalIntegTests(_tst.dynamodb_local.TestCase):
+class CreateTableLocalIntegTests(_tst.LocalIntegTests):
     def tearDown(self):
         self.connection.request(_lv.DeleteTable("Aaa"))
 
@@ -553,7 +553,7 @@ class CreateTableLocalIntegTests(_tst.dynamodb_local.TestCase):
             self.assertEqual(r.table_description.table_status, "ACTIVE")
 
 
-class CreateTableErrorLocalIntegTests(_tst.dynamodb_local.TestCase):
+class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
     def testDefineUnusedAttribute(self):
         with self.assertRaises(_lv.ValidationException) as catcher:
             self.connection.request(
