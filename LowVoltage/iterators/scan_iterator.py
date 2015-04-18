@@ -38,8 +38,12 @@ class ScanIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     keys = [u"{:03}".format(k) for k in range(15)]
 
     def setUpItems(self):
-        for h in self.keys:
-            self.connection.request(_lv.PutItem("Aaa", {"h": h, "xs": "x" * 300000}))  # 300kB items ensure a single Scan will return at most 4 items
+        self.connection.request(
+            _lv.BatchWriteItem().table("Aaa").put(
+                {"h": h, "xs": "x" * 300000}  # 300kB items ensure a single Query will return at most 4 items
+                for h in self.keys
+            )
+        )
 
     def test_simple_scan(self):
         self.assertEqual(

@@ -278,13 +278,15 @@ class QueryUnitTests(unittest.TestCase):
 
 class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
     def setUpItems(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 41, "v": 0}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 42, "v": 1}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 43, "v": 2}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 44, "v": 3}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": 45, "v": 4}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"1", "r": 42, "v": 2}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"2", "r": 42, "v": 3}))
+        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+            {"h": u"0", "r": 41, "v": 0},
+            {"h": u"0", "r": 42, "v": 1},
+            {"h": u"0", "r": 43, "v": 2},
+            {"h": u"0", "r": 44, "v": 3},
+            {"h": u"0", "r": 45, "v": 4},
+            {"h": u"1", "r": 42, "v": 2},
+            {"h": u"2", "r": 42, "v": 3},
+        ))
 
     def testSimpleQuery(self):
         r = self.connection.request(

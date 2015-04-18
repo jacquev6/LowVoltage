@@ -184,10 +184,11 @@ class BatchWriteItemUnitTests(unittest.TestCase):
 
 class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleBatchPut(self):
-        r = self.connection.request(
-            _lv.BatchWriteItem().table("Aaa")
-                .put({"h": u"1", "a": "xxx"}, {"h": u"2", "a": "yyy"}, {"h": u"3", "a": "zzz"})
-        )
+        r = self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+            {"h": u"1", "a": "xxx"},
+            {"h": u"2", "a": "yyy"},
+            {"h": u"3", "a": "zzz"},
+        ))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
@@ -200,11 +201,17 @@ class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         )
 
     def testSimpleBatchDelete(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"2", "a": "yyy"}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"3", "a": "zzz"}))
+        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+            {"h": u"1", "a": "xxx"},
+            {"h": u"2", "a": "yyy"},
+            {"h": u"3", "a": "zzz"},
+        ))
 
-        r = self.connection.request(_lv.BatchWriteItem().table("Aaa").delete({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
+        r = self.connection.request(_lv.BatchWriteItem().table("Aaa").delete(
+            {"h": u"1"},
+            {"h": u"2"},
+            {"h": u"3"}
+        ))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
@@ -217,8 +224,9 @@ class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         )
 
     def test_write_without_unprocessed_items(self):
-        for i in range(25):
-            self.connection.request(_lv.PutItem("Aaa", {"h": unicode(i)}))
+        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+            {"h": unicode(i)} for i in range(25)
+        ))
 
         action = _lv.BatchWriteItem().table("Aaa").delete({"h": unicode(i)} for i in range(25))
         r = self.connection.request(action)
@@ -227,4 +235,4 @@ class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         self.assertEqual(action.is_completable, True)
         self.assertIsNone(action.get_completion_action(r))
 
-    # #todo I don't know if we can write a test_write_with_unprocessed_items because I don't know how to make DynamoDB return some UnprocessedItems on demand.
+    # @todo I don't know if we can write a test_write_with_unprocessed_items because I don't know how to make DynamoDB return some UnprocessedItems on demand.

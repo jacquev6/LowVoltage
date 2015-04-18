@@ -28,8 +28,12 @@ class QueryIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
     keys = range(15)
 
     def setUpItems(self):
-        for r in self.keys:
-            self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "r": r, "xs": "x" * 300000}))  # 300kB items ensure a single Query will return at most 4 items
+        self.connection.request(
+            _lv.BatchWriteItem().table("Aaa").put(
+                {"h": u"0", "r": r, "xs": "x" * 300000}  # 300kB items ensure a single Query will return at most 4 items
+                for r in self.keys
+            )
+        )
 
     def test_simple_query(self):
         self.assertEqual(

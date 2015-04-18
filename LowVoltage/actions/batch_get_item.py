@@ -216,9 +216,11 @@ class BatchGetItemUnitTests(unittest.TestCase):
 
 class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleBatchGet(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"1", "a": "xxx"}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"2", "a": "yyy"}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"3", "a": "zzz"}))
+        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+            {"h": u"1", "a": "xxx"},
+            {"h": u"2", "a": "yyy"},
+            {"h": u"3", "a": "zzz"},
+        ))
 
         r = self.connection.request(_lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
@@ -232,9 +234,11 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.unprocessed_keys, {})
 
     def testBatchGetWithProjections(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"1", "a": "a1", "b": "b1", "c": "c1"}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"2", "a": "a2", "b": "b2", "c": "c2"}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"3", "a": "a3", "b": "b3", "c": "c3"}))
+        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+            {"h": u"1", "a": "a1", "b": "b1", "c": "c1"},
+            {"h": u"2", "a": "a2", "b": "b2", "c": "c2"},
+            {"h": u"3", "a": "a3", "b": "b3", "c": "c3"},
+        ))
 
         r = self.connection.request(
             _lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}).expression_attribute_name("p", "b").project("h").project("a", ["#p"])
@@ -250,8 +254,9 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.unprocessed_keys, {})
 
     def test_get_without_unprocessed_keys(self):
-        for i in range(100):
-            self.connection.request(_lv.PutItem("Aaa", {"h": unicode(i)}))
+        # @todo Use a LargeBatchWriteItem when implemented
+        for i in range(4):
+            self.connection.request(_lv.BatchWriteItem().table("Aaa").put({"h": unicode(i * 25 + j)} for j in range(25)))
 
         action = _lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100))
         r = self.connection.request(action)
@@ -262,8 +267,9 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         self.assertIsNone(action.get_completion_action(r))
 
     def test_get_with_unprocessed_keys(self):
-        for i in range(100):
-            self.connection.request(_lv.PutItem("Aaa", {"h": unicode(i), "xs": "x" * 300000}))
+        # @todo Use a LargeBatchWriteItem when implemented
+        for i in range(4):
+            self.connection.request(_lv.BatchWriteItem().table("Aaa").put({"h": unicode(i * 25 + j), "xs": "x" * 300000} for j in range(25)))
 
         main_action = _lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100))
         r1 = self.connection.request(main_action)

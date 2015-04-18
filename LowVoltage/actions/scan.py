@@ -154,10 +154,12 @@ class ScanUnitTests(unittest.TestCase):
 
 class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def setUpItems(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"0", "v": 0}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"1", "v": 1}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"2", "v": 2}))
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"3", "v": 3}))
+        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+            {"h": u"0", "v": 0},
+            {"h": u"1", "v": 1},
+            {"h": u"2", "v": 2},
+            {"h": u"3", "v": 3},
+        ))
 
     def testSimpleScan(self):
         r = self.connection.request(
