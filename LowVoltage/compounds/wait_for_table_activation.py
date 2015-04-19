@@ -13,7 +13,7 @@ def WaitForTableActivation(connection, table):
 
     r = connection.request(_lv.DescribeTable(table))
     while r.table.table_status != "ACTIVE":
-        time.sleep(3)
+        time.sleep(3)  # @todo Use a policy to choose polling interval? Same in WaitForTableDeletion.
         r = connection.request(_lv.DescribeTable(table))
 
 

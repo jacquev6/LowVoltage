@@ -10,10 +10,9 @@ Tenets
 Todo
 ====
 
+- write connected integ tests to reach 100% coverage
 - docs
 - credential provider for AWS's AIM roles
-- ease batch_get more than 100 items
-- ease batch_write more than 25 items
 - create builder for attribute paths
 - improve builder for expressions
 - metrics
