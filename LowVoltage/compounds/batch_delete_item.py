@@ -22,6 +22,7 @@ def BatchDeleteItem(connection, table, keys):
             unprocessed_items += r.unprocessed_items[table]
 
     # @todo Maybe wait a bit before retrying unprocessed items? Same in BatchPutItem and BatchGetItemIterator.
+    # @todo In the first loop, maybe wait a bit before next request if we get unprocessed items? Might not be a good idea.
 
     while len(unprocessed_items) != 0:
         r = connection.request(_lv.BatchWriteItem({table: unprocessed_items[:25]}))

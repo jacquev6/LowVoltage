@@ -10,6 +10,7 @@ Tenets
 Todo
 ====
 
+- __str__ and __repr__
 - write connected integ tests to reach 100% coverage
 - docs
 - credential provider for AWS's AIM roles

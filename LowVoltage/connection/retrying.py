@@ -14,7 +14,7 @@ import LowVoltage.policies as _pol
 
 
 class RetryingConnection(object):
-    """Connection decorator retrying failed requests (due to network, server and throtling errors)"""
+    """Connection decorator retrying failed requests (due to network, server and throttling errors)"""
 
     def __init__(self, connection, retry_policy):
         self.__connection = connection
