@@ -17,9 +17,13 @@ class BatchGetItemIterator(Iterator):
     Warning: items are returned by DynamoDB in an unspecified order and LowVoltage does not try to change that.
     """
 
-    def __init__(self, connection, table, keys):
+    def __init__(self, connection, table, *keys):
         self.__table = table
-        self.__keys = list(keys)
+        self.__keys = []
+        for key in keys:
+            if isinstance(key, dict):
+                key = [key]
+            self.__keys.extend(key)
         self.__unprocessed_keys = []
         Iterator.__init__(self, connection, self.__next_action())
 
@@ -73,7 +77,7 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [{"h": u"a"}, {"h": u"b"}])),
+            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})),
             [{"h": "c"}, {"h": "d"}]
         )
 
@@ -90,7 +94,7 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [{"h": u"a"}, {"h": u"b"}])),
+            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})),
             [{"h": "c"}, {"h": "e"}]
         )
 
@@ -112,7 +116,7 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [{"h": i} for i in range(0, 250)])),
+            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", ({"h": i} for i in range(0, 250)))),
             [{"h": i} for i in range(1000, 1250)]
         )
 

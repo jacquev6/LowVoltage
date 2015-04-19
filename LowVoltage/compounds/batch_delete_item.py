@@ -10,14 +10,20 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 
 
-def BatchDeleteItem(connection, table, keys):
+def BatchDeleteItem(connection, table, *keys):
     """Make as many "BatchWriteItem" actions as needed to delete all specified keys. Including UnprocessedItems."""
+
+    delete = []
+    for key in keys:
+        if isinstance(key, dict):
+            key = [key]
+        delete.extend(key)
 
     unprocessed_items = []
 
-    while len(keys) != 0:
-        r = connection.request(_lv.BatchWriteItem().table(table).delete(keys[:25]))
-        keys = keys[25:]
+    while len(delete) != 0:
+        r = connection.request(_lv.BatchWriteItem().table(table).delete(delete[:25]))
+        delete = delete[25:]
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]
 
@@ -59,7 +65,7 @@ class BatchDeleteItemUnitTests(unittest.TestCase):
             _lv.BatchWriteItem.Result()
         )
 
-        BatchDeleteItem(self.connection.object, "Aaa", [{"h": u"a"}, {"h": u"b"}])
+        BatchDeleteItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages(self):
         self.connection.expect.request.withArguments(
@@ -78,7 +84,7 @@ class BatchDeleteItemUnitTests(unittest.TestCase):
             _lv.BatchWriteItem.Result()
         )
 
-        BatchDeleteItem(self.connection.object, "Aaa", [{"h": i} for i in range(60)])
+        BatchDeleteItem(self.connection.object, "Aaa", ({"h": i} for i in range(60)))
 
     def test_one_unprocessed_item(self):
         self.connection.expect.request.withArguments(
@@ -92,7 +98,7 @@ class BatchDeleteItemUnitTests(unittest.TestCase):
             _lv.BatchWriteItem.Result()
         )
 
-        BatchDeleteItem(self.connection.object, "Aaa", [{"h": u"a"}, {"h": u"b"}])
+        BatchDeleteItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages_of_unprocessed_item(self):
         self.connection.expect.request.withArguments(

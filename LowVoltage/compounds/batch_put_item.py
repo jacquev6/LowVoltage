@@ -10,14 +10,20 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 
 
-def BatchPutItem(connection, table, items):
+def BatchPutItem(connection, table, *items):
     """Make as many "BatchWriteItem" actions as needed to put all specified items. Including UnprocessedItems."""
+
+    put = []
+    for item in items:
+        if isinstance(item, dict):
+            item = [item]
+        put.extend(item)
 
     unprocessed_items = []
 
-    while len(items) != 0:
-        r = connection.request(_lv.BatchWriteItem().table(table).put(items[:25]))
-        items = items[25:]
+    while len(put) != 0:
+        r = connection.request(_lv.BatchWriteItem().table(table).put(put[:25]))
+        put = put[25:]
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]
 
@@ -56,7 +62,7 @@ class BatchPutItemUnitTests(unittest.TestCase):
             _lv.BatchWriteItem.Result()
         )
 
-        BatchPutItem(self.connection.object, "Aaa", [{"h": u"a"}, {"h": u"b"}])
+        BatchPutItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages(self):
         self.connection.expect.request.withArguments(
@@ -75,7 +81,7 @@ class BatchPutItemUnitTests(unittest.TestCase):
             _lv.BatchWriteItem.Result()
         )
 
-        BatchPutItem(self.connection.object, "Aaa", [{"h": i} for i in range(60)])
+        BatchPutItem(self.connection.object, "Aaa", ({"h": i} for i in range(60)))
 
     def test_one_unprocessed_item(self):
         self.connection.expect.request.withArguments(
@@ -89,7 +95,7 @@ class BatchPutItemUnitTests(unittest.TestCase):
             _lv.BatchWriteItem.Result()
         )
 
-        BatchPutItem(self.connection.object, "Aaa", [{"h": u"a"}, {"h": u"b"}])
+        BatchPutItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages_of_unprocessed_item(self):
         self.connection.expect.request.withArguments(
