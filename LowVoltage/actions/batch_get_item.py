@@ -8,7 +8,7 @@ import MockMockMock
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
-from .action import CompletableAction, ActionProxy
+from .action import Action, ActionProxy
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
 from .expression_mixins import ExpressionAttributeNamesMixin, ProjectionExpressionMixin
 from .return_mixins import ReturnConsumedCapacityMixin
@@ -16,7 +16,7 @@ from .return_types import ConsumedCapacity_, _is_dict
 
 
 class BatchGetItem(
-    CompletableAction,
+    Action,
     ReturnConsumedCapacityMixin,
 ):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters"""
@@ -93,19 +93,6 @@ class BatchGetItem(
         if name not in self.__tables:
             self.__tables[name] = self._Table(self, name)
         return self.__tables[name]
-
-    def get_completion_action(self, r):
-        if _is_dict(r.unprocessed_keys) and len(r.unprocessed_keys) != 0:
-            return BatchGetItem(r.unprocessed_keys)
-        else:
-            return None
-
-    def complete_response(self, r1, r2):
-        r1.consumed_capacity = r2.consumed_capacity  # @todo Should we merge those? (Maybe add them?)
-        for table, items in r2.responses.iteritems():
-            l = r1.responses.setdefault(table, [])
-            l += items
-        r1.unprocessed_keys = r2.unprocessed_keys
 
 
 class BatchGetItemUnitTests(unittest.TestCase):
@@ -193,26 +180,6 @@ class BatchGetItemUnitTests(unittest.TestCase):
             }
         )
 
-    def test_no_completion_action(self):
-        self.assertIsNone(
-            BatchGetItem().get_completion_action(BatchGetItem.Result(UnprocessedKeys={}))
-        )
-
-    def test_completion_action(self):
-        a = BatchGetItem().get_completion_action(BatchGetItem.Result(UnprocessedKeys={"Foo": {}}))
-        self.assertEqual(a.build(), {"RequestItems": {"Foo": {}}})
-
-    def test_complete_response(self):
-        r = BatchGetItem.Result(Responses={"A": [{"h": {"S": "0"}}]})
-        r2 = self.mocks.create("r2")
-        r2.expect.consumed_capacity.andReturn(1)
-        r2.expect.responses.andReturn({"A": [1, 2], "B": [3, 4]})
-        r2.expect.unprocessed_keys.andReturn(2)
-        BatchGetItem().complete_response(r, r2.object)
-        self.assertEqual(r.consumed_capacity, 1)
-        self.assertEqual(r.responses, {"A": [{"h": "0"}, 1, 2], "B": [3, 4]})
-        self.assertEqual(r.unprocessed_keys, 2)
-
 
 class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleBatchGet(self):
@@ -254,36 +221,15 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.unprocessed_keys, {})
 
     def test_get_without_unprocessed_keys(self):
-        # @todo Use a LargeBatchWriteItem when implemented
-        for i in range(4):
-            self.connection.request(_lv.BatchWriteItem().table("Aaa").put({"h": unicode(i * 25 + j)} for j in range(25)))
+        _lv.BatchPutItem(self.connection, "Aaa", [{"h": unicode(i)} for i in range(100)])
 
-        action = _lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100))
-        r = self.connection.request(action)
+        r = self.connection.request(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
         self.assertEqual(r.unprocessed_keys, {})
         self.assertEqual(len(r.responses["Aaa"]), 100)
 
-        self.assertEqual(action.is_completable, True)
-        self.assertIsNone(action.get_completion_action(r))
-
     def test_get_with_unprocessed_keys(self):
-        # @todo Use a LargeBatchWriteItem when implemented
-        for i in range(4):
-            self.connection.request(_lv.BatchWriteItem().table("Aaa").put({"h": unicode(i * 25 + j), "xs": "x" * 300000} for j in range(25)))
+        _lv.BatchPutItem(self.connection, "Aaa", [{"h": unicode(i), "xs": "x" * 300000} for i in range(100)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
 
-        main_action = _lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100))
-        r1 = self.connection.request(main_action)
+        r1 = self.connection.request(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
         self.assertEqual(len(r1.unprocessed_keys["Aaa"]["Keys"]), 45)
         self.assertEqual(len(r1.responses["Aaa"]), 55)
-
-        second_action = main_action.get_completion_action(r1)
-        r2 = self.connection.request(second_action)
-        self.assertEqual(r2.unprocessed_keys, {})
-        self.assertEqual(len(r2.responses["Aaa"]), 45)
-
-        main_action.complete_response(r1, r2)
-        self.assertEqual(r1.unprocessed_keys, {})
-        self.assertEqual(len(r1.responses["Aaa"]), 100)
-
-        third_action = main_action.get_completion_action(r1)
-        self.assertIsNone(third_action)

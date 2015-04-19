@@ -51,8 +51,6 @@ class LocalIntegTests(unittest.TestCase):
             LowVoltage.StaticCredentials("DummyKey", "DummySecret"),
             "http://localhost:65432/",
             retry_policy=LowVoltage.ExponentialBackoffRetryPolicy(1, 1, 3),
-            complete_batches=False,
-            wait_for_tables=True,
         )
 
     def assertDateTimeIsReasonable(self, t):

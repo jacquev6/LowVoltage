@@ -4,4 +4,3 @@
 
 from ...signing import SigningConnectionLocalIntegTests
 from ...retrying import RetryingConnectionLocalIntegTests
-from ...completing import CompletingConnectionLocalIntegTests

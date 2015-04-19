@@ -4,4 +4,3 @@
 
 from ..signing import SigningConnectionUnitTests
 from ..retrying import RetryingConnectionUnitTests
-from ..completing import CompletingConnectionUnitTests

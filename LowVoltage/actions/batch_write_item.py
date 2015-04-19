@@ -8,14 +8,14 @@ import MockMockMock
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
-from .action import CompletableAction, ActionProxy
+from .action import Action, ActionProxy
 from .conversion import _convert_dict_to_db
 from .return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
 
 
 class BatchWriteItem(
-    CompletableAction,
+    Action,
     ReturnConsumedCapacityMixin,
     ReturnItemCollectionMetricsMixin,
 ):
@@ -91,17 +91,6 @@ class BatchWriteItem(
             self.__tables[name] = self._Table(self, name)
         return self.__tables[name]
 
-    def get_completion_action(self, r):
-        if _is_dict(r.unprocessed_items) and len(r.unprocessed_items) != 0:
-            return BatchWriteItem(r.unprocessed_items)
-        else:
-            return None
-
-    def complete_response(self, r1, r2):
-        r1.consumed_capacity = r2.consumed_capacity  # @todo Should we merge those? (Maybe add them?)
-        r1.item_collection_metrics = r2.item_collection_metrics  # @todo Make sure that the newer one superceeds the older one.
-        r1.unprocessed_items = r2.unprocessed_items
-
 
 class BatchWriteItemUnitTests(unittest.TestCase):
     def setUp(self):
@@ -161,26 +150,6 @@ class BatchWriteItemUnitTests(unittest.TestCase):
             }
         )
 
-    def test_no_completion_action(self):
-        self.assertIsNone(
-            BatchWriteItem().get_completion_action(BatchWriteItem.Result(UnprocessedItems={}))
-        )
-
-    def test_completion_action(self):
-        a = BatchWriteItem().get_completion_action(BatchWriteItem.Result(UnprocessedItems={"Foo": {}}))
-        self.assertEqual(a.build(), {"RequestItems": {"Foo": {}}})
-
-    def test_complete_response(self):
-        r = BatchWriteItem.Result(UnprocessedItems={})
-        r2 = self.mocks.create("r2")
-        r2.expect.consumed_capacity.andReturn(1)
-        r2.expect.item_collection_metrics.andReturn(2)
-        r2.expect.unprocessed_items.andReturn(3)
-        BatchWriteItem().complete_response(r, r2.object)
-        self.assertEqual(r.consumed_capacity, 1)
-        self.assertEqual(r.item_collection_metrics, 2)
-        self.assertEqual(r.unprocessed_items, 3)
-
 
 class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleBatchPut(self):
@@ -222,17 +191,3 @@ class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.connection.request(_lv.GetItem("Aaa", {"h": u"1"})).item,
             None
         )
-
-    def test_write_without_unprocessed_items(self):
-        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
-            {"h": unicode(i)} for i in range(25)
-        ))
-
-        action = _lv.BatchWriteItem().table("Aaa").delete({"h": unicode(i)} for i in range(25))
-        r = self.connection.request(action)
-        self.assertEqual(r.unprocessed_items, {})
-
-        self.assertEqual(action.is_completable, True)
-        self.assertIsNone(action.get_completion_action(r))
-
-    # @todo I don't know if we can write a test_write_with_unprocessed_items because I don't know how to make DynamoDB return some UnprocessedItems on demand.

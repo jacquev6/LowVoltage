@@ -9,6 +9,8 @@ import LowVoltage.testing as _tst
 
 
 def WaitForTableDeletion(connection, table):
+    """Make "DescribeTable" actions until a ResourceNotFoundException is raised."""
+
     while True:
         try:
             connection.request(_lv.DescribeTable(table))

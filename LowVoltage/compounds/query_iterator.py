@@ -12,7 +12,7 @@ from .iterator import Iterator
 
 
 class QueryIterator(Iterator):
-    """Make as many "Query" actions as needed to iterate over all matching items"""
+    """Make as many "Query" actions as needed to iterate over all matching items."""
 
     def __init__(self, connection, query):
         Iterator.__init__(self, connection, query)

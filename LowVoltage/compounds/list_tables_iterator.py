@@ -12,7 +12,7 @@ from .iterator import Iterator
 
 
 class ListTablesIterator(Iterator):
-    """Make as many "ListTables" actions as needed to iterate over all tables"""
+    """Make as many "ListTables" actions as needed to iterate over all tables."""
 
     def __init__(self, connection):
         Iterator.__init__(self, connection, _lv.ListTables())

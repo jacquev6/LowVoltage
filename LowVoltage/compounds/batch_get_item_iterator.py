@@ -2,13 +2,17 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+import unittest
+
+import MockMockMock
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .iterator import Iterator
 
 
 class BatchGetItemIterator(Iterator):
-    """Make as many "BatchGetItem" actions as needed to iterate over all specified items
+    """Make as many "BatchGetItem" actions as needed to iterate over all specified items. Including UnprocessedKeys.
 
     Warning: items are returned by DynamoDB in an unspecified order and LowVoltage does not try to change that.
     """
@@ -16,6 +20,7 @@ class BatchGetItemIterator(Iterator):
     def __init__(self, connection, table, keys):
         self.__table = table
         self.__keys = list(keys)
+        self.__unprocessed_keys = []
         Iterator.__init__(self, connection, self.__next_action())
 
     def __next_action(self):
@@ -23,12 +28,131 @@ class BatchGetItemIterator(Iterator):
             action = _lv.BatchGetItem().table(self.__table).keys(self.__keys[:100])
             self.__keys = self.__keys[100:]
             return action
+        elif len(self.__unprocessed_keys) > 0:
+            action = _lv.BatchGetItem({self.__table: {"Keys": self.__unprocessed_keys[:100]}})
+            self.__unprocessed_keys = self.__unprocessed_keys[100:]
+            return action
         else:
             return None
 
     def process(self, action, r):
-        # @todo Include UnprocessedItems in next action. Same in Batch[Put|Delete]Item. Then the completing connection might be unnecessary.
+        if isinstance(r.unprocessed_keys, dict) and self.__table in r.unprocessed_keys and "Keys" in r.unprocessed_keys[self.__table]:
+            self.__unprocessed_keys += r.unprocessed_keys[self.__table]["Keys"]
         return self.__next_action(), r.responses[self.__table]
+
+
+class BatchGetItemIteratorUnitTests(unittest.TestCase):
+    def setUp(self):
+        self.mocks = MockMockMock.Engine()
+        self.connection = self.mocks.create("connection")
+
+    def tearDown(self):
+        self.mocks.tearDown()
+
+    class Checker(object):
+        def __init__(self, expected_payload):
+            self.__expected_payload = expected_payload
+
+        def __call__(self, args, kwds):
+            assert len(args) == 1
+            assert len(kwds) == 0
+            action, = args
+            return action.name == "BatchGetItem" and action.build() == self.__expected_payload
+
+    def test_no_keys(self):
+        self.assertEqual(
+            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [])),
+            []
+        )
+
+    def test_one_page(self):
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "a"}}, {"h": {"S": "b"}}]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "c"}}, {"h": {"S": "d"}}]})
+        )
+
+        self.assertEqual(
+            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [{"h": u"a"}, {"h": u"b"}])),
+            [{"h": "c"}, {"h": "d"}]
+        )
+
+    def test_one_unprocessed_key(self):
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "a"}}, {"h": {"S": "b"}}]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "c"}}]}, UnprocessedKeys={"Aaa": {"Keys": [{"h": {"S": "d"}}]}})
+        )
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "d"}}]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "e"}}]})
+        )
+
+        self.assertEqual(
+            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [{"h": u"a"}, {"h": u"b"}])),
+            [{"h": "c"}, {"h": "e"}]
+        )
+
+    def test_several_pages(self):
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(0, 100)]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1000, 1100)]})
+        )
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(100, 200)]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1100, 1200)]})
+        )
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(200, 250)]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1200, 1250)]})
+        )
+
+        self.assertEqual(
+            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [{"h": i} for i in range(0, 250)])),
+            [{"h": i} for i in range(1000, 1250)]
+        )
+
+    def test_several_pages_of_unprocessed_keys(self):
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(0, 100)]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(
+                Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1000, 1100)]},
+                UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2000, 2075)]}}
+            )
+        )
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(100, 150)]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(
+                Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1100, 1150)]},
+                UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2075, 2150)]}}
+            )
+        )
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2000, 2100)]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(
+                Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1150, 1200)]},
+                UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2150, 2175)]}}
+            )
+        )
+        self.connection.expect.request.withArguments(
+            self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2100, 2175)]}}})
+        ).andReturn(
+            _lv.BatchGetItem.Result(
+                Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1200, 1250)]},
+            )
+        )
+
+        self.assertEqual(
+            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [{"h": i} for i in range(0, 150)])),
+            [{"h": i} for i in range(1000, 1250)]
+        )
 
 
 class BatchGetItemIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
@@ -36,14 +160,8 @@ class BatchGetItemIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         return u"{:03}".format(i)
 
     def setUpItems(self):
-        # @todo Use a LargeBatchWriteItem when implemented
-        for i in range(10):
-            self.connection.request(_lv.BatchWriteItem().table("Aaa").put({"h": self.key(i * 25 + j)} for j in range(25)))
+        _lv.BatchPutItem(self.connection, "Aaa", [{"h": self.key(i), "xs": "x" * 300000} for i in range(250)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
 
     def test(self):
         keys = [item["h"] for item in _lv.BatchGetItemIterator(self.connection, "Aaa", ({"h": self.key(i)} for i in range(250)))]
         self.assertEqual(sorted(keys), [self.key(i) for i in range(250)])
-
-    def test_no_keys(self):
-        for item in _lv.BatchGetItemIterator(self.connection, "Aaa", []):
-            self.fail()

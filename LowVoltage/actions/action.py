@@ -21,11 +21,3 @@ class ActionProxy(object):
 
     def __getattr__(self, name):
         return getattr(self._action, name)
-
-
-class CompletableAction(Action):
-    is_completable = True
-
-
-class WaitableAction(Action):
-    is_waitable = True

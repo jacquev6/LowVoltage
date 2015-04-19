@@ -9,6 +9,8 @@ import LowVoltage.testing as _tst
 
 
 def WaitForTableActivation(connection, table):
+    """Make "DescribeTable" actions until the table's status is "ACTIVE"."""
+
     r = connection.request(_lv.DescribeTable(table))
     while r.table.table_status != "ACTIVE":
         time.sleep(3)

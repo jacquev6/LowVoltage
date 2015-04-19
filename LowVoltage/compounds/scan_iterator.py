@@ -13,7 +13,7 @@ from .iterator import Iterator
 
 
 class ScanIterator(Iterator):
-    """Make as many "Scan" actions as needed to iterate over all items"""
+    """Make as many "Scan" actions as needed to iterate over all items."""
 
     @classmethod
     def parallelize(cls, connection, scan, threads):
