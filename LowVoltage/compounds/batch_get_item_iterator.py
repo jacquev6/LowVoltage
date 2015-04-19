@@ -27,6 +27,7 @@ class BatchGetItemIterator(Iterator):
             return None
 
     def process(self, action, r):
+        # @todo Include UnprocessedItems in next action. Same in Batch[Put|Delete]Item. Then the completing connection might be unnecessary.
         return self.__next_action(), r.responses[self.__table]
 
 
