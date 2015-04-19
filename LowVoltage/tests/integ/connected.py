@@ -4,6 +4,7 @@
 
 import unittest
 
+from LowVoltage.actions.tests.integ.connected import *
 from LowVoltage.compounds.tests.integ.connected import *
 
 

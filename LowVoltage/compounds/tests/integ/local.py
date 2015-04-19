@@ -8,3 +8,5 @@ from ...batch_put_item import BatchPutItemLocalIntegTests
 from ...list_tables_iterator import ListTablesIteratorLocalIntegTests
 from ...query_iterator import QueryIteratorLocalIntegTests
 from ...scan_iterator import ScanIteratorLocalIntegTests
+from ...wait_for_table_activation import WaitForTableActivationLocalIntegTests
+from ...wait_for_table_deletion import WaitForTableDeletionLocalIntegTests

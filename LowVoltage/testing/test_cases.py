@@ -17,7 +17,7 @@ class LocalIntegTestsWithTableH(LocalIntegTests):
         self.setUpItems()
 
     def setUpItems(self):
-        pass
+        pass  # pragma no cover (Test code)
 
     def tearDown(self):
         self.connection.request(_lv.DeleteTable("Aaa"))
@@ -34,13 +34,13 @@ class LocalIntegTestsWithTableHR(LocalIntegTests):
         self.setUpItems()
 
     def setUpItems(self):
-        pass
+        pass  # pragma no cover (Test code)
 
     def tearDown(self):
         self.connection.request(_lv.DeleteTable("Aaa"))
 
 
-class ConnectedIntegTests(unittest.TestCase):
+class ConnectedIntegTests(unittest.TestCase):  # pragma no cover (Connected integration test)
     __execution_date = datetime.datetime.now().strftime("%Y-%m-%d.%H-%M-%S.%f")
 
     @classmethod
@@ -54,3 +54,19 @@ class ConnectedIntegTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.connection = _lv.make_connection("eu-west-1", _lv.EnvironmentCredentials())
+
+
+class ConnectedIntegTestsWithTableH(ConnectedIntegTests):  # pragma no cover (Connected integration test)
+    def setUp(self):
+        self.table_name = self.make_table_name()
+        self.connection.request(
+            _lv.CreateTable(self.table_name).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
+        )
+        _lv.WaitForTableActivation(self.connection, self.table_name)
+        self.setUpItems()
+
+    def setUpItems(self):
+        pass  # pragma no cover (Test code)
+
+    def tearDown(self):
+        self.connection.request(_lv.DeleteTable(self.table_name))

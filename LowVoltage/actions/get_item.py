@@ -32,7 +32,7 @@ class GetItem(
         ):
             self.consumed_capacity = None
             if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
+                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)  # pragma no cover (Covered by connected integ tests)
 
             self.item = None
             if _is_dict(Item):  # pragma no branch (Defensive code)
@@ -160,3 +160,18 @@ class GetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def test_bad_key_type(self):
         with self.assertRaises(_lv.ValidationException):
             self.connection.request(_lv.GetItem("Aaa", {"h": 42}))
+
+
+class GetItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTableH):  # pragma no cover (Connected integration test)
+    def setUpItems(self):
+        self.connection.request(_lv.PutItem(self.table_name, {"h": u"toto"}))
+
+    def test_get_consumed_capacity(self):
+        r = self.connection.request(_lv.GetItem(self.table_name, {"h": u"toto"}).return_consumed_capacity_total())
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
+            self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
+            self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
+            self.assertEqual(r.consumed_capacity.table, None)
+            self.assertEqual(r.consumed_capacity.table_name, self.table_name)
+            self.assertEqual(r.item, {"h": u"toto"})

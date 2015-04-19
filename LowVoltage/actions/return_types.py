@@ -278,11 +278,11 @@ class ConsumedCapacity_(object):
 
         self.global_secondary_indexes = None
         if _is_list_of_dict(GlobalSecondaryIndexes):  # pragma no branch (Defensive code)
-            self.global_secondary_indexes = {n: Capacity(**v) for n, v in GlobalSecondaryIndexes.iteritems()}
+            self.global_secondary_indexes = {n: Capacity_(**v) for n, v in GlobalSecondaryIndexes.iteritems()}
 
         self.local_secondary_indexes = None
         if _is_list_of_dict(LocalSecondaryIndexes):  # pragma no branch (Defensive code)
-            self.local_secondary_indexes = {n: Capacity(**v) for n, v in LocalSecondaryIndexes.iteritems()}
+            self.local_secondary_indexes = {n: Capacity_(**v) for n, v in LocalSecondaryIndexes.iteritems()}
 
         self.table = None
         if _is_dict(Table):  # pragma no branch (Defensive code)
