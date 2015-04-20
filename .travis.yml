@@ -1,13 +1,21 @@
 language: python
 python:
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
+- '2.7'
+- '3.2'
+- '3.3'
+- '3.4'
 install:
-  - pip install -r requirements.txt
-  - pip install coveralls
+- pip install -r requirements.txt
+- pip install coveralls
 script:
-  - coverage run "--include=LowVoltage/*" setup.py test
+- coverage run "--include=LowVoltage/*" setup.py test
 after_success:
-  - coveralls
+- coveralls
+deploy:
+  provider: pypi
+  user: jacquev6
+  password:
+    secure: afOb6lt07nKDry3V2vDB8mi0SWDJw86J+PqnRgL75Y09jFvtI/knXM27wg6hDqIpLs7L9ejpsUzorl4VAKtgAt4XZtXKPkvvfPxI/lGxwjKt+K/+XPPsNIt2/yqYUyOGOcB+hnE0tV4fHrBS/+ypj9D3nYFOZ1CaERQjpRn5MyM=
+  on:
+    tags: true
+    repo: jacquev6/LowVoltage
