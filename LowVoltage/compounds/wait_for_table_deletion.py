@@ -14,7 +14,7 @@ def WaitForTableDeletion(connection, table):
     while True:
         try:
             connection.request(_lv.DescribeTable(table))
-            time.sleep(3)  # pragma no cover (Covered by connected integ tests)
+            time.sleep(3)
         except _lv.ResourceNotFoundException:
             break
 
@@ -30,14 +30,18 @@ class WaitForTableDeletionLocalIntegTests(_tst.LocalIntegTests):
             self.connection.request(_lv.DescribeTable("Aaa"))
 
 
-class WaitForTableDeletionConnectedIntegTests(_tst.ConnectedIntegTests):  # pragma no cover (Connected integration test)
+class WaitForTableDeletionConnectedIntegTests(_tst.ConnectedIntegTests):
+    @classmethod
+    def setUpClass(cls):
+        _tst.ConnectedIntegTests.setUpClass()
+        cls.table_name = cls.make_table_name()
+
     def setUp(self):
-        self.table = self.make_table_name()
-        self.connection.request(_lv.CreateTable(self.table).hash_key("h", _lv.STRING).provisioned_throughput(1, 1))
-        _lv.WaitForTableActivation(self.connection, self.table)
+        self.connection.request(_lv.CreateTable(self.table_name).hash_key("h", _lv.STRING).provisioned_throughput(1, 1))
+        _lv.WaitForTableActivation(self.connection, self.table_name)
 
     def test(self):
-        self.connection.request(_lv.DeleteTable(self.table))
-        _lv.WaitForTableDeletion(self.connection, self.table)
+        self.connection.request(_lv.DeleteTable(self.table_name))
+        _lv.WaitForTableDeletion(self.connection, self.table_name)
         with self.assertRaises(_lv.ResourceNotFoundException):
-            self.connection.request(_lv.DescribeTable(self.table))
+            self.connection.request(_lv.DescribeTable(self.table_name))

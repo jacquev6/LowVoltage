@@ -11,7 +11,7 @@ import LowVoltage.testing as _tst
 from .action import Action, ActionProxy
 from .conversion import _convert_dict_to_db
 from .return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
-from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
+from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict, _is_list_of_dict
 
 
 class BatchWriteItem(
@@ -32,12 +32,12 @@ class BatchWriteItem(
             **dummy
         ):
             self.consumed_capacity = None
-            if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
+            if _is_list_of_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
+                self.consumed_capacity = [ConsumedCapacity_(**c) for c in ConsumedCapacity]
 
             self.item_collection_metrics = None
             if _is_dict(ItemCollectionMetrics):  # pragma no branch (Defensive code)
-                self.item_collection_metrics = ItemCollectionMetrics_(**ItemCollectionMetrics)
+                self.item_collection_metrics = {n: [ItemCollectionMetrics_(**m) for m in v] for n, v in ItemCollectionMetrics.iteritems()}
 
             self.unprocessed_items = UnprocessedItems
 
@@ -191,3 +191,46 @@ class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.connection.request(_lv.GetItem("Aaa", {"h": u"1"})).item,
             None
         )
+
+
+class BatchWriteItemConnectedIntegTests(_tst.ConnectedIntegTests):
+    @classmethod
+    def setUpClass(cls):
+        _tst.ConnectedIntegTests.setUpClass()
+        cls.table_name = cls.make_table_name()
+        cls.connection.request(
+            _lv.CreateTable(cls.table_name)
+                .hash_key("a", _lv.NUMBER).range_key("b", _lv.NUMBER).provisioned_throughput(1, 1)
+                .global_secondary_index("the_gsi").hash_key("c", _lv.NUMBER).range_key("d", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
+                .local_secondary_index("the_lsi").hash_key("a", _lv.NUMBER).range_key("e", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
+        )
+        _lv.WaitForTableActivation(cls.connection, cls.table_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.connection.request(_lv.DeleteTable(cls.table_name))
+
+    def test_return_consumed_capacity_indexes(self):
+        r = self.connection.request(_lv.BatchWriteItem().table(self.table_name).put({"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}, {"a": 10, "b": 2, "c": 3, "d": 4, "e": 5}).return_consumed_capacity_indexes())
+
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity[0].capacity_units, 6.0)
+            self.assertEqual(r.consumed_capacity[0].global_secondary_indexes["the_gsi"].capacity_units, 2.0)
+            self.assertEqual(r.consumed_capacity[0].local_secondary_indexes["the_lsi"].capacity_units, 2.0)
+            self.assertEqual(r.consumed_capacity[0].table.capacity_units, 2.0)
+            self.assertEqual(r.consumed_capacity[0].table_name, self.table_name)
+            self.assertEqual(r.item_collection_metrics, None)
+            self.assertEqual(r.unprocessed_items, {})
+
+    def test_return_item_collection_metrics_size(self):
+        r = self.connection.request(_lv.BatchWriteItem().table(self.table_name).put({"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}, {"a": 10, "b": 2, "c": 3, "d": 4, "e": 5}).return_item_collection_metrics_size())
+
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertIn(r.item_collection_metrics[self.table_name][0].item_collection_key, [{"a": 1}, {"a": 10}])
+            self.assertEqual(r.item_collection_metrics[self.table_name][0].size_estimate_range_gb[0], 0.0)
+            self.assertEqual(r.item_collection_metrics[self.table_name][0].size_estimate_range_gb[1], 1.0)
+            self.assertIn(r.item_collection_metrics[self.table_name][1].item_collection_key, [{"a": 1}, {"a": 10}])
+            self.assertEqual(r.item_collection_metrics[self.table_name][1].size_estimate_range_gb[0], 0.0)
+            self.assertEqual(r.item_collection_metrics[self.table_name][1].size_estimate_range_gb[1], 1.0)
+            self.assertEqual(r.unprocessed_items, {})

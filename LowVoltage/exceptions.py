@@ -115,6 +115,17 @@ class ValidationException(ClientError):
     pass
 
 
+# Error discovered by chance, not documented
+
+
+class AccessDeniedException(ClientError):
+    pass
+
+
+class InvalidSignatureException(ClientError):
+    pass
+
+
 # Sorted by decreasing suffix length to ensure BasicConnection._raise finds the right class using str.endswith.
 client_errors = sorted(
     [
@@ -139,6 +150,8 @@ client_errors = sorted(
         ("Throttling", Throttling),
         ("ValidationError", ValidationError),
         ("ValidationException", ValidationException),
+        ("AccessDeniedException", AccessDeniedException),
+        ("InvalidSignatureException", InvalidSignatureException),
     ],
     key=lambda (prefix, cls): -len(prefix)
 )

@@ -40,11 +40,11 @@ class PutItem(
 
             self.consumed_capacity = None
             if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = _rtyp.ConsumedCapacity(**ConsumedCapacity)
+                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
 
             self.item_collection_metrics = None
             if _is_dict(ItemCollectionMetrics):  # pragma no branch (Defensive code)
-                self.item_collection_metrics = _rtyp.ItemCollectionMetrics(**ItemCollectionMetrics)
+                self.item_collection_metrics = ItemCollectionMetrics_(**ItemCollectionMetrics)
 
     def __init__(self, table_name, item):
         super(PutItem, self).__init__("PutItem")
@@ -201,3 +201,43 @@ class PutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.attributes, {"h": u"return", "a": b"yyy"})
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item_collection_metrics, None)
+
+
+class PutItemConnectedIntegTests(_tst.ConnectedIntegTests):
+    @classmethod
+    def setUpClass(cls):
+        _tst.ConnectedIntegTests.setUpClass()
+        cls.table_name = cls.make_table_name()
+        cls.connection.request(
+            _lv.CreateTable(cls.table_name)
+                .hash_key("a", _lv.NUMBER).range_key("b", _lv.NUMBER).provisioned_throughput(1, 1)
+                .global_secondary_index("the_gsi").hash_key("c", _lv.NUMBER).range_key("d", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
+                .local_secondary_index("the_lsi").hash_key("a", _lv.NUMBER).range_key("e", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
+        )
+        _lv.WaitForTableActivation(cls.connection, cls.table_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.connection.request(_lv.DeleteTable(cls.table_name))
+
+    def test_return_consumed_capacity_indexes(self):
+        r = self.connection.request(_lv.PutItem(self.table_name, {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}).return_consumed_capacity_indexes())
+
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.attributes, None)
+            self.assertEqual(r.consumed_capacity.capacity_units, 3.0)
+            self.assertEqual(r.consumed_capacity.global_secondary_indexes["the_gsi"].capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.local_secondary_indexes["the_lsi"].capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.table_name, self.table_name)
+            self.assertEqual(r.item_collection_metrics, None)
+
+    def test_return_item_collection_metrics_size(self):
+        r = self.connection.request(_lv.PutItem(self.table_name, {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}).return_item_collection_metrics_size())
+
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.attributes, None)
+            self.assertEqual(r.consumed_capacity, None)
+            self.assertEqual(r.item_collection_metrics.item_collection_key, {"a": 1})
+            self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[0], 0.0)
+            self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[1], 1.0)

@@ -1,5 +1,12 @@
 LowVoltage is a standalone Python (2 and 3) client for DynamoDB that doesn't hide any feature of the API.
 
+Why?
+====
+
+- I wanted to learn DynamoDB
+- I found out Boto is (was?) not up-to-date with newer API parameters and does (did?) not support Python 3
+- I had some time
+
 Tenets
 ======
 

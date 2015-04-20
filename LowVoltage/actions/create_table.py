@@ -491,7 +491,6 @@ class CreateTableLocalIntegTests(_tst.LocalIntegTests):
             self.assertEqual(r.table_description.key_schema[1].key_type, "RANGE")
             self.assertEqual(r.table_description.local_secondary_indexes[0].index_name, "the_lsi")
             self.assertEqual(r.table_description.local_secondary_indexes[0].index_size_bytes, 0)
-            self.assertEqual(r.table_description.local_secondary_indexes[0].index_status, None)
             self.assertEqual(r.table_description.local_secondary_indexes[0].item_count, 0)
             self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[0].attribute_name, "h")
             self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[0].key_type, "HASH")

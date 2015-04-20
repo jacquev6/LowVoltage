@@ -32,7 +32,7 @@ class GetItem(
         ):
             self.consumed_capacity = None
             if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)  # pragma no cover (Covered by connected integ tests)
+                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
 
             self.item = None
             if _is_dict(Item):  # pragma no branch (Defensive code)
@@ -162,11 +162,22 @@ class GetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.connection.request(_lv.GetItem("Aaa", {"h": 42}))
 
 
-class GetItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTableH):  # pragma no cover (Connected integration test)
-    def setUpItems(self):
-        self.connection.request(_lv.PutItem(self.table_name, {"h": u"toto"}))
+class GetItemConnectedIntegTests(_tst.ConnectedIntegTests):
+    @classmethod
+    def setUpClass(cls):
+        _tst.ConnectedIntegTests.setUpClass()
+        cls.table_name = cls.make_table_name()
+        cls.connection.request(
+            _lv.CreateTable(cls.table_name).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
+        )
+        _lv.WaitForTableActivation(cls.connection, cls.table_name)
+        cls.connection.request(_lv.PutItem(cls.table_name, {"h": u"toto"}))
 
-    def test_get_consumed_capacity(self):
+    @classmethod
+    def tearDownClass(cls):
+        cls.connection.request(_lv.DeleteTable(cls.table_name))
+
+    def test_return_consumed_capacity_total(self):
         r = self.connection.request(_lv.GetItem(self.table_name, {"h": u"toto"}).return_consumed_capacity_total())
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity.capacity_units, 0.5)

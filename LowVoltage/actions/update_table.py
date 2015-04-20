@@ -14,6 +14,8 @@ from .return_types import TableDescription_, _is_dict
 class UpdateTable(Action):
     """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_RequestParameters"""
 
+    # @todo Create and delete secondary indexes!
+
     class Result(object):
         """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_ResponseElements"""
         def __init__(

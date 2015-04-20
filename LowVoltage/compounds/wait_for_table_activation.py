@@ -12,10 +12,10 @@ def WaitForTableActivation(connection, table):
     """Make "DescribeTable" actions until the table's status is "ACTIVE"."""
 
     r = connection.request(_lv.DescribeTable(table))
-    while r.table.table_status != "ACTIVE":  # pragma no branch (Covered by connected integ tests)
+    while r.table.table_status != "ACTIVE":
         # @todo Use a policy to choose polling interval? Same in WaitForTableDeletion.
-        time.sleep(3)  # pragma no cover (Covered by connected integ tests)
-        r = connection.request(_lv.DescribeTable(table))  # pragma no cover (Covered by connected integ tests)
+        time.sleep(3)
+        r = connection.request(_lv.DescribeTable(table))
 
 
 class WaitForTableActivationLocalIntegTests(_tst.LocalIntegTests):
@@ -28,14 +28,16 @@ class WaitForTableActivationLocalIntegTests(_tst.LocalIntegTests):
         self.assertEqual(self.connection.request(_lv.DescribeTable("Aaa")).table.table_status, "ACTIVE")
 
 
-class WaitForTableActivationConnectedIntegTests(_tst.ConnectedIntegTests):  # pragma no cover (Connected integ test)
-    def setUp(self):
-        self.table = self.make_table_name()
+class WaitForTableActivationConnectedIntegTests(_tst.ConnectedIntegTests):
+    @classmethod
+    def setUpClass(cls):
+        _tst.ConnectedIntegTests.setUpClass()
+        cls.table_name = cls.make_table_name()
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteTable(self.table))
+        self.connection.request(_lv.DeleteTable(self.table_name))
 
     def test(self):
-        self.connection.request(_lv.CreateTable(self.table).hash_key("h", _lv.STRING).provisioned_throughput(1, 1))
-        _lv.WaitForTableActivation(self.connection, self.table)
-        self.assertEqual(self.connection.request(_lv.DescribeTable(self.table)).table.table_status, "ACTIVE")
+        self.connection.request(_lv.CreateTable(self.table_name).hash_key("h", _lv.STRING).provisioned_throughput(1, 1))
+        _lv.WaitForTableActivation(self.connection, self.table_name)
+        self.assertEqual(self.connection.request(_lv.DescribeTable(self.table_name)).table.table_status, "ACTIVE")

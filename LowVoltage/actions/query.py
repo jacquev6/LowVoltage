@@ -317,3 +317,36 @@ class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
             self.assertEqual(r.items[0], {"r": 44, "v": 3})
             self.assertEqual(r.last_evaluated_key, {"h": u"0", "r": 43})
             self.assertEqual(r.scanned_count, 2)
+
+
+class QueryConnectedIntegTests(_tst.ConnectedIntegTests):
+    @classmethod
+    def setUpClass(cls):
+        _tst.ConnectedIntegTests.setUpClass()
+        cls.table_name = cls.make_table_name()
+        cls.connection.request(
+            _lv.CreateTable(cls.table_name).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
+        )
+        _lv.WaitForTableActivation(cls.connection, cls.table_name)
+        cls.connection.request(_lv.BatchWriteItem().table(cls.table_name).put(
+            {"h": u"0"},
+            {"h": u"1"},
+            {"h": u"2"},
+        ))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.connection.request(_lv.DeleteTable(cls.table_name))
+
+    def test_return_consumed_capacity_total(self):
+        r = self.connection.request(_lv.Query(self.table_name).key_eq("h", u"1").return_consumed_capacity_total())
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
+            self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
+            self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
+            self.assertEqual(r.consumed_capacity.table, None)
+            self.assertEqual(r.consumed_capacity.table_name, self.table_name)
+            self.assertEqual(r.count, 1)
+            self.assertEqual(r.items[0], {"h": u"1"})
+            self.assertEqual(r.last_evaluated_key, None)
+            self.assertEqual(r.scanned_count, 1)
