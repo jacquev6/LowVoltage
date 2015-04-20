@@ -17,16 +17,8 @@ import LowVoltage as _lv
 
 
 class DynamoDbLocalResourceManager(testresources.TestResourceManager):
-    def __dl_if_needed(self):  # pragma no cover (Test code)
-        if not os.path.exists(".dynamodblocal/DynamoDBLocal.jar"):
-            archive = requests.get("http://dynamodb-local.s3-website-us-west-2.amazonaws.com/dynamodb_local_latest").content
-            tarfile.open(fileobj=io.BytesIO(archive)).extractall(".dynamodblocal")
-            # Fix permissions, needed at least when running with Cygwin's Python
-            for f in glob.glob(".dynamodblocal/DynamoDBLocal_lib/*"):
-                os.chmod(f, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-
     def make(self, dependencies):
-        self.__dl_if_needed()
+        self.__download_if_needed()
 
         self.__process = subprocess.Popen(
             # ["sleep 7; java -Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -inMemory -port 65432"],
@@ -39,8 +31,16 @@ class DynamoDbLocalResourceManager(testresources.TestResourceManager):
             "us-west-2",
             _lv.StaticCredentials("DummyKey", "DummySecret"),
             endpoint="http://localhost:65432/",
-            retry_policy=_lv.ExponentialBackoffRetryPolicy(1, 1, 3),
+            retry_policy=_lv.ExponentialBackoffRetryPolicy(1, 2, 5),
         )
+
+    def __download_if_needed(self):  # pragma no cover (Test code)
+        if not os.path.exists(".dynamodblocal/DynamoDBLocal.jar"):
+            archive = requests.get("http://dynamodb-local.s3-website-us-west-2.amazonaws.com/dynamodb_local_latest").content
+            tarfile.open(fileobj=io.BytesIO(archive)).extractall(".dynamodblocal")
+            # Fix permissions, needed at least when running with Cygwin's Python
+            for f in glob.glob(".dynamodblocal/DynamoDBLocal_lib/*"):
+                os.chmod(f, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
 
     def clean(self, resource):
         self.__process.kill()
