@@ -15,5 +15,5 @@ def fix_table_description(d):
     d.attribute_definitions = sorted(d.attribute_definitions, key=lambda d: d.attribute_name)
 
 
-def main():
+def main():  # pragma no cover (Test code)
     unittest.main(catchbreak=True, testLoader=testresources.TestLoader())
