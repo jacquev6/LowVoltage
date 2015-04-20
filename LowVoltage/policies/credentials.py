@@ -18,5 +18,7 @@ class StaticCredentials(object):
 class EnvironmentCredentials(object):
     """Credential provider reading the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables"""
 
+    # @todo Fail fast if variables not in environ
+
     def get(self):
         return (os.environ["AWS_ACCESS_KEY_ID"], os.environ["AWS_SECRET_ACCESS_KEY"])
