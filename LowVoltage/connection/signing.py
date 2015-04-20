@@ -137,6 +137,7 @@ class SigningConnectionUnitTests(unittest.TestCase):
             return json.loads(self.text)
 
     def setUp(self):
+        super(SigningConnectionUnitTests, self).setUp()
         self.connection = SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
     def testSign(self):

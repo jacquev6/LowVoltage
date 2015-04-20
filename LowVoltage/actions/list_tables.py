@@ -68,6 +68,7 @@ class ListTablesUnitTests(unittest.TestCase):
 
 class ListTablesLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
+        super(ListTablesLocalIntegTests, self).setUp()
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
@@ -82,6 +83,7 @@ class ListTablesLocalIntegTests(_tst.LocalIntegTests):
         self.connection.request(_lv.DeleteTable("Aaa"))
         self.connection.request(_lv.DeleteTable("Bbb"))
         self.connection.request(_lv.DeleteTable("Ccc"))
+        super(ListTablesLocalIntegTests, self).tearDown()
 
     def testAllArguments(self):
         r = self.connection.request(_lv.ListTables().exclusive_start_table_name("Aaa").limit(1))

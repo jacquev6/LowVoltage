@@ -153,7 +153,8 @@ class ScanUnitTests(unittest.TestCase):
 
 
 class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
-    def setUpItems(self):
+    def setUp(self):
+        super(ScanLocalIntegTests, self).setUp()
         self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"0", "v": 0},
             {"h": u"1", "v": 1},
@@ -231,30 +232,24 @@ class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.scanned_count, 4)
 
 
-class ScanConnectedIntegTests(_tst.ConnectedIntegTests):
-    @classmethod
-    def setUpClass(cls):
-        _tst.ConnectedIntegTests.setUpClass()
-        cls.table_name = cls.make_table_name()
-        cls.connection.request(
-            _lv.CreateTable(cls.table_name).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
-        )
-        _lv.WaitForTableActivation(cls.connection, cls.table_name)
-        cls.connection.request(_lv.PutItem(cls.table_name, {"h": u"0"}))
+class ScanConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
+    def setUp(self):
+        super(ScanConnectedIntegTests, self).setUp()
+        self.connection.request(_lv.PutItem(self.table, self.item))
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.connection.request(_lv.DeleteTable(cls.table_name))
+    def tearDown(self):
+        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        super(ScanConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_total(self):
-        r = self.connection.request(_lv.Scan(self.table_name).return_consumed_capacity_total())
+        r = self.connection.request(_lv.Scan(self.table).return_consumed_capacity_total())
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
             self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
             self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
             self.assertEqual(r.consumed_capacity.table, None)
-            self.assertEqual(r.consumed_capacity.table_name, self.table_name)
+            self.assertEqual(r.consumed_capacity.table_name, self.table)
             self.assertEqual(r.count, 1)
-            self.assertEqual(r.items[0], {"h": u"0"})
+            self.assertEqual(r.items[0], self.item)
             self.assertEqual(r.last_evaluated_key, None)
             self.assertEqual(r.scanned_count, 1)

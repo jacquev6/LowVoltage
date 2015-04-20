@@ -400,6 +400,7 @@ class CreateTableUnitTests(unittest.TestCase):
 class CreateTableLocalIntegTests(_tst.LocalIntegTests):
     def tearDown(self):
         self.connection.request(_lv.DeleteTable("Aaa"))
+        super(CreateTableLocalIntegTests, self).tearDown()
 
     def testSimplestTable(self):
         r = self.connection.request(

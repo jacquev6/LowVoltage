@@ -203,41 +203,29 @@ class PutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.item_collection_metrics, None)
 
 
-class PutItemConnectedIntegTests(_tst.ConnectedIntegTests):
-    @classmethod
-    def setUpClass(cls):
-        _tst.ConnectedIntegTests.setUpClass()
-        cls.table_name = cls.make_table_name()
-        cls.connection.request(
-            _lv.CreateTable(cls.table_name)
-                .hash_key("a", _lv.NUMBER).range_key("b", _lv.NUMBER).provisioned_throughput(1, 1)
-                .global_secondary_index("the_gsi").hash_key("c", _lv.NUMBER).range_key("d", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
-                .local_secondary_index("the_lsi").hash_key("a", _lv.NUMBER).range_key("e", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
-        )
-        _lv.WaitForTableActivation(cls.connection, cls.table_name)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.connection.request(_lv.DeleteTable(cls.table_name))
+class PutItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
+    def tearDown(self):
+        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        super(PutItemConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_indexes(self):
-        r = self.connection.request(_lv.PutItem(self.table_name, {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}).return_consumed_capacity_indexes())
+        r = self.connection.request(_lv.PutItem(self.table, self.item).return_consumed_capacity_indexes())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)
             self.assertEqual(r.consumed_capacity.capacity_units, 3.0)
-            self.assertEqual(r.consumed_capacity.global_secondary_indexes["the_gsi"].capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.local_secondary_indexes["the_lsi"].capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.global_secondary_indexes["gsi"].capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.local_secondary_indexes["lsi"].capacity_units, 1.0)
             self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.table_name, self.table_name)
+            self.assertEqual(r.consumed_capacity.table_name, self.table)
             self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_item_collection_metrics_size(self):
-        r = self.connection.request(_lv.PutItem(self.table_name, {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}).return_item_collection_metrics_size())
+        r = self.connection.request(_lv.PutItem(self.table, self.item).return_item_collection_metrics_size())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)
             self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.item_collection_metrics.item_collection_key, {"a": 1})
+            self.assertEqual(r.item_collection_metrics.item_collection_key, {"tab_h": "0"})
             self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[0], 0.0)
             self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[1], 1.0)

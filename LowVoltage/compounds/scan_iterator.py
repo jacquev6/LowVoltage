@@ -38,7 +38,8 @@ class ScanIterator(Iterator):
 class ScanIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     keys = [u"{:03}".format(k) for k in range(15)]
 
-    def setUpItems(self):
+    def setUp(self):
+        super(ScanIteratorLocalIntegTests, self).setUp()
         self.connection.request(
             _lv.BatchWriteItem().table("Aaa").put(
                 {"h": h, "xs": "x" * 300000}  # 300kB items ensure a single Query will return at most 4 items

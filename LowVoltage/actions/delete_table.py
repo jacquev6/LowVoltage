@@ -44,6 +44,7 @@ class DeleteTableUnitTests(unittest.TestCase):
 
 class DeleteTableLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
+        super(DeleteTableLocalIntegTests, self).setUp()
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )

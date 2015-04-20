@@ -29,9 +29,11 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
     def setUp(self):
         self.mocks = MockMockMock.Engine()
         self.connection = self.mocks.create("connection")
+        super(ListTablesIteratorUnitTests, self).setUp()
 
     def tearDown(self):
         self.mocks.tearDown()
+        super(ListTablesIteratorUnitTests, self).tearDown()
 
     class Checker(object):
         def __init__(self, expected_payload):
@@ -83,6 +85,7 @@ class ListTablesIteratorLocalIntegTests(_tst.LocalIntegTests):
     table_names = ["Tab{:03}".format(i) for i in range(103)]
 
     def setUp(self):
+        super(ListTablesIteratorLocalIntegTests, self).setUp()
         for t in self.table_names:
             self.connection.request(
                 _lv.CreateTable(t).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
@@ -91,6 +94,7 @@ class ListTablesIteratorLocalIntegTests(_tst.LocalIntegTests):
     def tearDown(self):
         for t in self.table_names:
             self.connection.request(_lv.DeleteTable(t))
+        super(ListTablesIteratorLocalIntegTests, self).tearDown()
 
     def test(self):
         self.assertEqual(

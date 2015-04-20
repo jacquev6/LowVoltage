@@ -4,8 +4,6 @@
 
 import unittest
 
-import MockMockMock
-
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action, ActionProxy
@@ -96,12 +94,6 @@ class BatchGetItem(
 
 
 class BatchGetItemUnitTests(unittest.TestCase):
-    def setUp(self):
-        self.mocks = MockMockMock.Engine()
-
-    def tearDown(self):
-        self.mocks.tearDown()
-
     def testName(self):
         self.assertEqual(BatchGetItem().name, "BatchGetItem")
 
@@ -252,28 +244,22 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         self.assertEqual(len(r1.responses["Aaa"]), 55)
 
 
-class BatchGetItemConnectedIntegTests(_tst.ConnectedIntegTests):
-    @classmethod
-    def setUpClass(cls):
-        _tst.ConnectedIntegTests.setUpClass()
-        cls.table_name = cls.make_table_name()
-        cls.connection.request(
-            _lv.CreateTable(cls.table_name).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
-        )
-        _lv.WaitForTableActivation(cls.connection, cls.table_name)
-        cls.connection.request(_lv.PutItem(cls.table_name, {"h": u"toto"}))
+class BatchGetItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
+    def setUp(self):
+        super(BatchGetItemConnectedIntegTests, self).setUp()
+        self.connection.request(_lv.PutItem(self.table, self.item))
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.connection.request(_lv.DeleteTable(cls.table_name))
+    def tearDown(self):
+        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        super(BatchGetItemConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_total(self):
-        r = self.connection.request(_lv.BatchGetItem().table(self.table_name).keys({"h": u"toto"}).return_consumed_capacity_total())
+        r = self.connection.request(_lv.BatchGetItem().table(self.table).keys(self.tab_key).return_consumed_capacity_total())
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity[0].capacity_units, 0.5)
             self.assertEqual(r.consumed_capacity[0].global_secondary_indexes, None)
             self.assertEqual(r.consumed_capacity[0].local_secondary_indexes, None)
             self.assertEqual(r.consumed_capacity[0].table, None)
-            self.assertEqual(r.consumed_capacity[0].table_name, self.table_name)
-            self.assertEqual(r.responses[self.table_name][0], {"h": u"toto"})
+            self.assertEqual(r.consumed_capacity[0].table_name, self.table)
+            self.assertEqual(r.responses[self.table][0], self.item)
             self.assertEqual(r.unprocessed_keys, {})

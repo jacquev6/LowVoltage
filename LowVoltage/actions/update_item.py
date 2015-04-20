@@ -359,47 +359,88 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.item_collection_metrics, None)
 
 
-class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTests):
-    @classmethod
-    def setUpClass(cls):
-        _tst.ConnectedIntegTests.setUpClass()
-        cls.table_name = cls.make_table_name()
-        cls.connection.request(
-            _lv.CreateTable(cls.table_name).hash_key("h", _lv.STRING).range_key("r1", _lv.NUMBER).provisioned_throughput(1, 1)
-            .local_secondary_index("the_lsi").hash_key("h").range_key("r2", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
-        )
-        _lv.WaitForTableActivation(cls.connection, cls.table_name)
+class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
+    def tearDown(self):
+        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        super(UpdateItemConnectedIntegTests, self).tearDown()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.connection.request(_lv.DeleteTable(cls.table_name))
+    def test_return_consumed_capacity_indexes_without_indexed_attribute(self):
+        r = self.connection.request(
+            _lv.UpdateItem(self.table, self.tab_key)
+                .set("a", "a").expression_attribute_value("a", "a")
+                .return_consumed_capacity_indexes()
+        )
+
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.attributes, None)
+            self.assertEqual(r.consumed_capacity.capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
+            self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
+            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.table_name, self.table)
+            self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_consumed_capacity_indexes(self):
         r = self.connection.request(
-            _lv.UpdateItem(self.table_name, {"h": u"toto", "r1": 1})
-                .set("r2", "r2").expression_attribute_value("r2", 2)
-                .return_consumed_capacity_total()
+            _lv.UpdateItem(self.table, self.tab_key)
+                .set("gsi_h", "gsi_h").expression_attribute_value("gsi_h", u"1")
+                .set("gsi_r", "gsi_r").expression_attribute_value("gsi_r", 1)
+                .set("lsi_r", "lsi_r").expression_attribute_value("lsi_r", 2)
+                .return_consumed_capacity_indexes()
+        )
+
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.attributes, None)
+            self.assertEqual(r.consumed_capacity.global_secondary_indexes["gsi"].capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.local_secondary_indexes["lsi"].capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.capacity_units, 3.0)
+            self.assertEqual(r.consumed_capacity.table_name, self.table)
+            self.assertEqual(r.item_collection_metrics, None)
+
+    def test_return_consumed_capacity_indexes_with_locally_indexed_attribute_only(self):
+        r = self.connection.request(
+            _lv.UpdateItem(self.table, self.tab_key)
+                .set("lsi_r", "lsi_r").expression_attribute_value("lsi_r", 2)
+                .return_consumed_capacity_indexes()
         )
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)
             self.assertEqual(r.consumed_capacity.capacity_units, 2.0)
             self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
+            self.assertEqual(r.consumed_capacity.local_secondary_indexes["lsi"].capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.table_name, self.table)
+            self.assertEqual(r.item_collection_metrics, None)
+
+    def test_return_consumed_capacity_indexes_with_globally_indexed_attribute_only(self):
+        r = self.connection.request(
+            _lv.UpdateItem(self.table, self.tab_key)
+                .set("gsi_h", "gsi_h").expression_attribute_value("gsi_h", u"1")
+                .set("gsi_r", "gsi_r").expression_attribute_value("gsi_r", 1)
+                .return_consumed_capacity_indexes()
+        )
+
+        with _tst.cover("r", r) as r:
+            self.assertEqual(r.attributes, None)
+            self.assertEqual(r.consumed_capacity.capacity_units, 2.0)
+            self.assertEqual(r.consumed_capacity.global_secondary_indexes["gsi"].capacity_units, 1.0)
             self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.table, None)
-            self.assertEqual(r.consumed_capacity.table_name, self.table_name)
+            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+            self.assertEqual(r.consumed_capacity.table_name, self.table)
             self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_item_collection_metrics_size(self):
         r = self.connection.request(
-            _lv.UpdateItem(self.table_name, {"h": u"toto", "r1": 1})
-                .set("r2", "r2").expression_attribute_value("r2", 2)
+            _lv.UpdateItem(self.table, self.tab_key)
+                .set("a", "a").expression_attribute_value("a", "a")
                 .return_item_collection_metrics_size()
         )
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)
             self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.item_collection_metrics.item_collection_key, {"h": u"toto"})
+            self.assertEqual(r.item_collection_metrics.item_collection_key, {"tab_h": u"0"})
             self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[0], 0.0)
             self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[1], 1.0)

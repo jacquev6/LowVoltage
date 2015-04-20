@@ -38,9 +38,11 @@ class BatchPutItemUnitTests(unittest.TestCase):
     def setUp(self):
         self.mocks = MockMockMock.Engine()
         self.connection = self.mocks.create("connection")
+        super(BatchPutItemUnitTests, self).setUp()
 
     def tearDown(self):
         self.mocks.tearDown()
+        super(BatchPutItemUnitTests, self).tearDown()
 
     class Checker(object):
         def __init__(self, expected_payload):

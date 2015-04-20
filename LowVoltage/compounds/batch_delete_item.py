@@ -39,11 +39,13 @@ def BatchDeleteItem(connection, table, *keys):
 
 class BatchDeleteItemUnitTests(unittest.TestCase):
     def setUp(self):
+        super(BatchDeleteItemUnitTests, self).setUp()
         self.mocks = MockMockMock.Engine()
         self.connection = self.mocks.create("connection")
 
     def tearDown(self):
         self.mocks.tearDown()
+        super(BatchDeleteItemUnitTests, self).tearDown()
 
     class Checker(object):
         def __init__(self, expected_payload):
@@ -129,7 +131,8 @@ class BatchDeleteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def key(self, i):
         return u"{:03}".format(i)
 
-    def setUpItems(self):
+    def setUp(self):
+        super(BatchDeleteItemLocalIntegTests, self).setUp()
         _lv.BatchPutItem(self.connection, "Aaa", [{"h": self.key(i)} for i in range(100)])
 
     def test(self):

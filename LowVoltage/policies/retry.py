@@ -24,6 +24,7 @@ class ExponentialBackoffRetryPolicy(object):
 class ExponentialBackoffRetryPolicyUnitTests(unittest.TestCase):
     def setUp(self):
         self.policy = ExponentialBackoffRetryPolicy(1, 3, 4)
+        super(ExponentialBackoffRetryPolicyUnitTests, self).setUp()
 
     def test_wait_after_first_failure(self):
         self.assertEqual(

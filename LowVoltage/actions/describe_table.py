@@ -44,12 +44,14 @@ class DescribeTableUnitTests(unittest.TestCase):
 
 class DescribeTableLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
+        super(DescribeTableLocalIntegTests, self).setUp()
         self.connection.request(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
         self.connection.request(_lv.DeleteTable("Aaa"))
+        super(DescribeTableLocalIntegTests, self).tearDown()
 
     def test(self):
         r = self.connection.request(_lv.DescribeTable("Aaa"))

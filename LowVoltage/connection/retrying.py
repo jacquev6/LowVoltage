@@ -7,6 +7,7 @@ import unittest
 
 import MockMockMock
 
+import LowVoltage.testing as _tst
 from LowVoltage.actions.action import Action
 from .signing import SigningConnection
 import LowVoltage.exceptions as _exn
@@ -36,6 +37,7 @@ class RetryingConnection(object):
 
 class RetryingConnectionUnitTests(unittest.TestCase):
     def setUp(self):
+        super(RetryingConnectionUnitTests, self).setUp()
         self.mocks = MockMockMock.Engine()
         self.policy = self.mocks.create("policy")
         self.basic_connection = self.mocks.create("connection")
@@ -45,6 +47,7 @@ class RetryingConnectionUnitTests(unittest.TestCase):
 
     def tearDown(self):
         self.mocks.tearDown()
+        super(RetryingConnectionUnitTests, self).tearDown()
 
     def test_unknown_exception_is_passed_through(self):
         exception = Exception()
@@ -77,7 +80,7 @@ class RetryingConnectionUnitTests(unittest.TestCase):
         self.assertIs(catcher.exception, exception)
 
 
-class RetryingConnectionLocalIntegTests(unittest.TestCase):
+class RetryingConnectionLocalIntegTests(_tst.LocalIntegTests):
     class TestAction(Action):
         class Result(object):
             def __init__(self, **kwds):
@@ -90,9 +93,9 @@ class RetryingConnectionLocalIntegTests(unittest.TestCase):
         def build(self):
             return self.__payload
 
-    @classmethod
-    def setUpClass(cls):
-        cls.connection = RetryingConnection(SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffRetryPolicy(1, 2, 5))
+    def setUp(self):
+        super(RetryingConnectionLocalIntegTests, self).setUp()
+        self.connection = RetryingConnection(SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffRetryPolicy(1, 2, 5))
 
     def test_request(self):
         r = self.connection.request(self.TestAction("ListTables"))

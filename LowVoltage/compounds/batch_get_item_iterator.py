@@ -47,11 +47,13 @@ class BatchGetItemIterator(Iterator):
 
 class BatchGetItemIteratorUnitTests(unittest.TestCase):
     def setUp(self):
+        super(BatchGetItemIteratorUnitTests, self).setUp()
         self.mocks = MockMockMock.Engine()
         self.connection = self.mocks.create("connection")
 
     def tearDown(self):
         self.mocks.tearDown()
+        super(BatchGetItemIteratorUnitTests, self).tearDown()
 
     class Checker(object):
         def __init__(self, expected_payload):
@@ -163,7 +165,8 @@ class BatchGetItemIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def key(self, i):
         return u"{:03}".format(i)
 
-    def setUpItems(self):
+    def setUp(self):
+        super(BatchGetItemIteratorLocalIntegTests, self).setUp()
         _lv.BatchPutItem(self.connection, "Aaa", [{"h": self.key(i), "xs": "x" * 300000} for i in range(250)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
 
     def test(self):
