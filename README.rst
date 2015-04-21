@@ -21,9 +21,6 @@ LowVoltage is a standalone Python (2 and 3) client for DynamoDB that doesn't hid
 .. image:: https://pypip.in/py_versions/LowVoltage/badge.svg
     :target: https://pypi.python.org/pypi/LowVoltage
 
-.. image:: https://pypip.in/py_versions/LowVoltage/badge.svg
-    :target: https://pypi.python.org/pypi/LowVoltage
-
 .. image:: https://pypip.in/status/LowVoltage/badge.svg
     :target: https://pypi.python.org/pypi/LowVoltage
 
