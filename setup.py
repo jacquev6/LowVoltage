@@ -22,7 +22,6 @@ setuptools.setup(
     packages=sorted(dirpath.replace("/", ".") for dirpath, dirnames, filenames in os.walk("LowVoltage") if "__init__.py" in filenames),
     classifiers=[
         "Development Status :: 3 - Alpha",
-        "License :: OSI Approved",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
