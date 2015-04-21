@@ -19,3 +19,4 @@ deploy:
   on:
     tags: true
     repo: jacquev6/LowVoltage
+    python: 2.7
