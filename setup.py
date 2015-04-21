@@ -9,7 +9,7 @@ import setuptools
 import setuptools.command.test
 
 
-version = "0.2.3"
+version = "0.2.4"
 
 
 setuptools.setup(
@@ -18,10 +18,12 @@ setuptools.setup(
     description="Standalone DynamoDB client not hiding any feature",
     author="Vincent Jacques",
     author_email="vincent@vincent-jacques.net",
-    url="http://jacquev6.github.io/LowVoltage",
-    packages=sorted(dirpath.replace("/", ".") for dirpath, dirnames, filenames in os.walk("LowVoltage") if "__init__.py" in filenames),
+    url="http://pythonhosted.org/LowVoltage",
+    packages=setuptools.find_packages(),
+    license="MIT",
     classifiers=[
         "Development Status :: 3 - Alpha",
+        "License :: OSI Approved",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
@@ -36,4 +38,11 @@ setuptools.setup(
     test_suite="LowVoltage.tests" if "AWS_ACCESS_KEY_ID" in os.environ else "LowVoltage.tests.local",
     test_loader="testresources:TestLoader",
     use_2to3=True,
+    command_options={
+        "build_sphinx": {
+            "version": ("setup.py", version),
+            "release": ("setup.py", version),
+            "source_dir": ("setup.py", "doc"),
+        }
+    }
 )
