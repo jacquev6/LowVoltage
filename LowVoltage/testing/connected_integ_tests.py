@@ -4,7 +4,14 @@
 
 import datetime
 
-import testresources
+try:
+    from testresources import TestResourceManager, ResourcedTestCase
+except ImportError:  # pragma no cover (Test code)
+    class TestResourceManager(object):
+        pass
+
+    class ResourcedTestCase(object):
+        pass
 
 import LowVoltage as _lv
 
@@ -12,7 +19,7 @@ import LowVoltage as _lv
 _execution_date = datetime.datetime.now()
 
 
-class DynamoDbResourceManager(testresources.TestResourceManager):
+class DynamoDbResourceManager(TestResourceManager):
     def make(self, dependencies):
         connection = _lv.make_connection("eu-west-1", _lv.EnvironmentCredentials())
 
@@ -32,7 +39,7 @@ class DynamoDbResourceManager(testresources.TestResourceManager):
         connection(_lv.DeleteTable(table))
 
 
-class ConnectedIntegTests(testresources.ResourcedTestCase):
+class ConnectedIntegTests(ResourcedTestCase):
     # Create an IAM user, populate the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
     # Use the following IAM policy to limit access to specific tables:
     # {

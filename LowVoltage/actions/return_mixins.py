@@ -2,7 +2,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
+import LowVoltage.testing as _tst
 
 
 class ReturnOldValuesMixin(object):
@@ -26,7 +26,7 @@ class ReturnOldValuesMixin(object):
         return self
 
 
-class ReturnOldValuesMixinUnitTests(unittest.TestCase):
+class ReturnOldValuesMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             ReturnOldValuesMixin()._build_return_values(),
@@ -57,7 +57,7 @@ class ReturnValuesMixin(ReturnOldValuesMixin):
         return self._set_return_values("UPDATED_OLD")
 
 
-class ReturnValuesMixinUnitTests(unittest.TestCase):
+class ReturnValuesMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             ReturnValuesMixin()._build_return_values(),
@@ -119,7 +119,7 @@ class ReturnConsumedCapacityMixin(object):
         return self
 
 
-class ReturnConsumedCapacityMixinUnitTests(unittest.TestCase):
+class ReturnConsumedCapacityMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             ReturnConsumedCapacityMixin()._build_return_consumed_capacity(),
@@ -166,7 +166,7 @@ class ReturnItemCollectionMetricsMixin(object):
         return self
 
 
-class ReturnItemCollectionMetricsMixinUnitTests(unittest.TestCase):
+class ReturnItemCollectionMetricsMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             ReturnItemCollectionMetricsMixin()._build_return_item_collection_metrics(),

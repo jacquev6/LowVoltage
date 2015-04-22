@@ -3,7 +3,6 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import datetime
-import unittest
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
@@ -84,7 +83,7 @@ class UpdateTable(Action):
         return self.__gsis[name]
 
 
-class UpdateTableUnitTests(unittest.TestCase):
+class UpdateTableUnitTests(_tst.UnitTests):
     def testName(self):
         self.assertEqual(UpdateTable("Foo").name, "UpdateTable")
 

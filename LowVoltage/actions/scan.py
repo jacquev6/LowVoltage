@@ -2,8 +2,6 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
-
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
@@ -114,7 +112,7 @@ class Scan(
         return self
 
 
-class ScanUnitTests(unittest.TestCase):
+class ScanUnitTests(_tst.UnitTests):
     def testName(self):
         self.assertEqual(Scan("Aaa").name, "Scan")
 

@@ -2,10 +2,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
 import copy
-
-import MockMockMock
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst

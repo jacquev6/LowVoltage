@@ -5,7 +5,8 @@
 import base64
 import numbers
 import sys
-import unittest
+
+import LowVoltage.testing as _tst
 
 
 def _convert_dict_to_db(attributes):
@@ -77,7 +78,7 @@ def _convert_db_to_value(value):
         raise TypeError
 
 
-class ConversionUnitTests(unittest.TestCase):
+class ConversionUnitTests(_tst.UnitTests):
     def testConvertValueToDb(self):
         self.assertEqual(_convert_value_to_db(u"éoà"), {"S": u"éoà"})
         self.assertEqual(_convert_value_to_db(b"\xFF\x00\xAB"), {"B": u"/wCr"})

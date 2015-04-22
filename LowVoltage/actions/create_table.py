@@ -3,7 +3,6 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import datetime
-import unittest
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
@@ -173,7 +172,7 @@ class CreateTable(Action):
         return self.__lsis[name]
 
 
-class CreateTableUnitTests(unittest.TestCase):
+class CreateTableUnitTests(_tst.UnitTests):
     def testName(self):
         self.assertEqual(CreateTable("Foo").name, "CreateTable")
 

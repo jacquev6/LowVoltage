@@ -6,11 +6,11 @@ import datetime
 import hashlib
 import hmac
 import json
-import unittest
 import urlparse
 
 import requests
 
+import LowVoltage.testing as _tst
 from LowVoltage.actions.action import Action, ActionProxy
 import LowVoltage.exceptions as _exn
 import LowVoltage.policies as _pol
@@ -127,7 +127,7 @@ class SigningConnection(object):
         return headers
 
 
-class SigningConnectionUnitTests(unittest.TestCase):
+class SigningConnectionUnitTests(_tst.UnitTests):
     class FakeResponse(object):
         def __init__(self, status_code, text):
             self.status_code = status_code
@@ -227,7 +227,7 @@ class SigningConnectionUnitTests(unittest.TestCase):
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceInUseException", "Message": "tralala"},))
 
 
-class SigningConnectionLocalIntegTests(unittest.TestCase):
+class SigningConnectionLocalIntegTests(_tst.UnitTests):
     class TestAction(Action):
         def build(self):
             return {}

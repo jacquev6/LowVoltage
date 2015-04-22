@@ -5,7 +5,8 @@
 import collections
 import datetime
 import numbers
-import unittest
+
+from .unit_tests import UnitTests
 
 
 class NotCovered(Exception):
@@ -79,7 +80,7 @@ def cover(prefix, anything):
         return CoverAttributes(prefix, anything)
 
 
-class CoverSimpleAttributesUnitTests(unittest.TestCase):
+class CoverSimpleAttributesUnitTests(UnitTests):
     class TestData:
         def __init__(self):
             self.a = True
@@ -115,7 +116,7 @@ class CoverSimpleAttributesUnitTests(unittest.TestCase):
         self.assertIs(catcher.exception, exception)
 
 
-class CoverObjectAttributesUnitTests(unittest.TestCase):
+class CoverObjectAttributesUnitTests(UnitTests):
     class TestData:
         def __init__(self, d):
             self.d = d
@@ -146,7 +147,7 @@ class CoverObjectAttributesUnitTests(unittest.TestCase):
         self.assertEqual(catcher.exception.args, (["data.e.e"],))
 
 
-class CoverListUnitTests(unittest.TestCase):
+class CoverListUnitTests(UnitTests):
     class TestData:
         def __init__(self):
             self.a = True

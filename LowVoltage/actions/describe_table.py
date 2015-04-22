@@ -3,7 +3,6 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import datetime
-import unittest
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
@@ -34,7 +33,7 @@ class DescribeTable(Action):
         return {"TableName": self.__table_name}
 
 
-class DescribeTableUnitTests(unittest.TestCase):
+class DescribeTableUnitTests(_tst.UnitTests):
     def testName(self):
         self.assertEqual(DescribeTable("Foo").name, "DescribeTable")
 

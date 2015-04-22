@@ -32,6 +32,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.4",
         "Environment :: Web Environment",
     ],
+    install_requires=["requests>=2.2"],
     test_suite="LowVoltage.tests" if "AWS_ACCESS_KEY_ID" in os.environ else "LowVoltage.tests.local",
     test_loader="testresources:TestLoader",
     use_2to3=True,

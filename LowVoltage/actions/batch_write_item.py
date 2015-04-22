@@ -2,8 +2,6 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
-
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action, ActionProxy
@@ -90,7 +88,7 @@ class BatchWriteItem(
         return self.__tables[name]
 
 
-class BatchWriteItemUnitTests(unittest.TestCase):
+class BatchWriteItemUnitTests(_tst.UnitTests):
     def testName(self):
         self.assertEqual(BatchWriteItem().name, "BatchWriteItem")
 

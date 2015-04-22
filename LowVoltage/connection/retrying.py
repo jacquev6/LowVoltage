@@ -3,9 +3,6 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import time
-import unittest
-
-import MockMockMock
 
 import LowVoltage.testing as _tst
 from LowVoltage.actions.action import Action
@@ -35,19 +32,14 @@ class RetryingConnection(object):
                     time.sleep(delay)
 
 
-class RetryingConnectionUnitTests(unittest.TestCase):
+class RetryingConnectionUnitTests(_tst.UnitTestsWithMocks):
     def setUp(self):
         super(RetryingConnectionUnitTests, self).setUp()
-        self.mocks = MockMockMock.Engine()
         self.policy = self.mocks.create("policy")
         self.basic_connection = self.mocks.create("connection")
         self.connection = RetryingConnection(self.basic_connection.object, self.policy.object)
         self.action = object()
         self.response = object()
-
-    def tearDown(self):
-        self.mocks.tearDown()
-        super(RetryingConnectionUnitTests, self).tearDown()
 
     def test_unknown_exception_is_passed_through(self):
         exception = Exception()

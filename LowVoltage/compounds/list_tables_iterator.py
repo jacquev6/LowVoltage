@@ -2,10 +2,6 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
-
-import MockMockMock
-
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .iterator import Iterator
@@ -25,28 +21,13 @@ class ListTablesIterator(Iterator):
         return action, r.table_names
 
 
-class ListTablesIteratorUnitTests(unittest.TestCase):
+class ListTablesIteratorUnitTests(_tst.UnitTestsWithMocks):
     def setUp(self):
-        self.mocks = MockMockMock.Engine()
-        self.connection = self.mocks.create("connection")
         super(ListTablesIteratorUnitTests, self).setUp()
-
-    def tearDown(self):
-        self.mocks.tearDown()
-        super(ListTablesIteratorUnitTests, self).tearDown()
-
-    class Checker(object):
-        def __init__(self, expected_payload):
-            self.__expected_payload = expected_payload
-
-        def __call__(self, args, kwds):
-            assert len(args) == 1
-            assert len(kwds) == 0
-            action, = args
-            return action.name == "ListTables" and action.build() == self.__expected_payload
+        self.connection = self.mocks.create("connection")
 
     def test_no_tables(self):
-        self.connection.expect._call_.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=[]))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTables.Result(TableNames=[]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -54,7 +35,7 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
         )
 
     def test_one_page(self):
-        self.connection.expect._call_.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"]))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -62,8 +43,8 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
         )
 
     def test_one_page_followed_by_empty_page(self):
-        self.connection.expect._call_.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
-        self.connection.expect._call_.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=[]))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=[]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -71,9 +52,9 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
         )
 
     def test_several_pages(self):
-        self.connection.expect._call_.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
-        self.connection.expect._call_.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=["E", "F", "G"], LastEvaluatedTableName="H"))
-        self.connection.expect._call_.withArguments(self.Checker({"ExclusiveStartTableName": "H"})).andReturn(_lv.ListTables.Result(TableNames=["I", "J", "K"]))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=["E", "F", "G"], LastEvaluatedTableName="H"))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "H"})).andReturn(_lv.ListTables.Result(TableNames=["I", "J", "K"]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),

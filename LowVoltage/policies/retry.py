@@ -2,9 +2,8 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
-
 import LowVoltage as _lv
+import LowVoltage.testing as _tst
 
 
 class ExponentialBackoffRetryPolicy(object):
@@ -21,7 +20,7 @@ class ExponentialBackoffRetryPolicy(object):
             return self.__first_wait * (self.__multiplier ** (errors - 1))
 
 
-class ExponentialBackoffRetryPolicyUnitTests(unittest.TestCase):
+class ExponentialBackoffRetryPolicyUnitTests(_tst.UnitTests):
     def setUp(self):
         self.policy = ExponentialBackoffRetryPolicy(1, 3, 4)
         super(ExponentialBackoffRetryPolicyUnitTests, self).setUp()

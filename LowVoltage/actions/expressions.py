@@ -2,7 +2,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
+import LowVoltage.testing as _tst
 
 
 class _Boolean(object):
@@ -163,7 +163,7 @@ class BeginsWith(_Boolean):
         return "begins_with({}, {})".format(self.__left.atom(), self.__right.atom())
 
 
-class ConditionExpressionUnitTests(unittest.TestCase):
+class ConditionExpressionUnitTests(_tst.UnitTests):
     def testAtomsComparison(self):
         self.assertEqual((Attr("a") == Attr("b")).bool(), "a=b")
         self.assertEqual((Attr("a") == Val("b")).bool(), "a=:b")

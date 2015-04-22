@@ -2,8 +2,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
-
+import LowVoltage.testing as _tst
 from LowVoltage.actions.conversion import _convert_value_to_db
 
 
@@ -25,7 +24,7 @@ class ExpressionAttributeValuesMixin(object):
         return self
 
 
-class ExpressionAttributeValuesMixinUnitTests(unittest.TestCase):
+class ExpressionAttributeValuesMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             ExpressionAttributeValuesMixin()._build_expression_attribute_values(),
@@ -65,7 +64,7 @@ class ExpressionAttributeNamesMixin(object):
         return self
 
 
-class ExpressionAttributeNamesMixinUnitTests(unittest.TestCase):
+class ExpressionAttributeNamesMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             ExpressionAttributeNamesMixin()._build_expression_attribute_names(),
@@ -102,7 +101,7 @@ class ConditionExpressionMixin(object):
         return self
 
 
-class ConditionExpressionMixinUnitTests(unittest.TestCase):
+class ConditionExpressionMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             ConditionExpressionMixin()._build_condition_expression(),
@@ -133,7 +132,7 @@ class FilterExpressionMixin(object):
         return self
 
 
-class FilterExpressionMixinUnitTests(unittest.TestCase):
+class FilterExpressionMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             FilterExpressionMixin()._build_filter_expression(),
@@ -167,7 +166,7 @@ class ProjectionExpressionMixin(object):
         return self
 
 
-class ProjectionExpressionMixinUnitTests(unittest.TestCase):
+class ProjectionExpressionMixinUnitTests(_tst.UnitTests):
     def testDefault(self):
         self.assertEqual(
             ProjectionExpressionMixin()._build_projection_expression(),

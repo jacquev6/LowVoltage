@@ -2,8 +2,6 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import unittest
-
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
@@ -70,7 +68,7 @@ class GetItem(
         return self
 
 
-class GetItemUnitTests(unittest.TestCase):
+class GetItemUnitTests(_tst.UnitTests):
     def testName(self):
         self.assertEqual(GetItem("Table", {"hash": 42}).name, "GetItem")
 

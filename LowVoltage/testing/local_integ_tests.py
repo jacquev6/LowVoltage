@@ -11,12 +11,19 @@ import subprocess
 import tarfile
 
 import requests
-import testresources
+try:
+    from testresources import TestResourceManager, ResourcedTestCase
+except ImportError:  # pragma no cover (Test code)
+    class TestResourceManager(object):
+        pass
+
+    class ResourcedTestCase(object):
+        pass
 
 import LowVoltage as _lv
 
 
-class DynamoDbLocalResourceManager(testresources.TestResourceManager):
+class DynamoDbLocalResourceManager(TestResourceManager):
     def make(self, dependencies):
         self.__download_if_needed()
 
@@ -46,7 +53,7 @@ class DynamoDbLocalResourceManager(testresources.TestResourceManager):
         self.__process.kill()
 
 
-class LocalIntegTests(testresources.ResourcedTestCase):
+class LocalIntegTests(ResourcedTestCase):
     resources = [("connection", DynamoDbLocalResourceManager())]
 
     before_start = datetime.datetime.utcnow()
