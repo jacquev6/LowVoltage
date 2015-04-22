@@ -3,6 +3,7 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 from ..conversion import ConversionUnitTests
+from ..expressions import ConditionExpressionUnitTests
 from ..expression_mixins import (
     ExpressionAttributeValuesMixinUnitTests,
     ExpressionAttributeNamesMixinUnitTests,
