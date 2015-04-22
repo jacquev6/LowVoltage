@@ -9,7 +9,7 @@ import setuptools
 import setuptools.command.test
 
 
-version = "0.2.4"
+version = "0.2.6"
 
 
 setuptools.setup(
