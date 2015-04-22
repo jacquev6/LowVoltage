@@ -147,9 +147,9 @@ class DeleteItemUnitTests(unittest.TestCase):
 
 class DeleteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleDelete(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"simple", "a": "yyy"}))
+        self.connection(_lv.PutItem("Aaa", {"h": u"simple", "a": "yyy"}))
 
-        r = self.connection.request(_lv.DeleteItem("Aaa", {"h": u"simple"}))
+        r = self.connection(_lv.DeleteItem("Aaa", {"h": u"simple"}))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)
@@ -157,9 +157,9 @@ class DeleteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.item_collection_metrics, None)
 
     def testReturnOldValues(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"return", "a": "yyy"}))
+        self.connection(_lv.PutItem("Aaa", {"h": u"return", "a": "yyy"}))
 
-        r = self.connection.request(_lv.DeleteItem("Aaa", {"h": u"return"}).return_values_all_old())
+        r = self.connection(_lv.DeleteItem("Aaa", {"h": u"return"}).return_values_all_old())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, {"h": "return", "a": "yyy"})
@@ -170,10 +170,10 @@ class DeleteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 class DeleteItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def setUp(self):
         super(DeleteItemConnectedIntegTests, self).setUp()
-        self.connection.request(_lv.PutItem(self.table, self.item))
+        self.connection(_lv.PutItem(self.table, self.item))
 
     def test_return_consumed_capacity_indexes(self):
-        r = self.connection.request(_lv.DeleteItem(self.table, self.tab_key).return_consumed_capacity_indexes())
+        r = self.connection(_lv.DeleteItem(self.table, self.tab_key).return_consumed_capacity_indexes())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)
@@ -185,7 +185,7 @@ class DeleteItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
             self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_item_collection_metrics_size(self):
-        r = self.connection.request(_lv.DeleteItem(self.table, self.tab_key).return_item_collection_metrics_size())
+        r = self.connection(_lv.DeleteItem(self.table, self.tab_key).return_item_collection_metrics_size())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)

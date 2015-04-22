@@ -136,18 +136,18 @@ class GetItemUnitTests(unittest.TestCase):
 
 class GetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleGet(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"get", "a": "yyy"}))
+        self.connection(_lv.PutItem("Aaa", {"h": u"get", "a": "yyy"}))
 
-        r = self.connection.request(_lv.GetItem("Aaa", {"h": u"get"}))
+        r = self.connection(_lv.GetItem("Aaa", {"h": u"get"}))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item, {"h": "get", "a": "yyy"})
 
     def testGetWithProjections(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"attrs", "a": "yyy", "b": {"c": ["d1", "d2", "d3"]}, "e": 42, "f": "nope"}))
+        self.connection(_lv.PutItem("Aaa", {"h": u"attrs", "a": "yyy", "b": {"c": ["d1", "d2", "d3"]}, "e": 42, "f": "nope"}))
 
-        r = self.connection.request(_lv.GetItem("Aaa", {"h": u"attrs"}).project("b.c[1]", "e"))
+        r = self.connection(_lv.GetItem("Aaa", {"h": u"attrs"}).project("b.c[1]", "e"))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
@@ -155,24 +155,24 @@ class GetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
     def test_unexisting_table(self):
         with self.assertRaises(_lv.ResourceNotFoundException):
-            self.connection.request(_lv.GetItem("Bbb", {}))
+            self.connection(_lv.GetItem("Bbb", {}))
 
     def test_bad_key_type(self):
         with self.assertRaises(_lv.ValidationException):
-            self.connection.request(_lv.GetItem("Aaa", {"h": 42}))
+            self.connection(_lv.GetItem("Aaa", {"h": 42}))
 
 
 class GetItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def setUp(self):
         super(GetItemConnectedIntegTests, self).setUp()
-        self.connection.request(_lv.PutItem(self.table, self.item))
+        self.connection(_lv.PutItem(self.table, self.item))
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        self.connection(_lv.DeleteItem(self.table, self.tab_key))
         super(GetItemConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_total(self):
-        r = self.connection.request(_lv.GetItem(self.table, self.tab_key).return_consumed_capacity_total())
+        r = self.connection(_lv.GetItem(self.table, self.tab_key).return_consumed_capacity_total())
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
             self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)

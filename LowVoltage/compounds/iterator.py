@@ -23,7 +23,7 @@ class Iterator(object):
             if self.__next_action is None:
                 raise
             else:
-                r = self.__connection.request(self.__next_action)
+                r = self.__connection(self.__next_action)
                 next_action, new_items = self.process(self.__next_action, r)
                 self.__next_action = next_action
                 self.__current_iter = new_items.__iter__()

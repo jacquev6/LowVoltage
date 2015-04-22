@@ -138,7 +138,7 @@ class UpdateTableUnitTests(unittest.TestCase):
 class UpdateTableLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
         super(UpdateTableLocalIntegTests, self).setUp()
-        self.connection.request(
+        self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
                 .global_secondary_index("the_gsi")
                 .hash_key("hh", _lv.STRING)
@@ -147,11 +147,11 @@ class UpdateTableLocalIntegTests(_tst.LocalIntegTests):
         )
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
+        self.connection(_lv.DeleteTable("Aaa"))
         super(UpdateTableLocalIntegTests, self).tearDown()
 
     def testThroughput(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateTable("Aaa").provisioned_throughput(2, 4)
         )
 
@@ -190,7 +190,7 @@ class UpdateTableLocalIntegTests(_tst.LocalIntegTests):
             self.assertEqual(r.table_description.table_status, "ACTIVE")
 
     def testGsiprovisioned_Throughput(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateTable("Aaa").global_secondary_index("the_gsi").provisioned_throughput(6, 8)
         )
 

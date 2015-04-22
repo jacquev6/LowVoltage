@@ -399,11 +399,11 @@ class CreateTableUnitTests(unittest.TestCase):
 
 class CreateTableLocalIntegTests(_tst.LocalIntegTests):
     def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
+        self.connection(_lv.DeleteTable("Aaa"))
         super(CreateTableLocalIntegTests, self).tearDown()
 
     def testSimplestTable(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
 
@@ -426,7 +426,7 @@ class CreateTableLocalIntegTests(_tst.LocalIntegTests):
             self.assertEqual(r.table_description.table_status, "ACTIVE")
 
     def testSimpleGlobalSecondaryIndex(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
                 .global_secondary_index("the_gsi")
                 .hash_key("hh", _lv.STRING)
@@ -469,7 +469,7 @@ class CreateTableLocalIntegTests(_tst.LocalIntegTests):
             self.assertEqual(r.table_description.table_status, "ACTIVE")
 
     def testSimpleLocalSecondaryIndex(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).range_key("r", _lv.STRING).provisioned_throughput(1, 2)
                 .local_secondary_index("the_lsi").hash_key("h").range_key("rr", _lv.STRING).project_all()
         )
@@ -509,7 +509,7 @@ class CreateTableLocalIntegTests(_tst.LocalIntegTests):
             self.assertEqual(r.table_description.table_status, "ACTIVE")
 
     def testGlobalSecondaryIndexWithProjection(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
                 .global_secondary_index("the_gsi")
                 .hash_key("hh", _lv.STRING)
@@ -556,7 +556,7 @@ class CreateTableLocalIntegTests(_tst.LocalIntegTests):
 class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
     def testDefineUnusedAttribute(self):
         with self.assertRaises(_lv.ValidationException) as catcher:
-            self.connection.request(
+            self.connection(
                 _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
                     .attribute_definition("x", _lv.STRING)
             )
@@ -570,7 +570,7 @@ class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
 
     def testDontDefineKeyAttribute(self):
         with self.assertRaises(_lv.ValidationException) as catcher:
-            self.connection.request(
+            self.connection(
                 _lv.CreateTable("Aaa").hash_key("h").provisioned_throughput(1, 2)
                     .attribute_definition("x", _lv.STRING)
             )
@@ -584,7 +584,7 @@ class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
 
     def testDontDefineAnyAttribute(self):
         with self.assertRaises(_lv.ValidationException) as catcher:
-            self.connection.request(
+            self.connection(
                 _lv.CreateTable("Aaa").hash_key("h").provisioned_throughput(1, 2)
             )
         self.assertEqual(

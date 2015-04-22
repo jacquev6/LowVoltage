@@ -21,11 +21,11 @@ class RetryingConnection(object):
         self.__connection = connection
         self.__retry_policy = retry_policy
 
-    def request(self, action):
+    def __call__(self, action):
         errors = 0
         while True:
             try:
-                return self.__connection.request(action)
+                return self.__connection(action)
             except _exn.Error as e:
                 errors += 1
                 delay = self.__retry_policy.get_retry_delay_on_exception(action, e, errors)
@@ -51,32 +51,32 @@ class RetryingConnectionUnitTests(unittest.TestCase):
 
     def test_unknown_exception_is_passed_through(self):
         exception = Exception()
-        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.basic_connection.expect(self.action).andRaise(exception)
         with self.assertRaises(Exception) as catcher:
-            self.connection.request(self.action)
+            self.connection(self.action)
         self.assertIs(catcher.exception, exception)
 
     def test_known_error_is_retried_until_success(self):
         exception = _exn.Error()
-        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.basic_connection.expect(self.action).andRaise(exception)
         self.policy.expect.get_retry_delay_on_exception(self.action, exception, 1).andReturn(0)
-        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.basic_connection.expect(self.action).andRaise(exception)
         self.policy.expect.get_retry_delay_on_exception(self.action, exception, 2).andReturn(0)
-        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.basic_connection.expect(self.action).andRaise(exception)
         self.policy.expect.get_retry_delay_on_exception(self.action, exception, 3).andReturn(0)
-        self.basic_connection.expect.request(self.action).andReturn(self.response)
-        self.assertIs(self.connection.request(self.action), self.response)
+        self.basic_connection.expect(self.action).andReturn(self.response)
+        self.assertIs(self.connection(self.action), self.response)
 
     def test_known_error_is_retried_then_raised(self):
         exception = _exn.Error()
-        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.basic_connection.expect(self.action).andRaise(exception)
         self.policy.expect.get_retry_delay_on_exception(self.action, exception, 1).andReturn(0)
-        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.basic_connection.expect(self.action).andRaise(exception)
         self.policy.expect.get_retry_delay_on_exception(self.action, exception, 2).andReturn(0)
-        self.basic_connection.expect.request(self.action).andRaise(exception)
+        self.basic_connection.expect(self.action).andRaise(exception)
         self.policy.expect.get_retry_delay_on_exception(self.action, exception, 3).andReturn(None)
         with self.assertRaises(_exn.Error) as catcher:
-            self.connection.request(self.action)
+            self.connection(self.action)
         self.assertIs(catcher.exception, exception)
 
 
@@ -98,19 +98,19 @@ class RetryingConnectionLocalIntegTests(_tst.LocalIntegTests):
         self.connection = RetryingConnection(SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffRetryPolicy(1, 2, 5))
 
     def test_request(self):
-        r = self.connection.request(self.TestAction("ListTables"))
+        r = self.connection(self.TestAction("ListTables"))
         self.assertIsInstance(r, self.TestAction.Result)
         self.assertEqual(r.kwds, {"TableNames": []})
 
     def test_client_error(self):
         with self.assertRaises(_exn.InvalidAction):
-            self.connection.request(self.TestAction("UnexistingAction"))
+            self.connection(self.TestAction("UnexistingAction"))
 
     def test_network_error(self):
         connection = RetryingConnection(SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/"), _pol.ExponentialBackoffRetryPolicy(0, 1, 4))
         with self.assertRaises(_exn.NetworkError):
-            connection.request(self.TestAction("ListTables"))
+            connection(self.TestAction("ListTables"))
 
     def test_unexisting_table(self):
         with self.assertRaises(_exn.ResourceNotFoundException):
-            self.connection.request(self.TestAction("GetItem", {"TableName": "Bbb"}))
+            self.connection(self.TestAction("GetItem", {"TableName": "Bbb"}))

@@ -160,6 +160,7 @@ class BatchGetItemUnitTests(unittest.TestCase):
             }
         )
 
+    # @todo pep8 test names (everywhere)
     def testExpressionAttributeName(self):
         self.assertEqual(
             BatchGetItem().table("Table1").expression_attribute_name("a", "p").build(),
@@ -175,13 +176,13 @@ class BatchGetItemUnitTests(unittest.TestCase):
 
 class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleBatchGet(self):
-        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+        self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "xxx"},
             {"h": u"2", "a": "yyy"},
             {"h": u"3", "a": "zzz"},
         ))
 
-        r = self.connection.request(_lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
+        r = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
@@ -193,13 +194,13 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.unprocessed_keys, {})
 
     def testBatchGetWithProjections(self):
-        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+        self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "a1", "b": "b1", "c": "c1"},
             {"h": u"2", "a": "a2", "b": "b2", "c": "c2"},
             {"h": u"3", "a": "a3", "b": "b3", "c": "c3"},
         ))
 
-        r = self.connection.request(
+        r = self.connection(
             _lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}).expression_attribute_name("p", "b").project("h").project("a", ["#p"])
         )
 
@@ -213,12 +214,12 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.unprocessed_keys, {})
 
     def test_get_unexisting_keys(self):
-        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+        self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "xxx"},
             {"h": u"2", "a": "yyy"},
         ))
 
-        r = self.connection.request(_lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
+        r = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)
@@ -232,14 +233,14 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def test_get_without_unprocessed_keys(self):
         _lv.BatchPutItem(self.connection, "Aaa", [{"h": unicode(i)} for i in range(100)])
 
-        r = self.connection.request(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
+        r = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
         self.assertEqual(r.unprocessed_keys, {})
         self.assertEqual(len(r.responses["Aaa"]), 100)
 
     def test_get_with_unprocessed_keys(self):
         _lv.BatchPutItem(self.connection, "Aaa", [{"h": unicode(i), "xs": "x" * 300000} for i in range(100)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
 
-        r1 = self.connection.request(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
+        r1 = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
         self.assertEqual(len(r1.unprocessed_keys["Aaa"]["Keys"]), 45)
         self.assertEqual(len(r1.responses["Aaa"]), 55)
 
@@ -247,14 +248,14 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 class BatchGetItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def setUp(self):
         super(BatchGetItemConnectedIntegTests, self).setUp()
-        self.connection.request(_lv.PutItem(self.table, self.item))
+        self.connection(_lv.PutItem(self.table, self.item))
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        self.connection(_lv.DeleteItem(self.table, self.tab_key))
         super(BatchGetItemConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_total(self):
-        r = self.connection.request(_lv.BatchGetItem().table(self.table).keys(self.tab_key).return_consumed_capacity_total())
+        r = self.connection(_lv.BatchGetItem().table(self.table).keys(self.tab_key).return_consumed_capacity_total())
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity[0].capacity_units, 0.5)
             self.assertEqual(r.consumed_capacity[0].global_secondary_indexes, None)

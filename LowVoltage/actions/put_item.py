@@ -147,17 +147,17 @@ class PutItemUnitTests(unittest.TestCase):
 
 class PutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimplePut(self):
-        r = self.connection.request(_lv.PutItem("Aaa", {"h": u"simple"}))
+        r = self.connection(_lv.PutItem("Aaa", {"h": u"simple"}))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)
             self.assertEqual(r.consumed_capacity, None)
             self.assertEqual(r.item_collection_metrics, None)
 
-        self.assertEqual(self.connection.request(_lv.GetItem("Aaa", {"h": u"simple"})).item, {"h": u"simple"})
+        self.assertEqual(self.connection(_lv.GetItem("Aaa", {"h": u"simple"})).item, {"h": u"simple"})
 
     def testPutAllTypes(self):
-        self.connection.request(_lv.PutItem("Aaa", {
+        self.connection(_lv.PutItem("Aaa", {
             "h": u"all",
             "number": 42,
             "string": u"àoé",
@@ -173,7 +173,7 @@ class PutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         }))
 
         self.assertEqual(
-            self.connection.request(_lv.GetItem("Aaa", {"h": u"all"})).item,
+            self.connection(_lv.GetItem("Aaa", {"h": u"all"})).item,
             {
                 "h": u"all",
                 "number": 42,
@@ -191,9 +191,9 @@ class PutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         )
 
     def testReturnOldValues(self):
-        self.connection.request(PutItem("Aaa", {"h": u"return", "a": b"yyy"}))
+        self.connection(PutItem("Aaa", {"h": u"return", "a": b"yyy"}))
 
-        r = self.connection.request(
+        r = self.connection(
             PutItem("Aaa", {"h": u"return", "b": b"xxx"}).return_values_all_old()
         )
 
@@ -205,11 +205,11 @@ class PutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
 class PutItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def tearDown(self):
-        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        self.connection(_lv.DeleteItem(self.table, self.tab_key))
         super(PutItemConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_indexes(self):
-        r = self.connection.request(_lv.PutItem(self.table, self.item).return_consumed_capacity_indexes())
+        r = self.connection(_lv.PutItem(self.table, self.item).return_consumed_capacity_indexes())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)
@@ -221,7 +221,7 @@ class PutItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
             self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_item_collection_metrics_size(self):
-        r = self.connection.request(_lv.PutItem(self.table, self.item).return_item_collection_metrics_size())
+        r = self.connection(_lv.PutItem(self.table, self.item).return_item_collection_metrics_size())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.attributes, None)

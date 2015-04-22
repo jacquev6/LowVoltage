@@ -22,7 +22,7 @@ def BatchDeleteItem(connection, table, *keys):
     unprocessed_items = []
 
     while len(delete) != 0:
-        r = connection.request(_lv.BatchWriteItem().table(table).delete(delete[:25]))
+        r = connection(_lv.BatchWriteItem().table(table).delete(delete[:25]))
         delete = delete[25:]
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]
@@ -31,7 +31,7 @@ def BatchDeleteItem(connection, table, *keys):
     # @todo In the first loop, maybe wait a bit before next request if we get unprocessed items? Might not be a good idea.
 
     while len(unprocessed_items) != 0:
-        r = connection.request(_lv.BatchWriteItem({table: unprocessed_items[:25]}))
+        r = connection(_lv.BatchWriteItem({table: unprocessed_items[:25]}))
         unprocessed_items = unprocessed_items[25:]
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]
@@ -61,7 +61,7 @@ class BatchDeleteItemUnitTests(unittest.TestCase):
         BatchDeleteItem(self.connection.object, "Aaa", [])
 
     def test_one_page(self):
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"S": "a"}}}}, {"DeleteRequest": {"Key": {"h": {"S": "b"}}}}]}})
         ).andReturn(
             _lv.BatchWriteItem.Result()
@@ -70,17 +70,17 @@ class BatchDeleteItemUnitTests(unittest.TestCase):
         BatchDeleteItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages(self):
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(0, 25)]}})
         ).andReturn(
             _lv.BatchWriteItem.Result()
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(25, 50)]}})
         ).andReturn(
             _lv.BatchWriteItem.Result()
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(50, 60)]}})
         ).andReturn(
             _lv.BatchWriteItem.Result()
@@ -89,12 +89,12 @@ class BatchDeleteItemUnitTests(unittest.TestCase):
         BatchDeleteItem(self.connection.object, "Aaa", ({"h": i} for i in range(60)))
 
     def test_one_unprocessed_item(self):
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"S": "a"}}}}, {"DeleteRequest": {"Key": {"h": {"S": "b"}}}}]}})
         ).andReturn(
             _lv.BatchWriteItem.Result(UnprocessedItems={"Aaa": [{"DeleteRequest": {"Key": {"h": {"S": "c"}}}}]})
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"S": "c"}}}}]}})
         ).andReturn(
             _lv.BatchWriteItem.Result()
@@ -103,22 +103,22 @@ class BatchDeleteItemUnitTests(unittest.TestCase):
         BatchDeleteItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages_of_unprocessed_item(self):
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(0, 25)]}})
         ).andReturn(
             _lv.BatchWriteItem.Result(UnprocessedItems={"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(100, 110)]})
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(25, 35)]}})
         ).andReturn(
             _lv.BatchWriteItem.Result(UnprocessedItems={"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(110, 120)]})
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(100, 120)]}})
         ).andReturn(
             _lv.BatchWriteItem.Result(UnprocessedItems={"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(120, 130)]})
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": [{"DeleteRequest": {"Key": {"h": {"N": str(i)}}}} for i in range(120, 130)]}})
         ).andReturn(
             _lv.BatchWriteItem.Result()

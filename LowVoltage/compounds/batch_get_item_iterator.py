@@ -72,7 +72,7 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
         )
 
     def test_one_page(self):
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "a"}}, {"h": {"S": "b"}}]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "c"}}, {"h": {"S": "d"}}]})
@@ -84,12 +84,12 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
         )
 
     def test_one_unprocessed_key(self):
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "a"}}, {"h": {"S": "b"}}]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "c"}}]}, UnprocessedKeys={"Aaa": {"Keys": [{"h": {"S": "d"}}]}})
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "d"}}]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "e"}}]})
@@ -101,17 +101,17 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
         )
 
     def test_several_pages(self):
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(0, 100)]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1000, 1100)]})
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(100, 200)]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1100, 1200)]})
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(200, 250)]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1200, 1250)]})
@@ -123,7 +123,7 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
         )
 
     def test_several_pages_of_unprocessed_keys(self):
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(0, 100)]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(
@@ -131,7 +131,7 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
                 UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2000, 2075)]}}
             )
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(100, 150)]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(
@@ -139,7 +139,7 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
                 UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2075, 2150)]}}
             )
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2000, 2100)]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(
@@ -147,7 +147,7 @@ class BatchGetItemIteratorUnitTests(unittest.TestCase):
                 UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2150, 2175)]}}
             )
         )
-        self.connection.expect.request.withArguments(
+        self.connection.expect._call_.withArguments(
             self.Checker({"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2100, 2175)]}}})
         ).andReturn(
             _lv.BatchGetItem.Result(

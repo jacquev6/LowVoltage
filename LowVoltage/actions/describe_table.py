@@ -45,16 +45,16 @@ class DescribeTableUnitTests(unittest.TestCase):
 class DescribeTableLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
         super(DescribeTableLocalIntegTests, self).setUp()
-        self.connection.request(
+        self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
+        self.connection(_lv.DeleteTable("Aaa"))
         super(DescribeTableLocalIntegTests, self).tearDown()
 
     def test(self):
-        r = self.connection.request(_lv.DescribeTable("Aaa"))
+        r = self.connection(_lv.DescribeTable("Aaa"))
 
         with _tst.cover("r", r) as r:
             self.assertDateTimeIsReasonable(r.table.creation_date_time)

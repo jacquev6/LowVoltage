@@ -26,7 +26,7 @@ class SigningConnection(object):
         self.__host = urlparse.urlparse(self.__endpoint).hostname
         self.__session = requests.Session()
 
-    def request(self, action):
+    def __call__(self, action):
         if not isinstance(action, (Action, ActionProxy)):
             raise TypeError
 
@@ -154,7 +154,7 @@ class SigningConnectionUnitTests(unittest.TestCase):
 
     def testBadAction(self):
         with self.assertRaises(TypeError):
-            self.connection.request(42)
+            self.connection(42)
 
     def testUnknownError(self):
         with self.assertRaises(_exn.UnknownError) as catcher:
@@ -235,4 +235,4 @@ class SigningConnectionLocalIntegTests(unittest.TestCase):
     def test_network_error(self):
         connection = SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/")
         with self.assertRaises(_exn.NetworkError):
-            connection.request(self.TestAction("ListTables"))
+            connection(self.TestAction("ListTables"))

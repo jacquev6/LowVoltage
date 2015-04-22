@@ -279,7 +279,7 @@ class QueryUnitTests(unittest.TestCase):
 class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
     def setUp(self):
         super(QueryLocalIntegTests, self).setUp()
-        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+        self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"0", "r": 41, "v": 0},
             {"h": u"0", "r": 42, "v": 1},
             {"h": u"0", "r": 43, "v": 2},
@@ -290,7 +290,7 @@ class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
         ))
 
     def testSimpleQuery(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.Query("Aaa").key_eq("h", u"1")
         )
 
@@ -302,7 +302,7 @@ class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
             self.assertEqual(r.scanned_count, 1)
 
     def testComplexQuery(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.Query("Aaa").key_eq("h", u"0").key_between("r", 42, 44)
                 .scan_index_forward_false()
                 .project("r", "v")
@@ -323,14 +323,14 @@ class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
 class QueryConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def setUp(self):
         super(QueryConnectedIntegTests, self).setUp()
-        self.connection.request(_lv.PutItem(self.table, self.item))
+        self.connection(_lv.PutItem(self.table, self.item))
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        self.connection(_lv.DeleteItem(self.table, self.tab_key))
         super(QueryConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_total(self):
-        r = self.connection.request(_lv.Query(self.table).key_eq("tab_h", u"0").return_consumed_capacity_total())
+        r = self.connection(_lv.Query(self.table).key_eq("tab_h", u"0").return_consumed_capacity_total())
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
             self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)

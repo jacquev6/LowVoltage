@@ -18,7 +18,7 @@ class DynamoDbResourceManager(testresources.TestResourceManager):
 
         table = _execution_date.strftime("LowVoltage.IntegTests.%Y-%m-%d.%H-%M-%S.%f")
 
-        connection.request(
+        connection(
             _lv.CreateTable(table).hash_key("tab_h", _lv.STRING).range_key("tab_r", _lv.NUMBER).provisioned_throughput(1, 1)
                 .global_secondary_index("gsi").hash_key("gsi_h", _lv.STRING).range_key("gsi_r", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
                 .local_secondary_index("lsi").hash_key("tab_h").range_key("lsi_r", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
@@ -29,7 +29,7 @@ class DynamoDbResourceManager(testresources.TestResourceManager):
 
     def clean(self, table):
         connection = _lv.make_connection("eu-west-1", _lv.EnvironmentCredentials())
-        connection.request(_lv.DeleteTable(table))
+        connection(_lv.DeleteTable(table))
 
 
 class ConnectedIntegTests(testresources.ResourcedTestCase):

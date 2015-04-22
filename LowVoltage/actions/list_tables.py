@@ -69,31 +69,31 @@ class ListTablesUnitTests(unittest.TestCase):
 class ListTablesLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
         super(ListTablesLocalIntegTests, self).setUp()
-        self.connection.request(
+        self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
-        self.connection.request(
+        self.connection(
             _lv.CreateTable("Bbb").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
-        self.connection.request(
+        self.connection(
             _lv.CreateTable("Ccc").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
-        self.connection.request(_lv.DeleteTable("Bbb"))
-        self.connection.request(_lv.DeleteTable("Ccc"))
+        self.connection(_lv.DeleteTable("Aaa"))
+        self.connection(_lv.DeleteTable("Bbb"))
+        self.connection(_lv.DeleteTable("Ccc"))
         super(ListTablesLocalIntegTests, self).tearDown()
 
     def testAllArguments(self):
-        r = self.connection.request(_lv.ListTables().exclusive_start_table_name("Aaa").limit(1))
+        r = self.connection(_lv.ListTables().exclusive_start_table_name("Aaa").limit(1))
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.last_evaluated_table_name, "Bbb")
             self.assertEqual(r.table_names[0], "Bbb")
 
     def testNoArguments(self):
-        r = self.connection.request(_lv.ListTables())
+        r = self.connection(_lv.ListTables())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.last_evaluated_table_name, None)

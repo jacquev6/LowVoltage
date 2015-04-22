@@ -60,19 +60,19 @@ class LocalIntegTests(testresources.ResourcedTestCase):
 class LocalIntegTestsWithTableH(LocalIntegTests):
     def setUp(self):
         super(LocalIntegTestsWithTableH, self).setUp()
-        self.connection.request(
+        self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
         )
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
+        self.connection(_lv.DeleteTable("Aaa"))
         super(LocalIntegTestsWithTableH, self).tearDown()
 
 
 class LocalIntegTestsWithTableHR(LocalIntegTests):
     def setUp(self):
         super(LocalIntegTestsWithTableHR, self).setUp()
-        self.connection.request(
+        self.connection(
             _lv.CreateTable("Aaa")
                 .hash_key("h", _lv.STRING)
                 .range_key("r", _lv.NUMBER)
@@ -80,5 +80,5 @@ class LocalIntegTestsWithTableHR(LocalIntegTests):
         )
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
+        self.connection(_lv.DeleteTable("Aaa"))
         super(LocalIntegTestsWithTableHR, self).tearDown()

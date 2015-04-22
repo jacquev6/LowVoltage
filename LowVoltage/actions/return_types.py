@@ -105,6 +105,7 @@ class AttributeDefinition_(object):
         self.attribute_name = None
         if _is_str(AttributeName):  # pragma no branch (Defensive code)
             self.attribute_name = AttributeName
+
         self.attribute_type = None
         if _is_str(AttributeType):  # pragma no branch (Defensive code)
             self.attribute_type = AttributeType

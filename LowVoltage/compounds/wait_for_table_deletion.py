@@ -13,7 +13,7 @@ def WaitForTableDeletion(connection, table):
 
     while True:
         try:
-            connection.request(_lv.DescribeTable(table))
+            connection(_lv.DescribeTable(table))
             time.sleep(3)
         except _lv.ResourceNotFoundException:
             break
@@ -22,24 +22,24 @@ def WaitForTableDeletion(connection, table):
 class WaitForTableDeletionLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
         super(WaitForTableDeletionLocalIntegTests, self).setUp()
-        self.connection.request(_lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 1))
+        self.connection(_lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 1))
 
     def test(self):
-        self.connection.request(_lv.DeleteTable("Aaa"))
+        self.connection(_lv.DeleteTable("Aaa"))
         _lv.WaitForTableDeletion(self.connection, "Aaa")
         with self.assertRaises(_lv.ResourceNotFoundException):
-            self.connection.request(_lv.DescribeTable("Aaa"))
+            self.connection(_lv.DescribeTable("Aaa"))
 
 
 class WaitForTableDeletionConnectedIntegTests(_tst.ConnectedIntegTests):
     def setUp(self):
         super(WaitForTableDeletionConnectedIntegTests, self).setUp()
         self.table = self.make_table_name()
-        self.connection.request(_lv.CreateTable(self.table).hash_key("h", _lv.STRING).provisioned_throughput(1, 1))
+        self.connection(_lv.CreateTable(self.table).hash_key("h", _lv.STRING).provisioned_throughput(1, 1))
         _lv.WaitForTableActivation(self.connection, self.table)
 
     def test(self):
-        self.connection.request(_lv.DeleteTable(self.table))
+        self.connection(_lv.DeleteTable(self.table))
         _lv.WaitForTableDeletion(self.connection, self.table)
         with self.assertRaises(_lv.ResourceNotFoundException):
-            self.connection.request(_lv.DescribeTable(self.table))
+            self.connection(_lv.DescribeTable(self.table))

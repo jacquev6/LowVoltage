@@ -155,7 +155,7 @@ class ScanUnitTests(unittest.TestCase):
 class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def setUp(self):
         super(ScanLocalIntegTests, self).setUp()
-        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+        self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"0", "v": 0},
             {"h": u"1", "v": 1},
             {"h": u"2", "v": 2},
@@ -163,7 +163,7 @@ class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         ))
 
     def testSimpleScan(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.Scan("Aaa")
         )
 
@@ -177,16 +177,16 @@ class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
     def testPaginatedSegmentedScan(self):
         # If this test fails randomly, change it to assert on the sum and union of the results
-        r01 = self.connection.request(
+        r01 = self.connection(
             _lv.Scan("Aaa").segment(0, 2).limit(1)
         )
-        r02 = self.connection.request(
+        r02 = self.connection(
             _lv.Scan("Aaa").segment(0, 2).exclusive_start_key({"h": u"1"})
         )
-        r11 = self.connection.request(
+        r11 = self.connection(
             _lv.Scan("Aaa").segment(1, 2).limit(1)
         )
-        r12 = self.connection.request(
+        r12 = self.connection(
             _lv.Scan("Aaa").segment(1, 2).exclusive_start_key({"h": u"0"})
         )
 
@@ -219,7 +219,7 @@ class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.scanned_count, 1)
 
     def testFilteredScan(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.Scan("Aaa").filter_expression("v>:v").expression_attribute_value("v", 1).project("h")
         )
 
@@ -235,14 +235,14 @@ class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 class ScanConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def setUp(self):
         super(ScanConnectedIntegTests, self).setUp()
-        self.connection.request(_lv.PutItem(self.table, self.item))
+        self.connection(_lv.PutItem(self.table, self.item))
 
     def tearDown(self):
-        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        self.connection(_lv.DeleteItem(self.table, self.tab_key))
         super(ScanConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_total(self):
-        r = self.connection.request(_lv.Scan(self.table).return_consumed_capacity_total())
+        r = self.connection(_lv.Scan(self.table).return_consumed_capacity_total())
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
             self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)

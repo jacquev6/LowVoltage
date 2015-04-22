@@ -273,7 +273,7 @@ class UpdateItemUnitTests(unittest.TestCase):
 
 class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSet(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateItem("Aaa", {"h": u"set"})
                 .set("a", "v")
                 .set("#p", "w")
@@ -288,12 +288,12 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.item_collection_metrics, None)
 
         self.assertEqual(
-            self.connection.request(_lv.GetItem("Aaa", {"h": u"set"})).item,
+            self.connection(_lv.GetItem("Aaa", {"h": u"set"})).item,
             {"h": "set", "a": "aaa", "b": "bbb"}
         )
 
     def testComplexUpdate(self):
-        self.connection.request(
+        self.connection(
             _lv.PutItem(
                 "Aaa",
                 {
@@ -309,7 +309,7 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             )
         )
 
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateItem("Aaa", {"h": u"complex"})
                 .set("a", "s")
                 .set("b", "i")
@@ -340,9 +340,9 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.item_collection_metrics, None)
 
     def testConditionExpression(self):
-        self.connection.request(_lv.PutItem("Aaa", {"h": u"expr", "a": 42, "b": 42}))
+        self.connection(_lv.PutItem("Aaa", {"h": u"expr", "a": 42, "b": 42}))
 
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateItem("Aaa", {"h": u"expr"})
                 .set("checked", "true")
                 .expression_attribute_value("true", True)
@@ -361,11 +361,11 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
 class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def tearDown(self):
-        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        self.connection(_lv.DeleteItem(self.table, self.tab_key))
         super(UpdateItemConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_indexes_without_indexed_attribute(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
                 .set("a", "a").expression_attribute_value("a", "a")
                 .return_consumed_capacity_indexes()
@@ -381,7 +381,7 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
             self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_consumed_capacity_indexes(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
                 .set("gsi_h", "gsi_h").expression_attribute_value("gsi_h", u"1")
                 .set("gsi_r", "gsi_r").expression_attribute_value("gsi_r", 1)
@@ -399,7 +399,7 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
             self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_consumed_capacity_indexes_with_locally_indexed_attribute_only(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
                 .set("lsi_r", "lsi_r").expression_attribute_value("lsi_r", 2)
                 .return_consumed_capacity_indexes()
@@ -415,7 +415,7 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
             self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_consumed_capacity_indexes_with_globally_indexed_attribute_only(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
                 .set("gsi_h", "gsi_h").expression_attribute_value("gsi_h", u"1")
                 .set("gsi_r", "gsi_r").expression_attribute_value("gsi_r", 1)
@@ -432,7 +432,7 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
             self.assertEqual(r.item_collection_metrics, None)
 
     def test_return_item_collection_metrics_size(self):
-        r = self.connection.request(
+        r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
                 .set("a", "a").expression_attribute_value("a", "a")
                 .return_item_collection_metrics_size()

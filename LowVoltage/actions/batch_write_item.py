@@ -145,7 +145,7 @@ class BatchWriteItemUnitTests(unittest.TestCase):
 
 class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSimpleBatchPut(self):
-        r = self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+        r = self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "xxx"},
             {"h": u"2", "a": "yyy"},
             {"h": u"3", "a": "zzz"},
@@ -157,18 +157,18 @@ class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.unprocessed_items, {})
 
         self.assertEqual(
-            self.connection.request(_lv.GetItem("Aaa", {"h": u"1"})).item,
+            self.connection(_lv.GetItem("Aaa", {"h": u"1"})).item,
             {"h": "1", "a": "xxx"}
         )
 
     def testSimpleBatchDelete(self):
-        self.connection.request(_lv.BatchWriteItem().table("Aaa").put(
+        self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "xxx"},
             {"h": u"2", "a": "yyy"},
             {"h": u"3", "a": "zzz"},
         ))
 
-        r = self.connection.request(_lv.BatchWriteItem().table("Aaa").delete(
+        r = self.connection(_lv.BatchWriteItem().table("Aaa").delete(
             {"h": u"1"},
             {"h": u"2"},
             {"h": u"3"}
@@ -180,18 +180,18 @@ class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             self.assertEqual(r.unprocessed_items, {})
 
         self.assertEqual(
-            self.connection.request(_lv.GetItem("Aaa", {"h": u"1"})).item,
+            self.connection(_lv.GetItem("Aaa", {"h": u"1"})).item,
             None
         )
 
 
 class BatchWriteItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def tearDown(self):
-        self.connection.request(_lv.DeleteItem(self.table, self.tab_key))
+        self.connection(_lv.DeleteItem(self.table, self.tab_key))
         super(BatchWriteItemConnectedIntegTests, self).tearDown()
 
     def test_return_consumed_capacity_indexes(self):
-        r = self.connection.request(_lv.BatchWriteItem().table(self.table).put(self.item).return_consumed_capacity_indexes())
+        r = self.connection(_lv.BatchWriteItem().table(self.table).put(self.item).return_consumed_capacity_indexes())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity[0].capacity_units, 3.0)
@@ -203,7 +203,7 @@ class BatchWriteItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
             self.assertEqual(r.unprocessed_items, {})
 
     def test_return_item_collection_metrics_size(self):
-        r = self.connection.request(_lv.BatchWriteItem().table(self.table).put(self.item).return_item_collection_metrics_size())
+        r = self.connection(_lv.BatchWriteItem().table(self.table).put(self.item).return_item_collection_metrics_size())
 
         with _tst.cover("r", r) as r:
             self.assertEqual(r.consumed_capacity, None)

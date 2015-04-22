@@ -45,12 +45,12 @@ class DeleteTableUnitTests(unittest.TestCase):
 class DeleteTableLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
         super(DeleteTableLocalIntegTests, self).setUp()
-        self.connection.request(
+        self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
 
     def test(self):
-        r = self.connection.request(_lv.DeleteTable("Aaa"))
+        r = self.connection(_lv.DeleteTable("Aaa"))
 
         with _tst.cover("r", r) as r:
             self.assertDateTimeIsReasonable(r.table_description.creation_date_time)

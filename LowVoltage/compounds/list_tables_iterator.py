@@ -46,7 +46,7 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
             return action.name == "ListTables" and action.build() == self.__expected_payload
 
     def test_no_tables(self):
-        self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=[]))
+        self.connection.expect._call_.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=[]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -54,7 +54,7 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
         )
 
     def test_one_page(self):
-        self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"]))
+        self.connection.expect._call_.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -62,8 +62,8 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
         )
 
     def test_one_page_followed_by_empty_page(self):
-        self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
-        self.connection.expect.request.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=[]))
+        self.connection.expect._call_.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
+        self.connection.expect._call_.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=[]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -71,9 +71,9 @@ class ListTablesIteratorUnitTests(unittest.TestCase):
         )
 
     def test_several_pages(self):
-        self.connection.expect.request.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
-        self.connection.expect.request.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=["E", "F", "G"], LastEvaluatedTableName="H"))
-        self.connection.expect.request.withArguments(self.Checker({"ExclusiveStartTableName": "H"})).andReturn(_lv.ListTables.Result(TableNames=["I", "J", "K"]))
+        self.connection.expect._call_.withArguments(self.Checker({})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
+        self.connection.expect._call_.withArguments(self.Checker({"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=["E", "F", "G"], LastEvaluatedTableName="H"))
+        self.connection.expect._call_.withArguments(self.Checker({"ExclusiveStartTableName": "H"})).andReturn(_lv.ListTables.Result(TableNames=["I", "J", "K"]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -87,13 +87,13 @@ class ListTablesIteratorLocalIntegTests(_tst.LocalIntegTests):
     def setUp(self):
         super(ListTablesIteratorLocalIntegTests, self).setUp()
         for t in self.table_names:
-            self.connection.request(
+            self.connection(
                 _lv.CreateTable(t).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
             )
 
     def tearDown(self):
         for t in self.table_names:
-            self.connection.request(_lv.DeleteTable(t))
+            self.connection(_lv.DeleteTable(t))
         super(ListTablesIteratorLocalIntegTests, self).tearDown()
 
     def test(self):

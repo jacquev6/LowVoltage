@@ -30,7 +30,7 @@ class QueryIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
 
     def setUp(self):
         super(QueryIteratorLocalIntegTests, self).setUp()
-        self.connection.request(
+        self.connection(
             _lv.BatchWriteItem().table("Aaa").put(
                 {"h": u"0", "r": r, "xs": "x" * 300000}  # 300kB items ensure a single Query will return at most 4 items
                 for r in self.keys
