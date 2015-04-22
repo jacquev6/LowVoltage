@@ -3,11 +3,8 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import contextlib
 import os
 import setuptools
-import setuptools.command.test
-
 
 version = "0.2.6"
 
@@ -43,6 +40,6 @@ setuptools.setup(
             "version": ("setup.py", version),
             "release": ("setup.py", version),
             "source_dir": ("setup.py", "doc"),
-        }
+        },
     }
 )
