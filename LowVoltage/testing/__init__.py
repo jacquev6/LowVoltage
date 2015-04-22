@@ -24,5 +24,5 @@ def main():  # pragma no cover (Test code)
     try:
         import testresources, MockMockMock
     except ImportError:
-        warnings.warn("You are running a subset of LowVoltage's tests. Install testresources and MockMockMock to enable the full test suite.")
+        warnings.warn("You are running a subset of LowVoltage's tests. 'pip install testresources MockMockMock' to enable the full test suite.")
     unittest.main(catchbreak=True, testLoader=TestLoader())
