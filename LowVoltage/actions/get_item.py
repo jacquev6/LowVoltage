@@ -64,9 +64,15 @@ class GetItem(
         return data
 
     def consistent_read_true(self):
+        """
+        Set ConsistentRead to True.
+        """
         return self._set_consistent_read(True)
 
     def consistent_read_false(self):
+        """
+        Set ConsistentRead to False.
+        """
         return self._set_consistent_read(False)
 
     def _set_consistent_read(self, value):

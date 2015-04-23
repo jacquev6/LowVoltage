@@ -15,10 +15,16 @@ class BatchGetItem(
     Action,
     ReturnConsumedCapacityMixin,
 ):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters"""
+    """
+    The `BatchGetItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters>`__
+    """
 
+    # @todo Move all Results out of their Action class.
+    # @todo Document return types and Results
     class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_ResponseElements"""
+        """
+        The `BatchGetItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_ResponseElements>`__
+        """
 
         def __init__(
             self,

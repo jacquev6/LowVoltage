@@ -5,6 +5,8 @@ It's licensed under the `MIT license <http://choosealicense.com/licenses/mit/>`_
 It depends only on the excellent `python-requests <http://python-requests.org>`__ library.
 It's available on the `Python package index <http://pypi.python.org/pypi/LowVoltage>`__, its `documentation is hosted by Python <http://pythonhosted.org/LowVoltage>`__ and its source code is on `GitHub <https://github.com/jacquev6/LowVoltage>`__.
 
+Questions? Remarks? Bugs? Want to contribute? `Open an issue <https://github.com/jacquev6/LowVoltage/issues>`__!
+
 .. image:: https://img.shields.io/travis/jacquev6/LowVoltage/master.svg
     :target: https://travis-ci.org/jacquev6/LowVoltage
 
@@ -45,7 +47,7 @@ Install from PyPI::
 
     $ pip install LowVoltage
 
-Import the package and create a connection::
+Import the package and create a connection (assuming your AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables are set)::
 
     >>> from LowVoltage import *
     >>> connection = make_connection("eu-west-1", EnvironmentCredentials())
@@ -59,14 +61,3 @@ Assuming you have a table named "LowVoltage.DocTests" with a hash key on the num
 
     >>> connection(GetItem(table, {"h": 0})).item
     {u'a': 42, u'h': 0, u'b': u'bar'}
-
-Todo
-====
-
-- __str__ and __repr__
-- docs
-- credential provider for AWS's AIM roles
-- create builder for attribute paths
-- improve builder for expressions
-- metrics
-- debug logging
