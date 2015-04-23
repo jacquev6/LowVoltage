@@ -140,40 +140,47 @@ class Scan(
 
 
 class ScanUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(Scan("Aaa").name, "Scan")
 
-    def testTableName(self):
+    def test_table_name(self):
         self.assertEqual(Scan("Aaa").build(), {"TableName": "Aaa"})
 
-    def testSegment(self):
+    def test_segment(self):
         self.assertEqual(Scan("Aaa").segment(0, 2).build(), {"TableName": "Aaa", "Segment": 0, "TotalSegments": 2})
         self.assertEqual(Scan("Aaa").segment(1, 2).build(), {"TableName": "Aaa", "Segment": 1, "TotalSegments": 2})
 
-    def testExclusiveStartKey(self):
+    def test_exclusive_start_key(self):
         self.assertEqual(Scan("Aaa").exclusive_start_key({"h": u"v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
 
-    def testLimit(self):
+    def test_limit(self):
         self.assertEqual(Scan("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
 
-    def testSelect(self):
+    def test_select_all_attributes(self):
         self.assertEqual(Scan("Aaa").select_all_attributes().build(), {"TableName": "Aaa", "Select": "ALL_ATTRIBUTES"})
+
+    def test_select_count(self):
         self.assertEqual(Scan("Aaa").select_count().build(), {"TableName": "Aaa", "Select": "COUNT"})
+
+    def test_select_specific_attributes(self):
         self.assertEqual(Scan("Aaa").select_specific_attributes().build(), {"TableName": "Aaa", "Select": "SPECIFIC_ATTRIBUTES"})
 
-    def testExpressionAttributeName(self):
+    def test_expression_attribute_name(self):
         self.assertEqual(Scan("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
 
-    def testExpressionAttributeValue(self):
+    def test_expression_attribute_value(self):
         self.assertEqual(Scan("Aaa").expression_attribute_value("n", u"p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
 
-    def testProject(self):
+    def test_project(self):
         self.assertEqual(Scan("Aaa").project("a").build(), {"TableName": "Aaa", "ProjectionExpression": "a"})
 
-    def testReturnConsumedCapacityNone(self):
+    def test_return_consumed_capacity_total(self):
+        self.assertEqual(Scan("Aaa").return_consumed_capacity_total().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "TOTAL"})
+
+    def test_return_consumed_capacity_none(self):
         self.assertEqual(Scan("Aaa").return_consumed_capacity_none().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "NONE"})
 
-    def testFilterExpression(self):
+    def test_filter_expression(self):
         self.assertEqual(Scan("Aaa").filter_expression("a=b").build(), {"TableName": "Aaa", "FilterExpression": "a=b"})
 
 

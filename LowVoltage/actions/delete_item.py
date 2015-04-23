@@ -161,10 +161,10 @@ class DeleteItem(
 
 
 class DeleteItemUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(DeleteItem("Table", {"hash": 42}).name, "DeleteItem")
 
-    def testKey(self):
+    def test_key(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": 42}).build(),
             {
@@ -173,7 +173,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnValuesNone(self):
+    def test_return_values_none(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": u"h"}).return_values_none().build(),
             {
@@ -183,7 +183,37 @@ class DeleteItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnConsumedCapacityNone(self):
+    def test_return_values_all_old(self):
+        self.assertEqual(
+            DeleteItem("Table", {"hash": u"h"}).return_values_all_old().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_OLD",
+            }
+        )
+
+    def test_return_consumed_capacity_total(self):
+        self.assertEqual(
+            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_total().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def test_return_consumed_capacity_indexes(self):
+        self.assertEqual(
+            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "INDEXES",
+            }
+        )
+
+    def test_return_consumed_capacity_none(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
             {
@@ -193,7 +223,17 @@ class DeleteItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnItemCollectionMetricsNone(self):
+    def test_return_item_collection_metrics_size(self):
+        self.assertEqual(
+            DeleteItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnItemCollectionMetrics": "SIZE",
+            }
+        )
+
+    def test_return_item_collection_metrics_none(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
             {

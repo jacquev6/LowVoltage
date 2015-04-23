@@ -146,14 +146,6 @@ class Query(
         self.__select = "SPECIFIC_ATTRIBUTES"
         return self
 
-    def consistent_read_true(self):
-        self.__consistent_read = True
-        return self
-
-    def consistent_read_false(self):
-        self.__consistent_read = False
-        return self
-
     def index_name(self, name):
         self.__index_name = name
         return self
@@ -248,13 +240,13 @@ class Query(
 
 
 class QueryUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(Query("Aaa").name, "Query")
 
-    def testTableName(self):
+    def test_table_name(self):
         self.assertEqual(Query("Aaa").build(), {"TableName": "Aaa"})
 
-    def testKeyEq(self):
+    def test_key_eq(self):
         self.assertEqual(
             Query("Aaa").key_eq("name", 42).build(),
             {
@@ -263,7 +255,7 @@ class QueryUnitTests(_tst.UnitTests):
             }
         )
 
-    def testKeyLe(self):
+    def test_key_le(self):
         self.assertEqual(
             Query("Aaa").key_le("name", 42).build(),
             {
@@ -272,7 +264,7 @@ class QueryUnitTests(_tst.UnitTests):
             }
         )
 
-    def testKeyLt(self):
+    def test_key_lt(self):
         self.assertEqual(
             Query("Aaa").key_lt("name", 42).build(),
             {
@@ -281,7 +273,7 @@ class QueryUnitTests(_tst.UnitTests):
             }
         )
 
-    def testKeyGe(self):
+    def test_key_ge(self):
         self.assertEqual(
             Query("Aaa").key_ge("name", 42).build(),
             {
@@ -290,7 +282,7 @@ class QueryUnitTests(_tst.UnitTests):
             }
         )
 
-    def testKeyGt(self):
+    def test_key_gt(self):
         self.assertEqual(
             Query("Aaa").key_gt("name", 42).build(),
             {
@@ -299,7 +291,7 @@ class QueryUnitTests(_tst.UnitTests):
             }
         )
 
-    def testKeyBeginsWith(self):
+    def test_key_begins_with(self):
         self.assertEqual(
             Query("Aaa").key_begins_with("name", u"prefix").build(),
             {
@@ -308,7 +300,7 @@ class QueryUnitTests(_tst.UnitTests):
             }
         )
 
-    def testKeyBetween(self):
+    def test_key_between(self):
         self.assertEqual(
             Query("Aaa").key_between("name", 42, 44).build(),
             {
@@ -317,42 +309,52 @@ class QueryUnitTests(_tst.UnitTests):
             }
         )
 
-    def testExclusiveStartKey(self):
+    def test_exclusive_start_key(self):
         self.assertEqual(Query("Aaa").exclusive_start_key({"h": u"v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
 
-    def testLimit(self):
+    def test_limit(self):
         self.assertEqual(Query("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
 
-    def testSelect(self):
+    def test_select(self):
         self.assertEqual(Query("Aaa").select_all_attributes().build(), {"TableName": "Aaa", "Select": "ALL_ATTRIBUTES"})
         self.assertEqual(Query("Aaa").select_all_projected_attributes().build(), {"TableName": "Aaa", "Select": "ALL_PROJECTED_ATTRIBUTES"})
         self.assertEqual(Query("Aaa").select_count().build(), {"TableName": "Aaa", "Select": "COUNT"})
         self.assertEqual(Query("Aaa").select_specific_attributes().build(), {"TableName": "Aaa", "Select": "SPECIFIC_ATTRIBUTES"})
 
-    def testExpressionAttributeName(self):
+    def test_expression_attribute_name(self):
         self.assertEqual(Query("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
 
-    def testExpressionAttributeValue(self):
+    def test_expression_attribute_value(self):
         self.assertEqual(Query("Aaa").expression_attribute_value("n", u"p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
 
-    def testProject(self):
+    def test_project(self):
         self.assertEqual(Query("Aaa").project("a").build(), {"TableName": "Aaa", "ProjectionExpression": "a"})
 
-    def testReturnConsumedCapacityNone(self):
+    def test_return_consumed_capacity_total(self):
+        self.assertEqual(Query("Aaa").return_consumed_capacity_total().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "TOTAL"})
+
+    def test_return_consumed_capacity_indexes(self):
+        self.assertEqual(Query("Aaa").return_consumed_capacity_indexes().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "INDEXES"})
+
+    def test_return_consumed_capacity_none(self):
         self.assertEqual(Query("Aaa").return_consumed_capacity_none().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "NONE"})
 
-    def testFilterExpression(self):
+    def test_filter_expression(self):
         self.assertEqual(Query("Aaa").filter_expression("a=b").build(), {"TableName": "Aaa", "FilterExpression": "a=b"})
 
-    def testConsistentRead(self):
+    def test_consistent_read_true(self):
         self.assertEqual(Query("Aaa").consistent_read_true().build(), {"TableName": "Aaa", "ConsistentRead": True})
+
+    def test_consistent_read_false(self):
         self.assertEqual(Query("Aaa").consistent_read_false().build(), {"TableName": "Aaa", "ConsistentRead": False})
 
-    def testIndexName(self):
+    def test_index_name(self):
         self.assertEqual(Query("Aaa").index_name("foo").build(), {"TableName": "Aaa", "IndexName": "foo"})
 
-    def testScanIndexForward(self):
+    def test_scan_index_forward_true(self):
         self.assertEqual(Query("Aaa").scan_index_forward_true().build(), {"TableName": "Aaa", "ScanIndexForward": True})
+
+    def test_scan_index_forward_false(self):
         self.assertEqual(Query("Aaa").scan_index_forward_false().build(), {"TableName": "Aaa", "ScanIndexForward": False})
 
 

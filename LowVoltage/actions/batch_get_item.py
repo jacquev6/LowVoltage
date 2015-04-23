@@ -174,16 +174,16 @@ class BatchGetItem(Action):
 
 
 class BatchGetItemUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(BatchGetItem().name, "BatchGetItem")
 
-    def testEmpty(self):
+    def test_empty(self):
         self.assertEqual(
             BatchGetItem().build(),
             {}
         )
 
-    def testReturnConsumedCapacityNone(self):
+    def test_return_consumed_capacity_none(self):
         self.assertEqual(
             BatchGetItem().return_consumed_capacity_none().build(),
             {
@@ -191,7 +191,15 @@ class BatchGetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testKeys(self):
+    def test_return_consumed_capacity_total(self):
+        self.assertEqual(
+            BatchGetItem().return_consumed_capacity_total().build(),
+            {
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def test_keys(self):
         self.assertEqual(
             BatchGetItem().table("Table2").keys({"hash": u"h21"}).table("Table1").keys({"hash": u"h11"}, {"hash": u"h12"}).table("Table2").keys([{"hash": u"h22"}, {"hash": u"h23"}]).build(),
             {
@@ -213,7 +221,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testConsistentRead(self):
+    def test_consistent_read(self):
         self.assertEqual(
             BatchGetItem().table("Table1").consistent_read_true().table("Table2").consistent_read_false().build(),
             {
@@ -228,7 +236,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testProject(self):
+    def test_project(self):
         self.assertEqual(
             BatchGetItem().table("Table1").project("a").build(),
             {
@@ -240,8 +248,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    # @todo pep8 test names (everywhere)
-    def testExpressionAttributeName(self):
+    def test_expression_attribute_name(self):
         self.assertEqual(
             BatchGetItem().table("Table1").expression_attribute_name("a", "p").build(),
             {
@@ -255,6 +262,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
 
 
 class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
+    # @todo pep8 test names (everywhere)
     def testSimpleBatchGet(self):
         self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "xxx"},

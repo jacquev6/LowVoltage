@@ -117,10 +117,10 @@ class GetItem(
 
 
 class GetItemUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(GetItem("Table", {"hash": 42}).name, "GetItem")
 
-    def testKey(self):
+    def test_key(self):
         self.assertEqual(
             GetItem("Table", {"hash": 42}).build(),
             {
@@ -129,7 +129,7 @@ class GetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnConsumedCapacityNone(self):
+    def test_return_consumed_capacity_none(self):
         self.assertEqual(
             GetItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
             {
@@ -139,7 +139,17 @@ class GetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testConsistentReadTrue(self):
+    def test_return_consumed_capacity_total(self):
+        self.assertEqual(
+            GetItem("Table", {"hash": u"h"}).return_consumed_capacity_total().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def test_consistent_read_true(self):
         self.assertEqual(
             GetItem("Table", {"hash": u"h"}).consistent_read_true().build(),
             {
@@ -149,7 +159,7 @@ class GetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testConsistentReadFalse(self):
+    def test_consistent_read_false(self):
         self.assertEqual(
             GetItem("Table", {"hash": u"h"}).consistent_read_false().build(),
             {
@@ -159,7 +169,7 @@ class GetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testProject(self):
+    def test_project(self):
         self.assertEqual(
             GetItem("Table", {"hash": u"h"}).project("abc").build(),
             {
@@ -169,7 +179,7 @@ class GetItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testExpressionAttributeName(self):
+    def test_expression_attribute_name(self):
         self.assertEqual(
             GetItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
             {

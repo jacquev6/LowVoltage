@@ -310,10 +310,10 @@ class UpdateItem(
 
 
 class UpdateItemUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(UpdateItem("Table", {"hash": 42}).name, "UpdateItem")
 
-    def testKey(self):
+    def test_key(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).build(),
             {
@@ -322,7 +322,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testSet(self):
+    def test_set(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).set("a", ":v").build(),
             {
@@ -332,7 +332,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testSeveralSets(self):
+    def test_several_sets(self):
         self.assertIn(
             UpdateItem("Table", {"hash": 42}).set("a", ":v").set("b", ":w").build(),
             [
@@ -349,7 +349,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             ]
         )
 
-    def testRemove(self):
+    def test_remove(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).remove("a").remove("b").build(),
             {
@@ -359,7 +359,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testAdd(self):
+    def test_add(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).add("a", "v").build(),
             {
@@ -369,7 +369,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testSeveralAdds(self):
+    def test_several_adds(self):
         self.assertIn(
             UpdateItem("Table", {"hash": 42}).add("a", "v").add("b", "w").build(),
             [
@@ -386,7 +386,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             ]
         )
 
-    def testDelete(self):
+    def test_delete(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).delete("a", "v").build(),
             {
@@ -396,7 +396,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testSeveralDeletes(self):
+    def test_several_deletes(self):
         self.assertIn(
             UpdateItem("Table", {"hash": 42}).delete("a", "v").delete("b", "w").build(),
             [
@@ -413,7 +413,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             ]
         )
 
-    def testExpressionAttributeValue(self):
+    def test_expression_attribute_value(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
             {
@@ -423,7 +423,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testExpressionAttributeName(self):
+    def test_expression_attribute_name(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
             {
@@ -433,7 +433,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testConditionExpression(self):
+    def test_condition_expression(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).condition_expression("a=b").build(),
             {
@@ -443,7 +443,47 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnValuesNone(self):
+    def test_return_values_all_new(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": u"h"}).return_values_all_new().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_NEW",
+            }
+        )
+
+    def test_return_values_all_old(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": u"h"}).return_values_all_old().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_OLD",
+            }
+        )
+
+    def test_return_values_updated_new(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": u"h"}).return_values_updated_new().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "UPDATED_NEW",
+            }
+        )
+
+    def test_return_values_updated_old(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": u"h"}).return_values_updated_old().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnValues": "UPDATED_OLD",
+            }
+        )
+
+    def test_return_values_none(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": u"h"}).return_values_none().build(),
             {
@@ -453,7 +493,27 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnConsumedCapacityNone(self):
+    def test_return_consumed_capacity_total(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_total().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def test_return_consumed_capacity_indexes(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "INDEXES",
+            }
+        )
+
+    def test_return_consumed_capacity_none(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
             {
@@ -463,7 +523,17 @@ class UpdateItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnItemCollectionMetricsNone(self):
+    def test_return_item_collection_metrics_size(self):
+        self.assertEqual(
+            UpdateItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().build(),
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"S": "h"}},
+                "ReturnItemCollectionMetrics": "SIZE",
+            }
+        )
+
+    def test_return_item_collection_metrics_none(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
             {

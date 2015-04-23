@@ -154,16 +154,16 @@ class BatchWriteItem(Action):
 
 
 class BatchWriteItemUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(BatchWriteItem().name, "BatchWriteItem")
 
-    def testEmpty(self):
+    def test_empty(self):
         self.assertEqual(
             BatchWriteItem().build(),
             {}
         )
 
-    def testReturnConsumedCapacityNone(self):
+    def test_return_consumed_capacity_none(self):
         self.assertEqual(
             BatchWriteItem().return_consumed_capacity_none().build(),
             {
@@ -171,7 +171,23 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnItemCollectionMetricsNone(self):
+    def test_return_consumed_capacity_indexes(self):
+        self.assertEqual(
+            BatchWriteItem().return_consumed_capacity_indexes().build(),
+            {
+                "ReturnConsumedCapacity": "INDEXES",
+            }
+        )
+
+    def test_return_consumed_capacity_total(self):
+        self.assertEqual(
+            BatchWriteItem().return_consumed_capacity_total().build(),
+            {
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def test_return_item_collection_metrics_none(self):
         self.assertEqual(
             BatchWriteItem().return_item_collection_metrics_none().build(),
             {
@@ -179,7 +195,26 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testDelete(self):
+    def test_return_item_collection_metrics_size(self):
+        self.assertEqual(
+            BatchWriteItem().return_item_collection_metrics_size().build(),
+            {
+                "ReturnItemCollectionMetrics": "SIZE",
+            }
+        )
+
+    def test_table(self):
+        self.assertEqual(
+            BatchWriteItem().table("Table").build(),
+            {
+                "RequestItems": {
+                    "Table": [
+                    ],
+                },
+            }
+        )
+
+    def test_delete(self):
         self.assertEqual(
             BatchWriteItem().table("Table").delete({"hash": u"h1"}).table("Table").delete([{"hash": u"h2"}]).build(),
             {
@@ -187,12 +222,12 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
                     "Table": [
                         {"DeleteRequest": {"Key": {"hash": {"S": "h1"}}}},
                         {"DeleteRequest": {"Key": {"hash": {"S": "h2"}}}},
-                    ]
+                    ],
                 },
             }
         )
 
-    def testPut(self):
+    def test_put(self):
         self.assertEqual(
             BatchWriteItem().table("Table").put({"hash": u"h1"}, [{"hash": u"h2"}]).build(),
             {
@@ -205,9 +240,31 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
             }
         )
 
+    def test_alternate_between_tables_and_put_delete(self):
+        self.assertEqual(
+            BatchWriteItem()
+                .table("Table1").delete({"hash": u"h1"})
+                .table("Table2").put([{"hash": u"h2"}])
+                .table("Table1").put({"hash": u"h11"})
+                .table("Table2").delete({"hash": u"h22"})
+                .build(),
+            {
+                "RequestItems": {
+                    "Table1": [
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h1"}}}},
+                        {"PutRequest": {"Item": {"hash": {"S": "h11"}}}},
+                    ],
+                    "Table2": [
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h22"}}}},
+                        {"PutRequest": {"Item": {"hash": {"S": "h2"}}}},
+                    ],
+                },
+            }
+        )
+
 
 class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
-    def testSimpleBatchPut(self):
+    def test_simple_batch_put(self):
         r = self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "xxx"},
             {"h": u"2", "a": "yyy"},
@@ -224,7 +281,7 @@ class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             {"h": "1", "a": "xxx"}
         )
 
-    def testSimpleBatchDelete(self):
+    def test_simple_batch_delete(self):
         self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "xxx"},
             {"h": u"2", "a": "yyy"},

@@ -148,10 +148,10 @@ class PutItem(
 
 
 class PutItemUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(PutItem("Table", {"hash": 42}).name, "PutItem")
 
-    def testItem(self):
+    def test_item(self):
         self.assertEqual(
             PutItem("Table", {"hash": u"value"}).build(),
             {
@@ -160,7 +160,7 @@ class PutItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnValuesNone(self):
+    def test_return_values_none(self):
         self.assertEqual(
             PutItem("Table", {"hash": u"h"}).return_values_none().build(),
             {
@@ -170,7 +170,37 @@ class PutItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnConsumedCapacityNone(self):
+    def test_return_values_all_old(self):
+        self.assertEqual(
+            PutItem("Table", {"hash": u"h"}).return_values_all_old().build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"S": "h"}},
+                "ReturnValues": "ALL_OLD",
+            }
+        )
+
+    def test_return_consumed_capacity_total(self):
+        self.assertEqual(
+            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_total().build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def test_return_consumed_capacity_indexes(self):
+        self.assertEqual(
+            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"S": "h"}},
+                "ReturnConsumedCapacity": "INDEXES",
+            }
+        )
+
+    def test_return_consumed_capacity_none(self):
         self.assertEqual(
             PutItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
             {
@@ -180,7 +210,17 @@ class PutItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testReturnItemCollectionMetricsNone(self):
+    def test_return_item_collection_metrics_size(self):
+        self.assertEqual(
+            PutItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().build(),
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"S": "h"}},
+                "ReturnItemCollectionMetrics": "SIZE",
+            }
+        )
+
+    def test_return_item_collection_metrics_none(self):
         self.assertEqual(
             PutItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
             {
@@ -190,7 +230,7 @@ class PutItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testExpressionAttributeValue(self):
+    def test_expression_attribute_value(self):
         self.assertEqual(
             PutItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
             {
@@ -200,7 +240,7 @@ class PutItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testExpressionAttributeName(self):
+    def test_expression_attribute_name(self):
         self.assertEqual(
             PutItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
             {
@@ -210,7 +250,7 @@ class PutItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testConditionExpression(self):
+    def test_condition_expression(self):
         self.assertEqual(
             PutItem("Table", {"hash": 42}).condition_expression("a=b").build(),
             {
