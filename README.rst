@@ -57,7 +57,7 @@ Assuming you have a table named "LowVoltage.DocTests" with a hash key on the num
     >>> table = "LowVoltage.DocTests"
 
     >>> connection(PutItem(table, {"h": 0, "a": 42, "b": u"bar"}))
-    <LowVoltage.actions.put_item.Result object at ...>
+    <LowVoltage.actions.put_item.PutItemResponse object at ...>
 
     >>> connection(GetItem(table, {"h": 0})).item
     {u'a': 42, u'h': 0, u'b': u'bar'}

@@ -35,6 +35,11 @@ Compounds: some features disappear (BatchGet from several tables, return consume
 Builders (with proxies) for actions
 ===================================
 
+Expressions
+===========
+
+Condition, projection, attribute names, attribute values. @todo add links to here in the next gen mixins.
+
 Error/retry strategy
 ====================
 

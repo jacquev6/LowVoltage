@@ -73,6 +73,9 @@ Batch actions
     reference/actions/query
     reference/actions/scan
 
+Return types
+------------
+
 .. toctree::
 
     reference/actions/return_types

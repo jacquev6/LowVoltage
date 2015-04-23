@@ -3,6 +3,7 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import LowVoltage.testing as _tst
+from .conversion import _convert_value_to_db
 
 
 def ScalarValue(name):
@@ -69,7 +70,7 @@ class ConditionExpression(ScalarValue("ConditionExpression")):
     def set(self, expression):
         """
         Set the ConditionExpression, making the request conditional.
-        It will raise a :class:`ConditionalCheckFailedException` if the condition is not met.
+        It will raise a :class:`.ConditionalCheckFailedException` if the condition is not met.
         """
         return super(ConditionExpression, self).set(expression)
 
@@ -127,21 +128,21 @@ class ReturnConsumedCapacity(ScalarValue("ReturnConsumedCapacity")):
     def indexes(self):
         """
         Set ReturnConsumedCapacity to INDEXES.
-        The result will contain the capacity consumed by this request detailled on the table and the indexes.
+        The response will contain the capacity consumed by this request detailled on the table and the indexes.
         """
         return self.set("INDEXES")
 
     def none(self):
         """
         Set ReturnConsumedCapacity to NONE.
-        The result will not contain the capacity consumed by this request.
+        The response will not contain the capacity consumed by this request.
         """
         return self.set("NONE")
 
     def total(self):
         """
         Set ReturnConsumedCapacity to TOTAL.
-        The result will contain the total capacity consumed by this request.
+        The response will contain the total capacity consumed by this request.
         """
         return self.set("TOTAL")
 
@@ -150,14 +151,14 @@ class ReturnItemCollectionMetrics(ScalarValue("ReturnItemCollectionMetrics")):
     def none(self):
         """
         Set ReturnItemCollectionMetrics to NONE.
-        The result will not contain any item collection metrics.
+        The response will not contain any item collection metrics.
         """
         return self.set("NONE")
 
     def size(self):
         """
         Set ReturnItemCollectionMetrics to SIZE.
-        If the table has a local secondary index, the result will contain size item collection metrics.
+        If the table has a local secondary index, the response will contain size item collection metrics.
         """
         return self.set("SIZE")
 
@@ -166,35 +167,35 @@ class ReturnValues(ScalarValue("ReturnValues")):
     def all_new(self):
         """
         Set ReturnValues to ALL_NEW.
-        The result will contain all the attributes of the item in its new state.
+        The response will contain all the attributes of the item in its new state.
         """
         return self.set("ALL_NEW")
 
     def all_old(self):
         """
         Set ReturnValues to ALL_OLD.
-        The result will contain all the attributes of the item in its previous state.
+        The response will contain all the attributes of the item in its previous state.
         """
         return self.set("ALL_OLD")
 
     def none(self):
         """
         Set ReturnValues to NONE.
-        The result will not include the attributes of the item.
+        The response will not include the attributes of the item.
         """
         return self.set("NONE")
 
     def updated_new(self):
         """
         Set ReturnValues to UPDATED_NEW.
-        The result will contain the just-updated attributes of the item in its new state.
+        The response will contain the just-updated attributes of the item in its new state.
         """
         return self.set("UPDATED_NEW")
 
     def updated_old(self):
         """
         Set ReturnValues to UPDATED_OLD.
-        The result will contain the just-updated attributes of the item in its previous state.
+        The response will contain the just-updated attributes of the item in its previous state.
         """
         return self.set("UPDATED_OLD")
 

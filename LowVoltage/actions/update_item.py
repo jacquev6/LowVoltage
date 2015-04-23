@@ -97,7 +97,7 @@ class UpdateItem(
         As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.SET>`__.
 
         >>> connection(PutItem(table, {"h": 0}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .set("a", ":forty_two")
@@ -115,7 +115,7 @@ class UpdateItem(
         As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.REMOVE>`__.
 
         >>> connection(PutItem(table, {"h": 0, "a": 42}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .remove("a")
@@ -132,7 +132,7 @@ class UpdateItem(
         As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.ADD>`__.
 
         >>> connection(PutItem(table, {"h": 0, "a": 42}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .add("a", "two")
@@ -142,7 +142,7 @@ class UpdateItem(
         {u'a': 44, u'h': 0}
 
         >>> connection(PutItem(table, {"h": 0, "a": {2, 3}}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .add("a", "vals")
@@ -169,7 +169,7 @@ class UpdateItem(
         As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.DELETE>`__.
 
         >>> connection(PutItem(table, {"h": 0, "a": {1, 2, 3}}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .delete("a", "vals")
@@ -185,7 +185,7 @@ class UpdateItem(
     def return_values_all_old(self):
         """
         >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .set("a", ":v")
@@ -200,7 +200,7 @@ class UpdateItem(
     def return_values_all_new(self):
         """
         >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .set("a", ":v")
@@ -215,7 +215,7 @@ class UpdateItem(
     def return_values_updated_old(self):
         """
         >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .set("a", ":v")
@@ -230,7 +230,7 @@ class UpdateItem(
     def return_values_updated_new(self):
         """
         >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .set("a", ":v")
@@ -245,7 +245,7 @@ class UpdateItem(
     def return_values_none(self):
         """
         >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
-        <LowVoltage.actions.put_item.Result object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
         >>> print connection(
         ...   UpdateItem(table, {"h": 0})
         ...     .set("a", ":v")
