@@ -140,7 +140,7 @@ class SigningConnectionUnitTests(_tst.UnitTests):
         super(SigningConnectionUnitTests, self).setUp()
         self.connection = SigningConnection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
-    def testSign(self):
+    def test_sign(self):
         self.assertEqual(
             self.connection._sign(datetime.datetime(2014, 10, 4, 6, 33, 2), "Operation", '{"Payload": "Value"}'),
             {
@@ -152,76 +152,76 @@ class SigningConnectionUnitTests(_tst.UnitTests):
             }
         )
 
-    def testBadAction(self):
+    def test_bad_action(self):
         with self.assertRaises(TypeError):
             self.connection(42)
 
-    def testUnknownError(self):
+    def test_unknown_error(self):
         with self.assertRaises(_exn.UnknownError) as catcher:
             self.connection._raise(self.FakeResponse(999, "{}"))
         self.assertEqual(catcher.exception.args, (999, "{}"))
 
-    def testUnknownErrorWithoutJson(self):
+    def test_unknown_error_without_json(self):
         with self.assertRaises(_exn.UnknownError) as catcher:
             self.connection._raise(self.FakeResponse(999, "not json"))
         self.assertEqual(catcher.exception.args, (999, "not json"))
 
-    def testServerError(self):
+    def test_server_error(self):
         with self.assertRaises(_exn.ServerError) as catcher:
             self.connection._raise(self.FakeResponse(500, '{"foo": "bar"}'))
         self.assertEqual(catcher.exception.args, ({"foo": "bar"},))
 
-    def testServerErrorWithoutJson(self):
+    def test_server_error_without_json(self):
         with self.assertRaises(_exn.ServerError) as catcher:
             self.connection._raise(self.FakeResponse(500, "not json"))
         self.assertEqual(catcher.exception.args, ("not json",))
 
-    def testClientErrorWithoutType(self):
+    def test_client_error_without_type(self):
         with self.assertRaises(_exn.ClientError) as catcher:
             self.connection._raise(self.FakeResponse(400, "{}"))
         self.assertEqual(catcher.exception.args, ({},))
 
-    def testClientErrorWithUnknownType(self):
+    def test_client_error_with_unknown_type(self):
         with self.assertRaises(_exn.ClientError) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.UnhandledException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.UnhandledException", "Message": "tralala"},))
 
-    def testClientErrorWithoutJson(self):
+    def test_client_error_without_json(self):
         with self.assertRaises(_exn.ClientError) as catcher:
             self.connection._raise(self.FakeResponse(400, "not json"))
         self.assertEqual(catcher.exception.args, ("not json",))
 
-    def testResourceNotFoundException(self):
+    def test_resource_not_found_exception(self):
         with self.assertRaises(_exn.ResourceNotFoundException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ResourceNotFoundException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceNotFoundException", "Message": "tralala"},))
 
-    def testValidationException(self):
+    def test_validation_exception(self):
         with self.assertRaises(_exn.ValidationException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ValidationException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ValidationException", "Message": "tralala"},))
 
-    def testConditionalCheckFailedException(self):
+    def test_conditional_check_failed_exception(self):
         with self.assertRaises(_exn.ConditionalCheckFailedException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ConditionalCheckFailedException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ConditionalCheckFailedException", "Message": "tralala"},))
 
-    def testItemCollectionSizeLimitExceededException(self):
+    def test_item_collection_size_limit_exceeded_exception(self):
         with self.assertRaises(_exn.ItemCollectionSizeLimitExceededException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ItemCollectionSizeLimitExceededException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ItemCollectionSizeLimitExceededException", "Message": "tralala"},))
 
-    def testProvisionedThroughputExceededException(self):
+    def test_provisioned_throughput_exceeded_exception(self):
         with self.assertRaises(_exn.ProvisionedThroughputExceededException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ProvisionedThroughputExceededException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ProvisionedThroughputExceededException", "Message": "tralala"},))
 
-    def testLimitExceededException(self):
+    def test_limit_exceeded_exception(self):
         with self.assertRaises(_exn.LimitExceededException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.LimitExceededException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.LimitExceededException", "Message": "tralala"},))
 
-    def testResourceInUseException(self):
+    def test_resource_in_use_exception(self):
         with self.assertRaises(_exn.ResourceInUseException) as catcher:
             self.connection._raise(self.FakeResponse(400, '{"__type": "xxx.ResourceInUseException", "Message": "tralala"}'))
         self.assertEqual(catcher.exception.args, ({"__type": "xxx.ResourceInUseException", "Message": "tralala"},))

@@ -34,10 +34,10 @@ class DescribeTable(Action):
 
 
 class DescribeTableUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(DescribeTable("Foo").name, "DescribeTable")
 
-    def testBuild(self):
+    def test_build(self):
         self.assertEqual(DescribeTable("Foo").build(), {"TableName": "Foo"})
 
 

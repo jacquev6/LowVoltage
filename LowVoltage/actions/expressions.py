@@ -164,13 +164,13 @@ class BeginsWith(_Boolean):
 
 
 class ConditionExpressionUnitTests(_tst.UnitTests):
-    def testAtomsComparison(self):
+    def test_atoms_comparison(self):
         self.assertEqual((Attr("a") == Attr("b")).bool(), "a=b")
         self.assertEqual((Attr("a") == Val("b")).bool(), "a=:b")
         self.assertEqual((Val("a") == Attr("b")).bool(), ":a=b")
         self.assertEqual((Val("a") == Val("b")).bool(), ":a=:b")
 
-    def testComparisons(self):
+    def test_comparisons(self):
         self.assertEqual((Attr("a") == Attr("b")).bool(), "a=b")
         self.assertEqual((Attr("a") != Attr("b")).bool(), "a<>b")
         self.assertEqual((Attr("a") < Attr("b")).bool(), "a<b")
@@ -178,14 +178,14 @@ class ConditionExpressionUnitTests(_tst.UnitTests):
         self.assertEqual((Attr("a") > Attr("b")).bool(), "a>b")
         self.assertEqual((Attr("a") >= Attr("b")).bool(), "a>=b")
 
-    def testBooleanAlgebra(self):
+    def test_boolean_algebra(self):
         # Too many parentheses are needed because of lower priority of bitwise operators ("&", "|" and "~"),
         # but we cannot override keywords ("and", "or" and "not") that would have higher priority.
         self.assertEqual(((Attr("a") == Attr("b")) & (Attr("c") == Attr("d"))).bool(), "(a=b) AND (c=d)")
         self.assertEqual(((Attr("a") == Attr("b")) | (Attr("c") == Attr("d"))).bool(), "(a=b) OR (c=d)")
         self.assertEqual((~((Attr("a") == Attr("b")) | (Attr("c") == Attr("d")))).bool(), "NOT ((a=b) OR (c=d))")
 
-    def testFunctions(self):
+    def test_functions(self):
         # Erf, we cannot redefine list.__contains__ so we cannot obtain the syntax:
         # Attr("a") in [Val("b"), Val("c")]
         # And anyway the result of __contains__ is converted to a boolean by "in".
@@ -196,7 +196,7 @@ class ConditionExpressionUnitTests(_tst.UnitTests):
         self.assertEqual(Contains(Val("a"), Attr("b")).bool(), "contains(:a, b)")
         self.assertEqual(BeginsWith(Val("a"), Attr("b")).bool(), "begins_with(:a, b)")
 
-    def testMissingParenthesesInBooleanAlgebra(self):
+    def test_missing_parentheses_in_boolean_algebra(self):
         # But at least, missing parentheses are caught early
         with self.assertRaises(TypeError):
             Attr("a") == Attr("b") & Attr("c") == Attr("d")
@@ -205,7 +205,7 @@ class ConditionExpressionUnitTests(_tst.UnitTests):
         with self.assertRaises(TypeError):
             Attr("a") == Attr("b") & (Attr("c") == Attr("d"))
 
-    def testPlainWrongTypes(self):
+    def test_plain_wrong_types(self):
         with self.assertRaises(TypeError):
             Attr("a") & (Attr("c") == Attr("d"))
         with self.assertRaises(TypeError):

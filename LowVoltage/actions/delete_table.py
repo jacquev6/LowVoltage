@@ -34,10 +34,10 @@ class DeleteTable(Action):
 
 
 class DeleteTableUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(DeleteTable("Foo").name, "DeleteTable")
 
-    def testBuild(self):
+    def test_build(self):
         self.assertEqual(DeleteTable("Foo").build(), {"TableName": "Foo"})
 
 

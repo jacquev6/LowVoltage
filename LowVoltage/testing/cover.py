@@ -89,13 +89,13 @@ class CoverSimpleAttributesUnitTests(UnitTests):
 
     data = TestData()
 
-    def testCoverAll(self):
+    def test_cover_all(self):
         with cover("data", self.data) as u:
             self.assertEqual(u.a, True)
             self.assertEqual(u.b, 42)
             self.assertEqual(u.c, "abc")
 
-    def testCoverSeveralTimes(self):
+    def test_cover_several_times(self):
         with cover("data", self.data) as u:
             self.assertEqual(u.a, True)
             self.assertEqual(u.a, True)
@@ -124,21 +124,21 @@ class CoverObjectAttributesUnitTests(UnitTests):
 
     data = TestData(TestData(42))
 
-    def testCoverAll(self):
+    def test_cover_all(self):
         with cover("data", self.data) as u:
             self.assertEqual(u.d.d, 42)
             self.assertEqual(u.d.e, 42)
             self.assertEqual(u.e.d, 42)
             self.assertEqual(u.e.e, 42)
 
-    def testDontCoverAttribute(self):
+    def test_dont_cover_attribute(self):
         with self.assertRaises(NotCovered) as catcher:
             with cover("data", self.data) as u:
                 u.d.d
                 u.d.e
         self.assertEqual(catcher.exception.args, (["data.e"],))
 
-    def testDontCoverAttributesAttribute(self):
+    def test_dont_cover_attributes_attribute(self):
         with self.assertRaises(NotCovered) as catcher:
             with cover("data", self.data) as u:
                 u.d.d
@@ -154,27 +154,27 @@ class CoverListUnitTests(UnitTests):
 
     data = [1, 2, TestData()]
 
-    def testCoverAll(self):
+    def test_cover_all(self):
         with cover("data", self.data) as u:
             self.assertEqual(u[0], 1)
             self.assertEqual(u[1], 2)
             self.assertEqual(u[2].a, True)
 
-    def testCoverSeveralTimes(self):
+    def test_cover_several_times(self):
         with cover("data", self.data) as u:
             self.assertEqual(u[0], 1)
             self.assertEqual(u[0], 1)
             self.assertEqual(u[1], 2)
             self.assertEqual(u[2].a, True)
 
-    def testDontCoverItem(self):
+    def test_dont_cover_item(self):
         with self.assertRaises(NotCovered) as catcher:
             with cover("data", self.data) as u:
                 u[0]
                 u[2].a
         self.assertEqual(catcher.exception.args, (["data[1]"],))
 
-    def testDontCoverItemsAttribute(self):
+    def test_dont_cover_items_attribute(self):
         with self.assertRaises(NotCovered) as catcher:
             with cover("data", self.data) as u:
                 u[0]

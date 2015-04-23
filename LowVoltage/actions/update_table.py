@@ -84,13 +84,13 @@ class UpdateTable(Action):
 
 
 class UpdateTableUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(UpdateTable("Foo").name, "UpdateTable")
 
-    def testNoArguments(self):
+    def test_no_arguments(self):
         self.assertEqual(UpdateTable("Foo").build(), {"TableName": "Foo"})
 
-    def testThroughput(self):
+    def test_throughput(self):
         self.assertEqual(
             UpdateTable("Foo").provisioned_throughput(42, 43).build(),
             {
@@ -99,7 +99,7 @@ class UpdateTableUnitTests(_tst.UnitTests):
             }
         )
 
-    def testGsi(self):
+    def test_gsi(self):
         self.assertEqual(
             UpdateTable("Foo").global_secondary_index("the_gsi").build(),
             {
@@ -110,7 +110,7 @@ class UpdateTableUnitTests(_tst.UnitTests):
             }
         )
 
-    def testGsiprovisioned_Throughput(self):
+    def test_gsi_provisioned_throughput(self):
         self.assertEqual(
             UpdateTable("Foo").global_secondary_index("the_gsi").provisioned_throughput(42, 43).build(),
             {
@@ -121,7 +121,7 @@ class UpdateTableUnitTests(_tst.UnitTests):
             }
         )
 
-    def testBackToGsiAfterBackToTable(self):
+    def test_back_to_gsi_after_back_to_table(self):
         self.assertEqual(
             UpdateTable("Foo").global_secondary_index("the_gsi").table().provisioned_throughput(12, 13).global_secondary_index("the_gsi").provisioned_throughput(42, 43).build(),
             {

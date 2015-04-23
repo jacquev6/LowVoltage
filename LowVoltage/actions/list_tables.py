@@ -51,16 +51,16 @@ class ListTables(Action):
 
 
 class ListTablesUnitTests(_tst.UnitTests):
-    def testName(self):
+    def test_name(self):
         self.assertEqual(ListTables().name, "ListTables")
 
-    def testNoArguments(self):
+    def test_no_arguments(self):
         self.assertEqual(ListTables().build(), {})
 
-    def testLimit(self):
+    def test_limit(self):
         self.assertEqual(ListTables().limit(42).build(), {"Limit": "42"})
 
-    def testExclusiveStartTableName(self):
+    def test_exclusive_start_table_name(self):
         self.assertEqual(ListTables().exclusive_start_table_name("Bar").build(), {"ExclusiveStartTableName": "Bar"})
 
 
