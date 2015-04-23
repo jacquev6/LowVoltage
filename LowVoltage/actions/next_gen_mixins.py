@@ -3,7 +3,7 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import LowVoltage.testing as _tst
-from .conversion import _convert_value_to_db
+from .conversion import _convert_value_to_db, _convert_dict_to_db
 
 
 def ScalarValue(name):
@@ -91,6 +91,15 @@ class ConsistentRead(ScalarValue("ConsistentRead")):
         return self.set(True)
 
 
+class ExclusiveStartKey(ScalarValue("ExclusiveStartKey")):
+    def set(self, key):
+        """
+        Set ExclusiveStartKey. The request will only scan items that are after this key.
+        This is typically the :attr:`last_evaluated_key` of a previous response.
+        """
+        return super(ExclusiveStartKey, self).set(_convert_dict_to_db(key))
+
+
 class ExpressionAttributeNames(DictValue("ExpressionAttributeNames")):
     def add(self, synonym, name):
         """
@@ -111,9 +120,17 @@ class ExpressionAttributeValues(DictValue("ExpressionAttributeValues")):
 class FilterExpression(ScalarValue("FilterExpression")):
     def set(self, expression):
         """
-        Set the FilterExpression.
+        Set the FilterExpression. The response will contain only items that match.
         """
         return super(FilterExpression, self).set(expression)
+
+
+class Limit(ScalarValue("Limit")):
+    def set(self, limit):
+        """
+        Set Limit. The request will scan at most this number of items.
+        """
+        return super(Limit, self).set(limit)
 
 
 class ProjectionExpression(CommaSeparatedStringsValue("ProjectionExpression")):
@@ -201,14 +218,37 @@ class ReturnValues(ScalarValue("ReturnValues")):
         return self.set("UPDATED_OLD")
 
 
+class Select(ScalarValue("Select")):
+    def all_attributes(self):
+        """
+        Set Select to ALL_ATTRIBUTES. The response will contain all attributes of the matching items.
+        """
+        return self.set("ALL_ATTRIBUTES")
+
+    def all_projected_attributes(self):
+        """
+        Set Select to ALL_PROJECTED_ATTRIBUTES. Usable only when querying an index.
+        The response will contain the attributes of the matching items that are projected on the index.
+        """
+        return self.set("ALL_PROJECTED_ATTRIBUTES")
+
+    def count(self):
+        """
+        Set Select to COUNT. The response will contain only the count of matching items.
+        """
+        return self.set("COUNT")
+
+
 def proxy(method):
     bases = {
         "condition_expression": ConditionExpression.set,
         "consistent_read_false": ConsistentRead.false,
         "consistent_read_true": ConsistentRead.true,
+        "exclusive_start_key": ExclusiveStartKey.set,
         "expression_attribute_name": ExpressionAttributeNames.add,
         "expression_attribute_value": ExpressionAttributeValues.add,
         "filter_expression": FilterExpression.set,
+        "limit": Limit.set,
         "project": ProjectionExpression.add,
         "return_consumed_capacity_indexes": ReturnConsumedCapacity.indexes,
         "return_consumed_capacity_none": ReturnConsumedCapacity.none,
@@ -220,6 +260,9 @@ def proxy(method):
         "return_values_none": ReturnValues.none,
         "return_values_updated_new": ReturnValues.updated_new,
         "return_values_updated_old": ReturnValues.updated_old,
+        "select_all_attributes": Select.all_attributes,
+        "select_all_projected_attributes": Select.all_projected_attributes,
+        "select_count": Select.count,
     }
 
     method.__doc__ = bases[method.__name__].__doc__ + "\n" + method.__doc__

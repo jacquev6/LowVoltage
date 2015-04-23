@@ -2,117 +2,215 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`Scan`, the connection will return a :class:`ScanResponse`:
+
+>>> connection(Scan(table))
+<LowVoltage.actions.scan.ScanResponse ...>
+
+Items are accessed like this:
+
+>>> sorted(connection(Scan(table)).items)
+[{u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}]
+
+Note that items are returned in an undefined order. Here we sort them to make the doctest stable.
+"""
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
-from .expression_mixins import ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin
-from .next_gen_mixins import proxy, ReturnConsumedCapacity
+from .next_gen_mixins import proxy
+from .next_gen_mixins import (
+    ExclusiveStartKey,
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    FilterExpression,
+    Limit,
+    ProjectionExpression,
+    ReturnConsumedCapacity,
+    ScalarValue,
+    Select,
+)
 from .return_types import ConsumedCapacity_, _is_dict, _is_int, _is_list_of_dict
 
 
-class Scan(
-    Action,
-    ExpressionAttributeNamesMixin,
-    ExpressionAttributeValuesMixin,
-    ProjectionExpressionMixin,
-    FilterExpressionMixin,
-):
+class ScanResponse(object):
+    """
+    The `Scan response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        ConsumedCapacity=None,
+        Count=None,
+        Items=None,
+        LastEvaluatedKey=None,
+        ScannedCount=None,
+        **dummy
+    ):
+        self.__consumed_capacity = ConsumedCapacity
+        self.__count = Count
+        self.__items = Items
+        self.__last_evaluated_key = LastEvaluatedKey
+        self.__scanned_count = ScannedCount
+
+    @property
+    def consumed_capacity(self):
+        """
+        The capacity consumed by the request. If you used :meth:`~.Scan.return_consumed_capacity_total`.
+
+        :type: None or :class:`.ConsumedCapacity_`
+        """
+        if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+            return ConsumedCapacity_(**self.__consumed_capacity)
+
+    @property
+    def count(self):
+        """
+        The number of items matching the scan.
+
+        :type: None or long
+        """
+        if _is_int(self.__count):  # pragma no branch (Defensive code)
+            return long(self.__count)
+
+    @property
+    def items(self):
+        """
+        The items matching the scan. Unless you used :meth:`.Scan.select_count`.
+
+        :type: None or list of dict
+        """
+        if _is_list_of_dict(self.__items):  # pragma no branch (Defensive code)
+            return [_convert_db_to_dict(i) for i in self.__items]
+
+    @property
+    def last_evaluated_key(self):
+        """
+        The key of the last item evaluated by the scan. If not None, it should be given to :meth:`~.Scan.exclusive_start_key` is a subsequent :class:`.Scan`.
+
+        :type: None or dict
+        """
+        if _is_dict(self.__last_evaluated_key):  # pragma no branch (Defensive code)
+            return _convert_db_to_dict(self.__last_evaluated_key)
+
+    @property
+    def scanned_count(self):
+        """
+        The number of item scanned during the scan. This can be different from :attr:`~.ScanResponse.count` when using :meth:`~.Scan.filter_expression`.
+
+        :type: None or long
+        """
+        if _is_int(self.__scanned_count):  # pragma no branch (Defensive code)
+            return long(self.__scanned_count)
+
+
+class Scan(Action):
     """
     The `Scan request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_RequestParameters>`__.
     """
 
-    class Result(object):
-        """
-        The `Scan response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements>`__.
-        """
-
-        def __init__(
-            self,
-            ConsumedCapacity=None,
-            Count=None,
-            Items=None,
-            LastEvaluatedKey=None,
-            ScannedCount=None,
-            **dummy
-        ):
-            self.consumed_capacity = None
-            if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
-
-            self.count = None
-            if _is_int(Count):  # pragma no branch (Defensive code)
-                self.count = long(Count)
-
-            self.items = None
-            if _is_list_of_dict(Items):  # pragma no branch (Defensive code)
-                self.items = [_convert_db_to_dict(i) for i in Items]
-
-            self.last_evaluated_key = None
-            if _is_dict(LastEvaluatedKey):  # pragma no branch (Defensive code)
-                self.last_evaluated_key = _convert_db_to_dict(LastEvaluatedKey)
-
-            self.scanned_count = None
-            if _is_int(ScannedCount):  # pragma no branch (Defensive code)
-                self.scanned_count = long(ScannedCount)
-
     def __init__(self, table_name):
         super(Scan, self).__init__("Scan")
-        ExpressionAttributeNamesMixin.__init__(self)
-        ExpressionAttributeValuesMixin.__init__(self)
-        ProjectionExpressionMixin.__init__(self)
-        FilterExpressionMixin.__init__(self)
-        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__table_name = table_name
-        self.__exclusive_start_key = None
-        self.__limit = None
-        self.__select = None
-        self.__segment = None
-        self.__total_segments = None
+        self.__expression_attribute_names = ExpressionAttributeNames(self)
+        self.__expression_attribute_values = ExpressionAttributeValues(self)
+        self.__filter_expression = FilterExpression(self)
+        self.__projection_expression = ProjectionExpression(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        self.__exclusive_start_key = ExclusiveStartKey(self)
+        self.__limit = Limit(self)
+        self.__select = Select(self)
+        self.__segment = ScalarValue("Segment")(self)
+        self.__total_segments = ScalarValue("TotalSegments")(self)
 
     def build(self):
         data = {"TableName": self.__table_name}
-        data.update(self._build_expression_attribute_names())
-        data.update(self._build_expression_attribute_values())
-        data.update(self._build_projection_expression())
-        data.update(self._build_filter_expression())
+        data.update(self.__exclusive_start_key.build())
+        data.update(self.__expression_attribute_names.build())
+        data.update(self.__expression_attribute_values.build())
+        data.update(self.__filter_expression.build())
+        data.update(self.__projection_expression.build())
         data.update(self.__return_consumed_capacity.build())
-        if self.__segment is not None:
-            data["Segment"] = self.__segment
-        if self.__total_segments:
-            data["TotalSegments"] = self.__total_segments
-        if self.__exclusive_start_key:
-            data["ExclusiveStartKey"] = _convert_dict_to_db(self.__exclusive_start_key)
-        if self.__limit:
-            data["Limit"] = self.__limit
-        if self.__select:
-            data["Select"] = self.__select
+        data.update(self.__limit.build())
+        data.update(self.__select.build())
+        data.update(self.__segment.build())
+        data.update(self.__total_segments.build())
         return data
 
+    @staticmethod
+    def Result(**kwds):
+        return ScanResponse(**kwds)
+
     def segment(self, segment, total_segments):
-        self.__segment = segment
-        self.__total_segments = total_segments
-        return self
+        """
+        Set Segment and TotalSegments for a parallel scan. @todo See also ScanIterator.parallelize
 
+        @todo doctest
+        """
+        self.__segment.set(segment)
+        return self.__total_segments.set(total_segments)
+
+    @proxy
     def exclusive_start_key(self, key):
-        self.__exclusive_start_key = key
-        return self
+        """
+        @todo doctest
+        """
+        return self.__exclusive_start_key.set(key)
 
+    @proxy
     def limit(self, limit):
-        self.__limit = limit
-        return self
+        """
+        @todo doctest
+        """
+        return self.__limit.set(limit)
 
+    @proxy
     def select_count(self):
-        self.__select = "COUNT"
-        return self
+        """
+        >>> r = connection(Scan(table).select_count())
+        >>> r.count
+        10L
+        >>> print r.items
+        None
+        """
+        return self.__select.count()
 
+    @proxy
     def select_all_attributes(self):
-        self.__select = "ALL_ATTRIBUTES"
-        return self
+        """
+        @todo doctest
+        """
+        return self.__select.all_attributes()
 
-    def select_specific_attributes(self):
-        self.__select = "SPECIFIC_ATTRIBUTES"
-        return self
+    @proxy
+    def project(self, *names):
+        """
+        @todo doctest
+        """
+        return self.__projection_expression.add(*names)
+
+    @proxy
+    def filter_expression(self, expression):
+        """
+        @todo doctest
+        """
+        return self.__filter_expression.set(expression)
+
+    @proxy
+    def expression_attribute_name(self, synonym, name):
+        """
+        @todo doctest
+        """
+        return self.__expression_attribute_names.add(synonym, name)
+
+    @proxy
+    def expression_attribute_value(self, name, value):
+        """
+        @todo doctest
+        """
+        return self.__expression_attribute_values.add(name, value)
 
     @proxy
     def return_consumed_capacity_total(self):
@@ -148,7 +246,6 @@ class ScanUnitTests(_tst.UnitTests):
 
     def test_segment(self):
         self.assertEqual(Scan("Aaa").segment(0, 2).build(), {"TableName": "Aaa", "Segment": 0, "TotalSegments": 2})
-        self.assertEqual(Scan("Aaa").segment(1, 2).build(), {"TableName": "Aaa", "Segment": 1, "TotalSegments": 2})
 
     def test_exclusive_start_key(self):
         self.assertEqual(Scan("Aaa").exclusive_start_key({"h": u"v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
@@ -161,9 +258,6 @@ class ScanUnitTests(_tst.UnitTests):
 
     def test_select_count(self):
         self.assertEqual(Scan("Aaa").select_count().build(), {"TableName": "Aaa", "Select": "COUNT"})
-
-    def test_select_specific_attributes(self):
-        self.assertEqual(Scan("Aaa").select_specific_attributes().build(), {"TableName": "Aaa", "Select": "SPECIFIC_ATTRIBUTES"})
 
     def test_expression_attribute_name(self):
         self.assertEqual(Scan("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})

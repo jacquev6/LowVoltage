@@ -2,161 +2,274 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+@todo Document
+"""
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict
-from .expression_mixins import ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin
-from .next_gen_mixins import proxy, ReturnConsumedCapacity, ConsistentRead
+from .next_gen_mixins import proxy
+from .next_gen_mixins import (
+    ConsistentRead,
+    ExclusiveStartKey,
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    FilterExpression,
+    Limit,
+    ProjectionExpression,
+    ReturnConsumedCapacity,
+    ScalarValue,
+    Select,
+)
 from .return_types import ConsumedCapacity_, _is_dict, _is_int, _is_list_of_dict
 
 
-class Query(
-    Action,
-    ExpressionAttributeNamesMixin,
-    ExpressionAttributeValuesMixin,
-    ProjectionExpressionMixin,
-    FilterExpressionMixin,
-):
+class QueryResponse(object):
+    """
+    The `Query response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        ConsumedCapacity=None,
+        Count=None,
+        Items=None,
+        LastEvaluatedKey=None,
+        ScannedCount=None,
+        **dummy
+    ):
+        self.__consumed_capacity = ConsumedCapacity
+        self.__count = Count
+        self.__items = Items
+        self.__last_evaluated_key = LastEvaluatedKey
+        self.__scanned_count = ScannedCount
+
+    @property
+    def consumed_capacity(self):
+        """
+        The capacity consumed by the request. If you used :meth:`~.Query.return_consumed_capacity_total` or :meth:`~.Query.return_consumed_capacity_indexes`.
+
+        :type: None or :class:`.ConsumedCapacity_`
+        """
+        if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+            return ConsumedCapacity_(**self.__consumed_capacity)
+
+    @property
+    def count(self):
+        """
+        The number of items matching the query.
+
+        :type: None or long
+        """
+        if _is_int(self.__count):  # pragma no branch (Defensive code)
+            return long(self.__count)
+
+    @property
+    def items(self):
+        """
+        The items matching the query. Unless you used :meth:`.Query.select_count`.
+
+        :type: None or list of dict
+        """
+        if _is_list_of_dict(self.__items):  # pragma no branch (Defensive code)
+            return [_convert_db_to_dict(i) for i in self.__items]
+
+    @property
+    def last_evaluated_key(self):
+        """
+        The key of the last item evaluated by the query. If not None, it should be given to :meth:`~.Query.exclusive_start_key` is a subsequent :class:`.Query`.
+
+        :type: None or dict
+        """
+        if _is_dict(self.__last_evaluated_key):  # pragma no branch (Defensive code)
+            return _convert_db_to_dict(self.__last_evaluated_key)
+
+    @property
+    def scanned_count(self):
+        """
+        The number of item scanned during the query. This can be different from :attr:`~.QueryResponse.count` when using :meth:`~.Query.filter_expression`.
+
+        :type: None or long
+        """
+        if _is_int(self.__scanned_count):  # pragma no branch (Defensive code)
+            return long(self.__scanned_count)
+
+
+class Query(Action):
     """
     The `Query request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_RequestParameters>`__.
     """
 
-    class Result(object):
-        """
-        The `Query response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_ResponseElements>`__.
-        """
-
-        def __init__(
-            self,
-            ConsumedCapacity=None,
-            Count=None,
-            Items=None,
-            LastEvaluatedKey=None,
-            ScannedCount=None,
-            **dummy
-        ):
-            self.consumed_capacity = None
-            if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
-
-            self.count = None
-            if _is_int(Count):  # pragma no branch (Defensive code)
-                self.count = long(Count)
-
-            self.items = None
-            if _is_list_of_dict(Items):  # pragma no branch (Defensive code)
-                self.items = [_convert_db_to_dict(i) for i in Items]
-
-            self.last_evaluated_key = None
-            if _is_dict(LastEvaluatedKey):  # pragma no branch (Defensive code)
-                self.last_evaluated_key = _convert_db_to_dict(LastEvaluatedKey)
-
-            self.scanned_count = None
-            if _is_int(ScannedCount):  # pragma no branch (Defensive code)
-                self.scanned_count = long(ScannedCount)
-
     def __init__(self, table_name):
         super(Query, self).__init__("Query")
-        ExpressionAttributeNamesMixin.__init__(self)
-        ExpressionAttributeValuesMixin.__init__(self)
-        ProjectionExpressionMixin.__init__(self)
-        FilterExpressionMixin.__init__(self)
-        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__table_name = table_name
-        self.__conditions = {}
-        self.__exclusive_start_key = None
-        self.__limit = None
-        self.__select = None
         self.__consistent_read = ConsistentRead(self)
-        self.__index_name = None
-        self.__scan_index_forward = None
+        self.__exclusive_start_key = ExclusiveStartKey(self)
+        self.__expression_attribute_names = ExpressionAttributeNames(self)
+        self.__expression_attribute_values = ExpressionAttributeValues(self)
+        self.__filter_expression = FilterExpression(self)
+        self.__index_name = ScalarValue("IndexName")(self)
+        self.__limit = Limit(self)
+        self.__projection_expression = ProjectionExpression(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        self.__scan_index_forward = ScalarValue("ScanIndexForward")(self)
+        self.__select = Select(self)
+        self.__conditions = {}
 
     def build(self):
         data = {"TableName": self.__table_name}
-        data.update(self._build_expression_attribute_names())
-        data.update(self._build_expression_attribute_values())
-        data.update(self._build_projection_expression())
-        data.update(self.__return_consumed_capacity.build())
         data.update(self.__consistent_read.build())
-        data.update(self._build_filter_expression())
+        data.update(self.__exclusive_start_key.build())
+        data.update(self.__expression_attribute_names.build())
+        data.update(self.__expression_attribute_values.build())
+        data.update(self.__filter_expression.build())
+        data.update(self.__index_name.build())
+        data.update(self.__limit.build())
+        data.update(self.__projection_expression.build())
+        data.update(self.__return_consumed_capacity.build())
+        data.update(self.__scan_index_forward.build())
+        data.update(self.__select.build())
         if self.__conditions:
             data["KeyConditions"] = self.__conditions
-        if self.__exclusive_start_key:
-            data["ExclusiveStartKey"] = _convert_dict_to_db(self.__exclusive_start_key)
-        if self.__limit:
-            data["Limit"] = self.__limit
-        if self.__select:
-            data["Select"] = self.__select
-        if self.__index_name:
-            data["IndexName"] = self.__index_name
-        if self.__scan_index_forward is not None:
-            data["ScanIndexForward"] = self.__scan_index_forward
         return data
 
+    @staticmethod
+    def Result(**kwds):
+        return QueryResponse(**kwds)
+
     def key_eq(self, name, value):
+        """
+        @todo Document
+        """
         self.__conditions[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_le(self, name, value):
+        """
+        @todo Document
+        """
         self.__conditions[name] = {"ComparisonOperator": "LE", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_lt(self, name, value):
+        """
+        @todo Document
+        """
         self.__conditions[name] = {"ComparisonOperator": "LT", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_ge(self, name, value):
+        """
+        @todo Document
+        """
         self.__conditions[name] = {"ComparisonOperator": "GE", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_gt(self, name, value):
+        """
+        @todo Document
+        """
         self.__conditions[name] = {"ComparisonOperator": "GT", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_begins_with(self, name, value):
+        """
+        @todo Document
+        """
         self.__conditions[name] = {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_between(self, name, lo, hi):
+        """
+        @todo Document
+        """
         self.__conditions[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [_convert_value_to_db(lo), _convert_value_to_db(hi)]}
         return self
 
+    @proxy
     def exclusive_start_key(self, key):
-        self.__exclusive_start_key = key
-        return self
+        """
+        @todo doctest
+        """
+        return self.__exclusive_start_key.set(key)
 
+    @proxy
     def limit(self, limit):
-        self.__limit = limit
-        return self
+        """
+        @todo doctest
+        """
+        return self.__limit.set(limit)
 
+    @proxy
     def select_count(self):
-        self.__select = "COUNT"
-        return self
+        """
+        @todo doctest
+        """
+        return self.__select.count()
 
+    @proxy
     def select_all_attributes(self):
-        self.__select = "ALL_ATTRIBUTES"
-        return self
+        """
+        @todo doctest
+        """
+        return self.__select.all_attributes()
 
+    @proxy
     def select_all_projected_attributes(self):
-        self.__select = "ALL_PROJECTED_ATTRIBUTES"
-        return self
-
-    def select_specific_attributes(self):
-        self.__select = "SPECIFIC_ATTRIBUTES"
-        return self
+        """
+        @todo doctest
+        """
+        return self.__select.all_projected_attributes()
 
     def index_name(self, name):
-        self.__index_name = name
-        return self
+        """
+        Set Index. The request will use this index instead of the table key.
+
+        @todo doctest
+        """
+        return self.__index_name.set(name)
 
     def scan_index_forward_true(self):
-        self.__scan_index_forward = True
-        return self
+        """
+        @todo Document
+        """
+        return self.__scan_index_forward.set(True)
 
     def scan_index_forward_false(self):
-        self.__scan_index_forward = False
-        return self
+        """
+        @todo Document
+        """
+        return self.__scan_index_forward.set(False)
+
+    @proxy
+    def project(self, *names):
+        """
+        @todo doctest
+        """
+        return self.__projection_expression.add(*names)
+
+    @proxy
+    def filter_expression(self, expression):
+        """
+        @todo doctest
+        """
+        return self.__filter_expression.set(expression)
+
+    @proxy
+    def expression_attribute_name(self, synonym, name):
+        """
+        @todo doctest
+        """
+        return self.__expression_attribute_names.add(synonym, name)
+
+    @proxy
+    def expression_attribute_value(self, name, value):
+        """
+        @todo doctest
+        """
+        return self.__expression_attribute_values.add(name, value)
 
     @proxy
     def consistent_read_true(self):
@@ -315,11 +428,14 @@ class QueryUnitTests(_tst.UnitTests):
     def test_limit(self):
         self.assertEqual(Query("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
 
-    def test_select(self):
+    def test_select_all_attributes(self):
         self.assertEqual(Query("Aaa").select_all_attributes().build(), {"TableName": "Aaa", "Select": "ALL_ATTRIBUTES"})
+
+    def test_select_all_projected_attributes(self):
         self.assertEqual(Query("Aaa").select_all_projected_attributes().build(), {"TableName": "Aaa", "Select": "ALL_PROJECTED_ATTRIBUTES"})
+
+    def test_select_count(self):
         self.assertEqual(Query("Aaa").select_count().build(), {"TableName": "Aaa", "Select": "COUNT"})
-        self.assertEqual(Query("Aaa").select_specific_attributes().build(), {"TableName": "Aaa", "Select": "SPECIFIC_ATTRIBUTES"})
 
     def test_expression_attribute_name(self):
         self.assertEqual(Query("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
