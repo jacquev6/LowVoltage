@@ -73,6 +73,10 @@ Batch actions
     reference/actions/query
     reference/actions/scan
 
+.. toctree::
+
+    reference/actions/return_types
+
 Compounds
 =========
 
