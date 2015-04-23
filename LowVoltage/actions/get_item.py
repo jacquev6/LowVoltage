@@ -7,18 +7,25 @@ import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
 from .expression_mixins import ExpressionAttributeNamesMixin, ProjectionExpressionMixin
-from .return_mixins import ReturnConsumedCapacityMixin
+from .next_gen_mixins import proxy, ReturnConsumedCapacity, ConsistentRead
 from .return_types import ConsumedCapacity_, _is_dict
 
 
 class GetItem(
     Action,
-    ReturnConsumedCapacityMixin,
     ExpressionAttributeNamesMixin,
     ProjectionExpressionMixin,
 ):
     """
     The `GetItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_RequestParameters>`__
+
+    >>> connection(GetItem(table, {"h": 0})).item
+    {u'h': 0, u'gr': 0, u'gh': 0}
+
+    Note that getting an unexisting item does not raise an exception:
+
+    >>> print connection(GetItem(table, {"h": -1})).item
+    None
     """
 
     class Result(object):
@@ -46,38 +53,67 @@ class GetItem(
         super(GetItem, self).__init__("GetItem")
         self.__table_name = table_name
         self.__key = key
-        ReturnConsumedCapacityMixin.__init__(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         ExpressionAttributeNamesMixin.__init__(self)
         ProjectionExpressionMixin.__init__(self)
-        self.__consistent_read = None
+        self.__consistent_read = ConsistentRead(self)
 
     def build(self):
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        data.update(self._build_return_consumed_capacity())
+        data.update(self.__return_consumed_capacity.build())
         data.update(self._build_expression_attribute_names())
         data.update(self._build_projection_expression())
-        if self.__consistent_read is not None:
-            data["ConsistentRead"] = self.__consistent_read
+        data.update(self.__consistent_read.build())
         return data
 
+    @proxy
     def consistent_read_true(self):
         """
-        Set ConsistentRead to True.
+        >>> connection(
+        ...   GetItem(table, {"h": 0})
+        ...     .consistent_read_true()
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        1.0
         """
-        return self._set_consistent_read(True)
+        return self.__consistent_read.true()
 
+    @proxy
     def consistent_read_false(self):
         """
-        Set ConsistentRead to False.
+        >>> connection(
+        ...   GetItem(table, {"h": 0})
+        ...     .consistent_read_false()
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        0.5
         """
-        return self._set_consistent_read(False)
+        return self.__consistent_read.false()
 
-    def _set_consistent_read(self, value):
-        self.__consistent_read = value
-        return self
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> connection(
+        ...   GetItem(table, {"h": 0})
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        0.5
+        """
+        return self.__return_consumed_capacity.total()
+
+    @proxy
+    def return_consumed_capacity_none(self):
+        """
+        >>> print connection(
+        ...   GetItem(table, {"h": 0})
+        ...     .return_consumed_capacity_none()
+        ... ).consumed_capacity
+        None
+        """
+        return self.__return_consumed_capacity.none()
 
 
 class GetItemUnitTests(_tst.UnitTests):

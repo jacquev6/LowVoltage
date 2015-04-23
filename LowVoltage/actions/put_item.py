@@ -7,15 +7,12 @@ import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
 from .expression_mixins import ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin
-from .return_mixins import ReturnOldValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from .next_gen_mixins import proxy, ReturnValues, ReturnConsumedCapacity, ReturnItemCollectionMetrics
 from .return_types import ItemCollectionMetrics_, ConsumedCapacity_, _is_dict
 
 
 class PutItem(
     Action,
-    ReturnOldValuesMixin,
-    ReturnConsumedCapacityMixin,
-    ReturnItemCollectionMetricsMixin,
     ExpressionAttributeNamesMixin,
     ExpressionAttributeValuesMixin,
     ConditionExpressionMixin,
@@ -55,9 +52,9 @@ class PutItem(
         super(PutItem, self).__init__("PutItem")
         self.__table_name = table_name
         self.__item = item
-        ReturnOldValuesMixin.__init__(self)
-        ReturnConsumedCapacityMixin.__init__(self)
-        ReturnItemCollectionMetricsMixin.__init__(self)
+        self.__return_values = ReturnValues(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         ExpressionAttributeNamesMixin.__init__(self)
         ExpressionAttributeValuesMixin.__init__(self)
         ConditionExpressionMixin.__init__(self)
@@ -67,13 +64,87 @@ class PutItem(
             "TableName": self.__table_name,
             "Item": _convert_dict_to_db(self.__item),
         }
-        data.update(self._build_return_values())
-        data.update(self._build_return_consumed_capacity())
-        data.update(self._build_return_item_collection_metrics())
+        data.update(self.__return_values.build())
+        data.update(self.__return_consumed_capacity.build())
+        data.update(self.__return_item_collection_metrics.build())
         data.update(self._build_expression_attribute_names())
         data.update(self._build_expression_attribute_values())
         data.update(self._build_condition_expression())
         return data
+
+    @proxy
+    def return_values_all_old(self):
+        """
+        >>> connection(
+        ...   PutItem(table, {"h": 1})
+        ...     .return_values_all_old()
+        ... ).attributes
+        {u'h': 1, u'gr': 0, u'gh': 0}
+        """
+        return self.__return_values.all_old()
+
+    @proxy
+    def return_values_none(self):
+        """
+        >>> print connection(
+        ...   PutItem(table, {"h": 2})
+        ...     .return_values_none()
+        ... ).attributes
+        None
+        """
+        return self.__return_values.none()
+
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> connection(
+        ...   PutItem(table, {"h": 3, "gh": 3, "gr": 3})
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        3.0
+        """
+        return self.__return_consumed_capacity.total()
+
+    @proxy
+    def return_consumed_capacity_indexes(self):
+        """
+        >>> c = connection(
+        ...   PutItem(table, {"h": 4, "gh": 4, "gr": 4})
+        ...     .return_consumed_capacity_indexes()
+        ... ).consumed_capacity
+        >>> c.capacity_units
+        3.0
+        >>> c.table.capacity_units
+        1.0
+        >>> c.global_secondary_indexes["gsi"].capacity_units
+        2.0
+        """
+        return self.__return_consumed_capacity.indexes()
+
+    @proxy
+    def return_consumed_capacity_none(self):
+        """
+        >>> print connection(
+        ...   PutItem(table, {"h": 5})
+        ...     .return_consumed_capacity_none()
+        ... ).consumed_capacity
+        None
+        """
+        return self.__return_consumed_capacity.none()
+
+    @proxy
+    def return_item_collection_metrics_size(self):
+        """
+        @todo doctest (We need a table with a LSI)
+        """
+        return self.__return_item_collection_metrics.size()
+
+    @proxy
+    def return_item_collection_metrics_none(self):
+        """
+        @todo doctest (We need a table with a LSI)
+        """
+        return self.__return_item_collection_metrics.none()
 
 
 class PutItemUnitTests(_tst.UnitTests):

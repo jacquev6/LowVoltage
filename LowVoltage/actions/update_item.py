@@ -8,15 +8,12 @@ import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
 from .expression_mixins import ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin
-from .return_mixins import ReturnValuesMixin, ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from .next_gen_mixins import proxy, ReturnValues, ReturnConsumedCapacity, ReturnItemCollectionMetrics
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
 
 
 class UpdateItem(
     Action,
-    ReturnValuesMixin,
-    ReturnConsumedCapacityMixin,
-    ReturnItemCollectionMetricsMixin,
     ExpressionAttributeNamesMixin,
     ExpressionAttributeValuesMixin,
     ConditionExpressionMixin,
@@ -60,9 +57,9 @@ class UpdateItem(
         self.__remove = []
         self.__add = {}
         self.__delete = {}
-        ReturnValuesMixin.__init__(self)
-        ReturnConsumedCapacityMixin.__init__(self)
-        ReturnItemCollectionMetricsMixin.__init__(self)
+        self.__return_values = ReturnValues(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         ExpressionAttributeNamesMixin.__init__(self)
         ExpressionAttributeValuesMixin.__init__(self)
         ConditionExpressionMixin.__init__(self)
@@ -72,15 +69,15 @@ class UpdateItem(
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        data.update(self._build_return_values())
-        data.update(self._build_return_consumed_capacity())
-        data.update(self._build_return_item_collection_metrics())
+        data.update(self.__return_values.build())
+        data.update(self.__return_consumed_capacity.build())
+        data.update(self.__return_item_collection_metrics.build())
         data.update(self._build_expression_attribute_names())
         data.update(self._build_expression_attribute_values())
         data.update(self._build_condition_expression())
         update = []
         if self.__set:
-            update.append("SET {}".format(", ".join("{}=:{}".format(n, v) for n, v in self.__set.iteritems())))
+            update.append("SET {}".format(", ".join("{}={}".format(n, v) for n, v in self.__set.iteritems())))
         if self.__remove:
             update.append("REMOVE {}".format(", ".join(self.__remove)))
         if self.__add:
@@ -99,15 +96,15 @@ class UpdateItem(
         Add a value to SET as an attribute to UpdateExpression.
         As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.SET>`__.
 
-            >>> connection(PutItem(table, {"h": 0}))
-            <LowVoltage.actions.put_item.Result object at ...>
-            >>> connection(
-            ...   UpdateItem(table, {"h": 0})
-            ...     .set("a", "forty_two")
-            ...     .expression_attribute_value("forty_two", 42)
-            ...     .return_values_all_new()
-            ... ).attributes
-            {u'a': 42, u'h': 0}
+        >>> connection(PutItem(table, {"h": 0}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .set("a", ":forty_two")
+        ...     .expression_attribute_value("forty_two", 42)
+        ...     .return_values_all_new()
+        ... ).attributes
+        {u'a': 42, u'h': 0}
         """
         self.__set[attribute_name] = value_name
         return self
@@ -117,14 +114,14 @@ class UpdateItem(
         Add an attribute to REMOVE to UpdateExpression.
         As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.REMOVE>`__.
 
-            >>> connection(PutItem(table, {"h": 0, "a": 42}))
-            <LowVoltage.actions.put_item.Result object at ...>
-            >>> connection(
-            ...   UpdateItem(table, {"h": 0})
-            ...     .remove("a")
-            ...     .return_values_all_new()
-            ... ).attributes
-            {u'h': 0}
+        >>> connection(PutItem(table, {"h": 0, "a": 42}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .remove("a")
+        ...     .return_values_all_new()
+        ... ).attributes
+        {u'h': 0}
         """
         self.__remove.append(path)
         return self
@@ -134,22 +131,25 @@ class UpdateItem(
         Add a (set of) value(s) to ADD to a number (or a set) attribute to UpdateExpression.
         As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.ADD>`__.
 
-            >>> connection(PutItem(table, {"h": 0, "a": 42, "b": {2, 3}}))
-            <LowVoltage.actions.put_item.Result object at ...>
-            >>> connection(
-            ...   UpdateItem(table, {"h": 0})
-            ...     .add("a", "one")
-            ...     .expression_attribute_value("one", 1)
-            ...     .return_values_all_new()
-            ... ).attributes
-            {u'a': 43, u'h': 0, u'b': set([2, 3])}
-            >>> connection(
-            ...   UpdateItem(table, {"h": 0})
-            ...     .add("b", "vals")
-            ...     .expression_attribute_value("vals", set([1, 2]))
-            ...     .return_values_all_new()
-            ... ).attributes
-            {u'a': 43, u'h': 0, u'b': set([1, 2, 3])}
+        >>> connection(PutItem(table, {"h": 0, "a": 42}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .add("a", "two")
+        ...     .expression_attribute_value("two", 2)
+        ...     .return_values_all_new()
+        ... ).attributes
+        {u'a': 44, u'h': 0}
+
+        >>> connection(PutItem(table, {"h": 0, "a": {2, 3}}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .add("a", "vals")
+        ...     .expression_attribute_value("vals", {1, 2})
+        ...     .return_values_all_new()
+        ... ).attributes
+        {u'a': set([1, 2, 3]), u'h': 0}
         """
         self.__add[attribute_name] = value_name
         return self
@@ -168,18 +168,145 @@ class UpdateItem(
         Add a set of values to DELETE from a set attribute to UpdateExpression.
         As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.DELETE>`__.
 
-            >>> connection(PutItem(table, {"h": 0, "a": {1, 2, 3}}))
-            <LowVoltage.actions.put_item.Result object at ...>
-            >>> connection(
-            ...   UpdateItem(table, {"h": 0})
-            ...     .delete("a", "vals")
-            ...     .expression_attribute_value("vals", set([1, 2]))
-            ...     .return_values_all_new()
-            ... ).attributes
-            {u'a': set([3]), u'h': 0}
+        >>> connection(PutItem(table, {"h": 0, "a": {1, 2, 3}}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .delete("a", "vals")
+        ...     .expression_attribute_value("vals", {1, 2, 4})
+        ...     .return_values_all_new()
+        ... ).attributes
+        {u'a': set([3]), u'h': 0}
         """
         self.__delete[attribute_name] = value_name
         return self
+
+    @proxy
+    def return_values_all_old(self):
+        """
+        >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .set("a", ":v")
+        ...     .expression_attribute_value("v", 2)
+        ...     .return_values_all_old()
+        ... ).attributes
+        {u'a': 1, u'h': 0, u'b': 2}
+        """
+        return self.__return_values.all_old()
+
+    @proxy
+    def return_values_all_new(self):
+        """
+        >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .set("a", ":v")
+        ...     .expression_attribute_value("v", 2)
+        ...     .return_values_all_new()
+        ... ).attributes
+        {u'a': 2, u'h': 0, u'b': 2}
+        """
+        return self.__return_values.all_new()
+
+    @proxy
+    def return_values_updated_old(self):
+        """
+        >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .set("a", ":v")
+        ...     .expression_attribute_value("v", 2)
+        ...     .return_values_updated_old()
+        ... ).attributes
+        {u'a': 1}
+        """
+        return self.__return_values.updated_old()
+
+    @proxy
+    def return_values_updated_new(self):
+        """
+        >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .set("a", ":v")
+        ...     .expression_attribute_value("v", 2)
+        ...     .return_values_updated_new()
+        ... ).attributes
+        {u'a': 2}
+        """
+        return self.__return_values.updated_new()
+
+    @proxy
+    def return_values_none(self):
+        """
+        >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
+        <LowVoltage.actions.put_item.Result object at ...>
+        >>> print connection(
+        ...   UpdateItem(table, {"h": 0})
+        ...     .set("a", ":v")
+        ...     .expression_attribute_value("v", 2)
+        ...     .return_values_none()
+        ... ).attributes
+        None
+        """
+        return self.__return_values.none()
+
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> connection(
+        ...   UpdateItem(table, {"h": 4}).set("gh", "h").set("gr", "h")
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        3.0
+        """
+        return self.__return_consumed_capacity.total()
+
+    @proxy
+    def return_consumed_capacity_indexes(self):
+        """
+        >>> c = connection(
+        ...   UpdateItem(table, {"h": 5}).set("gh", "h").set("gr", "h")
+        ...     .return_consumed_capacity_indexes()
+        ... ).consumed_capacity
+        >>> c.capacity_units
+        3.0
+        >>> c.table.capacity_units
+        1.0
+        >>> c.global_secondary_indexes["gsi"].capacity_units
+        2.0
+        """
+        return self.__return_consumed_capacity.indexes()
+
+    @proxy
+    def return_consumed_capacity_none(self):
+        """
+        >>> print connection(
+        ...   UpdateItem(table, {"h": 6}).set("gh", "h").set("gr", "h")
+        ...     .return_consumed_capacity_none()
+        ... ).consumed_capacity
+        None
+        """
+        return self.__return_consumed_capacity.none()
+
+    @proxy
+    def return_item_collection_metrics_size(self):
+        """
+        @todo doctest (We need a table with a LSI)
+        """
+        return self.__return_item_collection_metrics.size()
+
+    @proxy
+    def return_item_collection_metrics_none(self):
+        """
+        @todo doctest (We need a table with a LSI)
+        """
+        return self.__return_item_collection_metrics.none()
 
 
 class UpdateItemUnitTests(_tst.UnitTests):
@@ -197,7 +324,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def testSet(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).set("a", "v").build(),
+            UpdateItem("Table", {"hash": 42}).set("a", ":v").build(),
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -207,7 +334,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def testSeveralSets(self):
         self.assertIn(
-            UpdateItem("Table", {"hash": 42}).set("a", "v").set("b", "w").build(),
+            UpdateItem("Table", {"hash": 42}).set("a", ":v").set("b", ":w").build(),
             [
                 {
                     "TableName": "Table",
@@ -351,8 +478,8 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def testSet(self):
         r = self.connection(
             _lv.UpdateItem("Aaa", {"h": u"set"})
-                .set("a", "v")
-                .set("#p", "w")
+                .set("a", ":v")
+                .set("#p", ":w")
                 .expression_attribute_value("v", "aaa")
                 .expression_attribute_value("w", "bbb")
                 .expression_attribute_name("p", "b")
@@ -387,8 +514,8 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
         r = self.connection(
             _lv.UpdateItem("Aaa", {"h": u"complex"})
-                .set("a", "s")
-                .set("b", "i")
+                .set("a", ":s")
+                .set("b", ":i")
                 .remove("c")
                 .add("d", "s")
                 .add("e", "i")
@@ -420,7 +547,7 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
         r = self.connection(
             _lv.UpdateItem("Aaa", {"h": u"expr"})
-                .set("checked", "true")
+                .set("checked", ":true")
                 .expression_attribute_value("true", True)
                 .condition_expression("a=b")
                 .return_values_all_new()
@@ -443,7 +570,7 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def test_return_consumed_capacity_indexes_without_indexed_attribute(self):
         r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
-                .set("a", "a").expression_attribute_value("a", "a")
+                .set("a", ":a").expression_attribute_value("a", "a")
                 .return_consumed_capacity_indexes()
         )
 
@@ -459,9 +586,9 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def test_return_consumed_capacity_indexes(self):
         r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
-                .set("gsi_h", "gsi_h").expression_attribute_value("gsi_h", u"1")
-                .set("gsi_r", "gsi_r").expression_attribute_value("gsi_r", 1)
-                .set("lsi_r", "lsi_r").expression_attribute_value("lsi_r", 2)
+                .set("gsi_h", ":gsi_h").expression_attribute_value("gsi_h", u"1")
+                .set("gsi_r", ":gsi_r").expression_attribute_value("gsi_r", 1)
+                .set("lsi_r", ":lsi_r").expression_attribute_value("lsi_r", 2)
                 .return_consumed_capacity_indexes()
         )
 
@@ -477,7 +604,7 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def test_return_consumed_capacity_indexes_with_locally_indexed_attribute_only(self):
         r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
-                .set("lsi_r", "lsi_r").expression_attribute_value("lsi_r", 2)
+                .set("lsi_r", ":lsi_r").expression_attribute_value("lsi_r", 2)
                 .return_consumed_capacity_indexes()
         )
 
@@ -493,8 +620,8 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def test_return_consumed_capacity_indexes_with_globally_indexed_attribute_only(self):
         r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
-                .set("gsi_h", "gsi_h").expression_attribute_value("gsi_h", u"1")
-                .set("gsi_r", "gsi_r").expression_attribute_value("gsi_r", 1)
+                .set("gsi_h", ":gsi_h").expression_attribute_value("gsi_h", u"1")
+                .set("gsi_r", ":gsi_r").expression_attribute_value("gsi_r", 1)
                 .return_consumed_capacity_indexes()
         )
 
@@ -510,7 +637,7 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def test_return_item_collection_metrics_size(self):
         r = self.connection(
             _lv.UpdateItem(self.table, self.tab_key)
-                .set("a", "a").expression_attribute_value("a", "a")
+                .set("a", ":a").expression_attribute_value("a", "a")
                 .return_item_collection_metrics_size()
         )
 

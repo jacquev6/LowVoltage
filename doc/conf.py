@@ -32,7 +32,7 @@ html_theme_options = {
 extensions.append("sphinx.ext.autodoc")
 # autoclass_content
 autodoc_member_order = "bysource"
-autodoc_default_flags = ["members", "inherited-members"]
+autodoc_default_flags = ["members"]
 # autodoc_docstring_signature
 # autodoc_mock_imports
 
@@ -53,7 +53,12 @@ doctest_global_setup = textwrap.dedent("""
                 .global_secondary_index("gsi").hash_key("gh", NUMBER).range_key("gr", NUMBER).provisioned_throughput(1, 1).project_all()
         )
         WaitForTableActivation(connection, table)
-    connection(DeleteItem(table, {"h": 0}))
+
+    BatchPutItem(
+        connection,
+        table,
+        [{"h": h, "gh": 0, "gr": 0} for h in range(10)],
+    )
     """)
 # doctest_global_cleanup
 # doctest_test_doctest_blocks

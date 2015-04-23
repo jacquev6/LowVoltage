@@ -9,6 +9,8 @@ import LowVoltage.testing as _tst
 def BatchPutItem(connection, table, *items):
     """Make as many "BatchWriteItem" actions as needed to put all specified items. Including UnprocessedItems."""
 
+    # @todo assert len(items) != 0
+
     put = []
     for item in items:
         if isinstance(item, dict):
