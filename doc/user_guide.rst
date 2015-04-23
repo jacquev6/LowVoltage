@@ -28,6 +28,10 @@ Credentials
 Actions vs. compounds
 =====================
 
+Actions: zero abstraction, total flexibility.
+
+Compounds: some features disappear (BatchGet from several tables, return consumed capacity) but usage is simpler.
+
 Builders (with proxies) for actions
 ===================================
 
@@ -36,3 +40,5 @@ Error/retry strategy
 
 Someday, maybe, an ORM-like?
 ============================
+
+Even simpler than compounds, even less flexible.
