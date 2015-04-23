@@ -2,43 +2,81 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`BatchGetItem`, the connection will return a :class:`BatchGetItemResponse`:
+
+>>> connection(BatchGetItem().table(table).keys({"h": 0}, {"h": 1}))
+<LowVoltage.actions.batch_get_item.BatchGetItemResponse ...>
+
+Responses are accessed like this:
+
+>>> connection(
+...   BatchGetItem().table(table).keys({"h": 0})
+... ).responses[table]
+[{u'h': 0, u'gr': 0, u'gh': 0}]
+
+Note that responses are in an undefined order.
+"""
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
-from .expression_mixins import ExpressionAttributeNamesMixin, ProjectionExpressionMixin
-from .next_gen_mixins import proxy, ReturnConsumedCapacity, ConsistentRead
+from .next_gen_mixins import proxy, ReturnConsumedCapacity, ConsistentRead, ExpressionAttributeNames, ProjectionExpression
 from .return_types import ConsumedCapacity_, _is_dict, _is_list_of_dict
+
+# @todo Document return types
+
+class BatchGetItemResponse(object):
+    """
+    The `BatchGetItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_ResponseElements>`__
+    """
+
+    def __init__(
+        self,
+        ConsumedCapacity=None,
+        Responses=None,
+        UnprocessedKeys=None,
+        **dummy
+    ):
+        self.__consumed_capacity = ConsumedCapacity
+        self.__responses = Responses
+        self.__unprocessed_keys = UnprocessedKeys
+
+    @property
+    def consumed_capacity(self):
+        """
+        The capacity consumed by the request. If you used :meth:`~.BatchGetItem.return_consumed_capacity_total`.
+
+        :type: None or list of :class:`.ConsumedCapacity_`
+        """
+        if _is_list_of_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+            return [ConsumedCapacity_(**c) for c in self.__consumed_capacity]
+
+    @property
+    def responses(self):
+        """
+        The items you just got.
+
+        :type: None or dict of string (table name) to list of dict
+        """
+        if _is_dict(self.__responses):  # pragma no branch (Defensive code)
+            return {t: [_convert_db_to_dict(v) for v in vs] for t, vs in self.__responses.iteritems()}
+
+    @property
+    def unprocessed_keys(self):
+        """
+        Keys that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`.BatchGetItem`.
+
+        :type: None or exactly as returned by DynamoDB
+        """
+        return self.__unprocessed_keys
 
 
 class BatchGetItem(Action):
     """
     The `BatchGetItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters>`__
     """
-
-    # @todo Move all Results out of their Action class.
-    # @todo Document return types and Results
-    class Result(object):
-        """
-        The `BatchGetItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_ResponseElements>`__
-        """
-
-        def __init__(
-            self,
-            ConsumedCapacity=None,
-            Responses=None,
-            UnprocessedKeys=None,
-            **dummy
-        ):
-            self.consumed_capacity = None
-            if _is_list_of_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = [ConsumedCapacity_(**c) for c in ConsumedCapacity]
-
-            self.responses = None
-            if _is_dict(Responses):  # pragma no branch (Defensive code)
-                self.responses = {t: [_convert_db_to_dict(v) for v in vs] for t, vs in Responses.iteritems()}
-
-            self.unprocessed_keys = UnprocessedKeys
 
     def __init__(self, previous_unprocessed_keys=None):
         super(BatchGetItem, self).__init__("BatchGetItem")
@@ -56,18 +94,22 @@ class BatchGetItem(Action):
             data["RequestItems"] = {n: t.build() for n, t in self.__tables.iteritems()}
         return data
 
-    class _Table(ExpressionAttributeNamesMixin, ProjectionExpressionMixin):
-        def __init__(self, action, name):
-            ExpressionAttributeNamesMixin.__init__(self)
-            ProjectionExpressionMixin.__init__(self)
-            self.consistent_read = ConsistentRead(action)
+    @staticmethod
+    def Result(**kwds):
+        return BatchGetItemResponse(**kwds)
+
+    class _Table:
+        def __init__(self, action):
             self.keys = []
+            self.consistent_read = ConsistentRead(action)
+            self.expression_attribute_names = ExpressionAttributeNames(action)
+            self.projection_expression = ProjectionExpression(action)
 
         def build(self):
             data = {}
-            data.update(self._build_expression_attribute_names())
-            data.update(self._build_projection_expression())
             data.update(self.consistent_read.build())
+            data.update(self.expression_attribute_names.build())
+            data.update(self.projection_expression.build())
             if self.keys:
                 data["Keys"] = [_convert_dict_to_db(k) for k in self.keys]
             return data
@@ -77,13 +119,24 @@ class BatchGetItem(Action):
         Set the active table. Calls to methods like :meth:`keys` or :meth:`consistent_read_true` will apply to this table.
         """
         if name not in self.__tables:
-            self.__tables[name] = self._Table(self, name)
+            self.__tables[name] = self._Table(self)
         self.__active_table = self.__tables[name]
         return self
 
     def keys(self, *keys):
         """
         Add keys to get from the active table.
+        This method accepts a variable number of keys or iterables.
+
+        >>> connection(
+        ...   BatchGetItem()
+        ...     .table(table)
+        ...     .keys({"h": 1})
+        ...     .keys({"h": 2}, {"h": 3})
+        ...     .keys([{"h": 4}, {"h": 5}])
+        ...     .keys({"h": h} for h in range(6, 10))
+        ... )
+        <LowVoltage.actions.batch_get_item.BatchGetItemResponse ...>
         """
         for key in keys:
             if isinstance(key, dict):
@@ -127,16 +180,37 @@ class BatchGetItem(Action):
         """
         return self.__active_table.consistent_read.false()
 
-    def expression_attribute_name(self, name, path):
-        """
-        """
-        self.__active_table.expression_attribute_name(name, path)
-        return self
-
+    @proxy
     def project(self, *names):
         """
+        (for the active table)
+
+        >>> connection(
+        ...   BatchGetItem()
+        ...     .table(table)
+        ...     .keys({"h": 0})
+        ...     .project("h", "gr")
+        ... ).responses[table]
+        [{u'h': 0, u'gr': 0}]
         """
-        self.__active_table.project(*names)
+        self.__active_table.projection_expression.add(*names)
+        return self
+
+    @proxy
+    def expression_attribute_name(self, name, path):
+        """
+        (for the active table)
+
+        >>> connection(
+        ...   BatchGetItem()
+        ...     .table(table)
+        ...     .keys({"h": 0})
+        ...     .expression_attribute_name("syn", "h")
+        ...     .project("#syn")
+        ... ).responses[table]
+        [{u'h': 0}]
+        """
+        self.__active_table.expression_attribute_names.add(name, path)
         return self
 
     @proxy

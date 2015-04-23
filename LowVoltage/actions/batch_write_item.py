@@ -2,6 +2,15 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`BatchWriteItem`, the connection will return a :class:`BatchWriteItemResponse`:
+
+>>> connection(
+...   BatchWriteItem().table(table).delete({"h": 0}, {"h": 1})
+... )
+<LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
+"""
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
@@ -10,32 +19,58 @@ from .next_gen_mixins import proxy, ReturnConsumedCapacity, ReturnItemCollection
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict, _is_list_of_dict
 
 
+class BatchWriteItemResponse(object):
+    """
+    The `BatchWriteItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        ConsumedCapacity=None,
+        ItemCollectionMetrics=None,
+        UnprocessedItems=None,
+        **dummy
+    ):
+        self.__consumed_capacity = ConsumedCapacity
+
+        self.__item_collection_metrics = ItemCollectionMetrics
+
+        self.__unprocessed_items = UnprocessedItems
+
+    @property
+    def consumed_capacity(self):
+        """
+        The capacity consumed by the request. If you used :meth:`~.BatchWriteItem.return_consumed_capacity_total` or :meth:`~.BatchWriteItem.return_consumed_capacity_index`.
+
+        :type: None or list of :class:`.ConsumedCapacity_`
+        """
+        if _is_list_of_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+            return [ConsumedCapacity_(**c) for c in self.__consumed_capacity]
+
+    @property
+    def item_collection_metrics(self):
+        """
+        Metrics about the collection of the items you just updated. If a LSI was touched and you used :meth:`~.BatchWriteItem.return_item_collection_metrics_size`.
+
+        :type: None or dict of string (table name) to list of :class:`.ItemCollectionMetrics_`
+        """
+        if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
+            return {n: [ItemCollectionMetrics_(**m) for m in v] for n, v in self.__item_collection_metrics.iteritems()}
+
+    @property
+    def unprocessed_items(self):
+        """
+        Items that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`.BatchWriteItem`.
+
+        :type: None or exactly as returned by DynamoDB
+        """
+        return self.__unprocessed_items
+
+
 class BatchWriteItem(Action):
     """
     The `BatchWriteItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_RequestParameters>`__.
     """
-
-    class Result(object):
-        """
-        The `BatchWriteItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_ResponseElements>`__.
-        """
-
-        def __init__(
-            self,
-            ConsumedCapacity=None,
-            ItemCollectionMetrics=None,
-            UnprocessedItems=None,
-            **dummy
-        ):
-            self.consumed_capacity = None
-            if _is_list_of_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = [ConsumedCapacity_(**c) for c in ConsumedCapacity]
-
-            self.item_collection_metrics = None
-            if _is_dict(ItemCollectionMetrics):  # pragma no branch (Defensive code)
-                self.item_collection_metrics = {n: [ItemCollectionMetrics_(**m) for m in v] for n, v in ItemCollectionMetrics.iteritems()}
-
-            self.unprocessed_items = UnprocessedItems
 
     def __init__(self, previous_unprocessed_items=None):
         super(BatchWriteItem, self).__init__("BatchWriteItem")
@@ -54,6 +89,10 @@ class BatchWriteItem(Action):
         if self.__tables:
             data["RequestItems"] = {n: t.build() for n, t in self.__tables.iteritems()}
         return data
+
+    @staticmethod
+    def Result(**kwds):
+        return BatchWriteItemResponse(**kwds)
 
     class _Table:
         def __init__(self, action, name):
@@ -77,24 +116,44 @@ class BatchWriteItem(Action):
         self.__active_table = self.__tables[name]
         return self
 
-    def delete(self, *keys):
-        """
-        Add keys to delete from the active table.
-        """
-        for key in keys:
-            if isinstance(key, dict):
-                key = [key]
-            self.__active_table.delete.extend(key)
-        return self
-
     def put(self, *items):
         """
         Add items to put in the active table.
+        This method accepts a variable number of items or iterables.
+
+        >>> connection(
+        ...   BatchWriteItem().table(table)
+        ...     .put({"h": 11})
+        ...     .put({"h": 12}, {"h": 13})
+        ...     .put([{"h": 14}, {"h": 15}])
+        ...     .put({"h": h} for h in range(16, 20))
+        ... )
+        <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
         """
         for item in items:
             if isinstance(item, dict):
                 item = [item]
             self.__active_table.put.extend(item)
+        return self
+
+    def delete(self, *keys):
+        """
+        Add keys to delete from the active table.
+        This method accepts a variable number of keys or iterables.
+
+        >>> connection(
+        ...   BatchWriteItem().table(table)
+        ...     .delete({"h": 11})
+        ...     .delete({"h": 12}, {"h": 13})
+        ...     .delete([{"h": 14}, {"h": 15}])
+        ...     .delete({"h": h} for h in range(16, 20))
+        ... )
+        <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
+        """
+        for key in keys:
+            if isinstance(key, dict):
+                key = [key]
+            self.__active_table.delete.extend(key)
         return self
 
     @proxy

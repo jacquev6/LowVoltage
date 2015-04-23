@@ -8,7 +8,7 @@ When given a :class:`GetItem`, the connection will return a :class:`GetItemRespo
 >>> connection(GetItem(table, {"h": 0}))
 <LowVoltage.actions.get_item.GetItemResponse object at ...>
 
-The item is accessible like this:
+The item is accessed like this:
 
 >>> connection(GetItem(table, {"h": 0})).item
 {u'h': 0, u'gr': 0, u'gh': 0}
@@ -71,20 +71,20 @@ class GetItem(Action):
         super(GetItem, self).__init__("GetItem")
         self.__table_name = table_name
         self.__key = key
-        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        self.__consistent_read = ConsistentRead(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__projection_expression = ProjectionExpression(self)
-        self.__consistent_read = ConsistentRead(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
 
     def build(self):
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        data.update(self.__return_consumed_capacity.build())
+        data.update(self.__consistent_read.build())
         data.update(self.__expression_attribute_names.build())
         data.update(self.__projection_expression.build())
-        data.update(self.__consistent_read.build())
+        data.update(self.__return_consumed_capacity.build())
         return data
 
     @staticmethod

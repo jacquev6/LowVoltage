@@ -120,6 +120,7 @@ class ProjectionExpression(CommaSeparatedStringsValue("ProjectionExpression")):
     def add(self, *names):
         """
         Add name(s) to ProjectionExpression.
+        This method accepts a variable number of names or iterables.
         """
         return super(ProjectionExpression, self).add(*names)
 
