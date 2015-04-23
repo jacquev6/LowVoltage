@@ -7,7 +7,7 @@ import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
 from .expression_mixins import ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ProjectionExpressionMixin, FilterExpressionMixin
-from .return_mixins import ReturnConsumedCapacityMixin
+from .next_gen_mixins import proxy, ReturnConsumedCapacity
 from .return_types import ConsumedCapacity_, _is_dict, _is_int, _is_list_of_dict
 
 
@@ -17,12 +17,15 @@ class Scan(
     ExpressionAttributeValuesMixin,
     ProjectionExpressionMixin,
     FilterExpressionMixin,
-    ReturnConsumedCapacityMixin,
 ):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_RequestParameters"""
+    """
+    The `Scan request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_RequestParameters>`__.
+    """
 
     class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements"""
+        """
+        The `Scan response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements>`__.
+        """
 
         def __init__(
             self,
@@ -58,8 +61,8 @@ class Scan(
         ExpressionAttributeNamesMixin.__init__(self)
         ExpressionAttributeValuesMixin.__init__(self)
         ProjectionExpressionMixin.__init__(self)
-        ReturnConsumedCapacityMixin.__init__(self)
         FilterExpressionMixin.__init__(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__table_name = table_name
         self.__exclusive_start_key = None
         self.__limit = None
@@ -72,8 +75,8 @@ class Scan(
         data.update(self._build_expression_attribute_names())
         data.update(self._build_expression_attribute_values())
         data.update(self._build_projection_expression())
-        data.update(self._build_return_consumed_capacity())
         data.update(self._build_filter_expression())
+        data.update(self.__return_consumed_capacity.build())
         if self.__segment is not None:
             data["Segment"] = self.__segment
         if self.__total_segments:
@@ -110,6 +113,30 @@ class Scan(
     def select_specific_attributes(self):
         self.__select = "SPECIFIC_ATTRIBUTES"
         return self
+
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> connection(
+        ...   Scan(table)
+        ...     .limit(4)
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        0.5
+        """
+        return self.__return_consumed_capacity.total()
+
+    @proxy
+    def return_consumed_capacity_none(self):
+        """
+        >>> print connection(
+        ...   Scan(table)
+        ...     .limit(4)
+        ...     .return_consumed_capacity_none()
+        ... ).consumed_capacity
+        None
+        """
+        return self.__return_consumed_capacity.none()
 
 
 class ScanUnitTests(_tst.UnitTests):

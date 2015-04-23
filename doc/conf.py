@@ -43,7 +43,10 @@ extensions.append("sphinx.ext.doctest")
 doctest_global_setup = textwrap.dedent("""
     from LowVoltage import *
     connection = make_connection("eu-west-1", EnvironmentCredentials())
+
     table = "LowVoltage.DocTests"
+    table2 = "LowVoltage.DocTests2"
+
     try:
         connection(DescribeTable(table))
     except ResourceNotFoundException:
@@ -52,12 +55,28 @@ doctest_global_setup = textwrap.dedent("""
                 .hash_key("h", NUMBER).provisioned_throughput(1, 1)
                 .global_secondary_index("gsi").hash_key("gh", NUMBER).range_key("gr", NUMBER).provisioned_throughput(1, 1).project_all()
         )
-        WaitForTableActivation(connection, table)
 
+    try:
+        connection(DescribeTable(table2))
+    except ResourceNotFoundException:
+        connection(
+            CreateTable(table2)
+                .hash_key("h", NUMBER).range_key("r1", NUMBER).provisioned_throughput(1, 1)
+                .local_secondary_index("lsi").hash_key("h", NUMBER).range_key("r2", NUMBER).project_all()
+        )
+
+    WaitForTableActivation(connection, table)
     BatchPutItem(
         connection,
         table,
         [{"h": h, "gh": 0, "gr": 0} for h in range(10)],
+    )
+
+    WaitForTableActivation(connection, table2)
+    BatchPutItem(
+        connection,
+        table2,
+        [{"h": h, "r1": 0, "r2": 0} for h in range(10)],
     )
     """)
 # doctest_global_cleanup

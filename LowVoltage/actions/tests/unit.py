@@ -11,12 +11,6 @@ from ..expression_mixins import (
     ProjectionExpressionMixinUnitTests,
     ConditionExpressionMixinUnitTests,
 )
-from ..return_mixins import (
-    ReturnOldValuesMixinUnitTests,
-    ReturnValuesMixinUnitTests,
-    ReturnConsumedCapacityMixinUnitTests,
-    ReturnItemCollectionMetricsMixinUnitTests,
-)
 
 from ..batch_get_item import BatchGetItemUnitTests
 from ..batch_write_item import BatchWriteItemUnitTests

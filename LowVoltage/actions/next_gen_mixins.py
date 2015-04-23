@@ -103,7 +103,7 @@ class ConsistentRead(SimpleValue("ConsistentRead")):
     def true(self):
         """
         Set ConsistentRead to True.
-        The request will use string consistent reads.
+        The request will use strong consistent reads.
         """
         return self.set(True)
 

@@ -7,14 +7,11 @@ import LowVoltage.testing as _tst
 from .action import Action, ActionProxy
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
 from .expression_mixins import ExpressionAttributeNamesMixin, ProjectionExpressionMixin
-from .return_mixins import ReturnConsumedCapacityMixin
+from .next_gen_mixins import proxy, ReturnConsumedCapacity, ConsistentRead
 from .return_types import ConsumedCapacity_, _is_dict, _is_list_of_dict
 
 
-class BatchGetItem(
-    Action,
-    ReturnConsumedCapacityMixin,
-):
+class BatchGetItem(Action):
     """
     The `BatchGetItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters>`__
     """
@@ -45,56 +42,135 @@ class BatchGetItem(
 
     def __init__(self, previous_unprocessed_keys=None):
         super(BatchGetItem, self).__init__("BatchGetItem")
-        ReturnConsumedCapacityMixin.__init__(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__previous_unprocessed_keys = previous_unprocessed_keys
         self.__tables = {}
+        self.__active_table = None
 
     def build(self):
         data = {}
-        data.update(self._build_return_consumed_capacity())
+        data.update(self.__return_consumed_capacity.build())
         if self.__previous_unprocessed_keys:
             data["RequestItems"] = self.__previous_unprocessed_keys
         if self.__tables:
-            data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
+            data["RequestItems"] = {n: t.build() for n, t in self.__tables.iteritems()}
         return data
 
-    class _Table(ActionProxy, ExpressionAttributeNamesMixin, ProjectionExpressionMixin):
+    class _Table(ExpressionAttributeNamesMixin, ProjectionExpressionMixin):
         def __init__(self, action, name):
-            super(BatchGetItem._Table, self).__init__(action)
             ExpressionAttributeNamesMixin.__init__(self)
             ProjectionExpressionMixin.__init__(self)
-            self.__consistent_read = None
-            self.__keys = []
+            self.consistent_read = ConsistentRead(action)
+            self.keys = []
 
-        def _build(self):
+        def build(self):
             data = {}
             data.update(self._build_expression_attribute_names())
             data.update(self._build_projection_expression())
-            if self.__consistent_read is not None:
-                data["ConsistentRead"] = self.__consistent_read
-            if self.__keys:
-                data["Keys"] = [_convert_dict_to_db(k) for k in self.__keys]
+            data.update(self.consistent_read.build())
+            if self.keys:
+                data["Keys"] = [_convert_dict_to_db(k) for k in self.keys]
             return data
 
-        def keys(self, *keys):
-            for key in keys:
-                if isinstance(key, dict):
-                    key = [key]
-                self.__keys.extend(key)
-            return self
-
-        def consistent_read_true(self):
-            self.__consistent_read = True
-            return self
-
-        def consistent_read_false(self):
-            self.__consistent_read = False
-            return self
-
     def table(self, name):
+        """
+        Set the active table. Calls to methods like :meth:`keys` or :meth:`consistent_read_true` will apply to this table.
+        """
         if name not in self.__tables:
             self.__tables[name] = self._Table(self, name)
-        return self.__tables[name]
+        self.__active_table = self.__tables[name]
+        return self
+
+    def keys(self, *keys):
+        """
+        Add keys to get from the active table.
+        """
+        for key in keys:
+            if isinstance(key, dict):
+                key = [key]
+            self.__active_table.keys.extend(key)
+        return self
+
+    @proxy
+    def consistent_read_true(self):
+        """
+        (for the active table)
+
+        >>> c = connection(
+        ...   BatchGetItem()
+        ...     .table(table).keys({"h": 0})
+        ...     .consistent_read_true()
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity
+        >>> c[0].table_name
+        u'LowVoltage.DocTests'
+        >>> c[0].capacity_units
+        1.0
+        """
+        return self.__active_table.consistent_read.true()
+
+    @proxy
+    def consistent_read_false(self):
+        """
+        (for the active table)
+
+        >>> c = connection(
+        ...   BatchGetItem()
+        ...     .table(table).keys({"h": 0})
+        ...     .consistent_read_false()
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity
+        >>> c[0].table_name
+        u'LowVoltage.DocTests'
+        >>> c[0].capacity_units
+        0.5
+        """
+        return self.__active_table.consistent_read.false()
+
+    def expression_attribute_name(self, name, path):
+        """
+        """
+        self.__active_table.expression_attribute_name(name, path)
+        return self
+
+    def project(self, *names):
+        """
+        """
+        self.__active_table.project(*names)
+        return self
+
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> c = connection(
+        ...   BatchGetItem()
+        ...     .table(table).keys({"h": 0}, {"h": 1}, {"h": 2})
+        ...     .table(table2).keys({"h": 0, "r1": 0}, {"h": 1, "r1": 0})
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity
+        >>> c[0].table_name
+        u'LowVoltage.DocTests'
+        >>> c[0].capacity_units
+        1.5
+        >>> c[1].table_name
+        u'LowVoltage.DocTests2'
+        >>> c[1].capacity_units
+        1.0
+        """
+        return self.__return_consumed_capacity.total()
+
+    @proxy
+    def return_consumed_capacity_none(self):
+        """
+        >>> print connection(
+        ...   BatchGetItem()
+        ...     .table(table)
+        ...     .keys({"h": 0}, {"h": 1}, {"h": 2})
+        ...     .return_consumed_capacity_none()
+        ... ).consumed_capacity
+        None
+        """
+        return self.__return_consumed_capacity.none()
 
 
 class BatchGetItemUnitTests(_tst.UnitTests):

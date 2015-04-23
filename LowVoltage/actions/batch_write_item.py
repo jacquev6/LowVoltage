@@ -6,19 +6,19 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action, ActionProxy
 from .conversion import _convert_dict_to_db
-from .return_mixins import ReturnConsumedCapacityMixin, ReturnItemCollectionMetricsMixin
+from .next_gen_mixins import proxy, ReturnConsumedCapacity, ReturnItemCollectionMetrics
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict, _is_list_of_dict
 
 
-class BatchWriteItem(
-    Action,
-    ReturnConsumedCapacityMixin,
-    ReturnItemCollectionMetricsMixin,
-):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_RequestParameters"""
+class BatchWriteItem(Action):
+    """
+    The `BatchWriteItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_RequestParameters>`__.
+    """
 
     class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_ResponseElements"""
+        """
+        The `BatchWriteItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_ResponseElements>`__.
+        """
 
         def __init__(
             self,
@@ -39,53 +39,118 @@ class BatchWriteItem(
 
     def __init__(self, previous_unprocessed_items=None):
         super(BatchWriteItem, self).__init__("BatchWriteItem")
-        ReturnConsumedCapacityMixin.__init__(self)
-        ReturnItemCollectionMetricsMixin.__init__(self)
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__previous_unprocessed_items = previous_unprocessed_items
         self.__tables = {}
+        self.__active_table = None
 
     def build(self):
         data = {}
-        data.update(self._build_return_consumed_capacity())
-        data.update(self._build_return_item_collection_metrics())
+        data.update(self.__return_consumed_capacity.build())
+        data.update(self.__return_item_collection_metrics.build())
         if self.__previous_unprocessed_items:
             data["RequestItems"] = self.__previous_unprocessed_items
         if self.__tables:
-            data["RequestItems"] = {n: t._build() for n, t in self.__tables.iteritems()}
+            data["RequestItems"] = {n: t.build() for n, t in self.__tables.iteritems()}
         return data
 
-    class _Table(ActionProxy):
+    class _Table:
         def __init__(self, action, name):
-            super(BatchWriteItem._Table, self).__init__(action)
-            self.__delete = []
-            self.__put = []
+            self.delete = []
+            self.put = []
 
-        def _build(self):
+        def build(self):
             items = []
-            if self.__delete:
-                items.extend({"DeleteRequest": {"Key": _convert_dict_to_db(k)}} for k in self.__delete)
-            if self.__put:
-                items.extend({"PutRequest": {"Item": _convert_dict_to_db(i)}} for i in self.__put)
+            if self.delete:
+                items.extend({"DeleteRequest": {"Key": _convert_dict_to_db(k)}} for k in self.delete)
+            if self.put:
+                items.extend({"PutRequest": {"Item": _convert_dict_to_db(i)}} for i in self.put)
             return items
 
-        def delete(self, *keys):
-            for key in keys:
-                if isinstance(key, dict):
-                    key = [key]
-                self.__delete.extend(key)
-            return self
-
-        def put(self, *items):
-            for item in items:
-                if isinstance(item, dict):
-                    item = [item]
-                self.__put.extend(item)
-            return self
-
     def table(self, name):
+        """
+        Set the active table. Calls to methods like :meth:`delete` or :meth:`put` will apply to this table.
+        """
         if name not in self.__tables:
             self.__tables[name] = self._Table(self, name)
-        return self.__tables[name]
+        self.__active_table = self.__tables[name]
+        return self
+
+    def delete(self, *keys):
+        """
+        Add keys to delete from the active table.
+        """
+        for key in keys:
+            if isinstance(key, dict):
+                key = [key]
+            self.__active_table.delete.extend(key)
+        return self
+
+    def put(self, *items):
+        """
+        Add items to put in the active table.
+        """
+        for item in items:
+            if isinstance(item, dict):
+                item = [item]
+            self.__active_table.put.extend(item)
+        return self
+
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> c = connection(
+        ...   BatchWriteItem().table(table).delete({"h": 3})
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity
+        >>> c[0].table_name
+        u'LowVoltage.DocTests'
+        >>> c[0].capacity_units
+        2.0
+        """
+        return self.__return_consumed_capacity.total()
+
+    @proxy
+    def return_consumed_capacity_indexes(self):
+        """
+        >>> c = connection(
+        ...   BatchWriteItem().table(table).delete({"h": 4})
+        ...     .return_consumed_capacity_indexes()
+        ... ).consumed_capacity
+        >>> c[0].capacity_units
+        2.0
+        >>> c[0].table.capacity_units
+        1.0
+        >>> c[0].global_secondary_indexes["gsi"].capacity_units
+        1.0
+        """
+        return self.__return_consumed_capacity.indexes()
+
+    @proxy
+    def return_consumed_capacity_none(self):
+        """
+        >>> print connection(
+        ...   BatchWriteItem().table(table).delete({"h": 5})
+        ...     .return_consumed_capacity_none()
+        ... ).consumed_capacity
+        None
+        """
+        return self.__return_consumed_capacity.none()
+
+    @proxy
+    def return_item_collection_metrics_size(self):
+        """
+        @todo doctest (We need a table with a LSI)
+        """
+        return self.__return_item_collection_metrics.size()
+
+    @proxy
+    def return_item_collection_metrics_none(self):
+        """
+        @todo doctest (We need a table with a LSI)
+        """
+        return self.__return_item_collection_metrics.none()
 
 
 class BatchWriteItemUnitTests(_tst.UnitTests):
