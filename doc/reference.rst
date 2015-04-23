@@ -50,6 +50,7 @@ Admin actions
 
     reference/actions/create_table
     reference/actions/describe_table
+    reference/actions/update_table
     reference/actions/delete_table
     reference/actions/list_tables
 
