@@ -22,8 +22,14 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
-from .next_gen_mixins import proxy, ReturnConsumedCapacity, ConsistentRead, ExpressionAttributeNames, ProjectionExpression
-from .return_types import ConsumedCapacity_, _is_dict, _is_list_of_dict
+from .next_gen_mixins import proxy
+from .next_gen_mixins import (
+    ConsistentRead,
+    ExpressionAttributeNames,
+    ProjectionExpression,
+    ReturnConsumedCapacity,
+)
+from .return_types import ConsumedCapacity, _is_dict, _is_list_of_dict
 
 # @todo Document return types
 
@@ -48,10 +54,10 @@ class BatchGetItemResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~.BatchGetItem.return_consumed_capacity_total`.
 
-        :type: None or list of :class:`.ConsumedCapacity_`
+        :type: None or list of :class:`.ConsumedCapacity`
         """
         if _is_list_of_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
-            return [ConsumedCapacity_(**c) for c in self.__consumed_capacity]
+            return [ConsumedCapacity(**c) for c in self.__consumed_capacity]
 
     @property
     def responses(self):
@@ -80,18 +86,18 @@ class BatchGetItem(Action):
 
     def __init__(self, previous_unprocessed_keys=None):
         super(BatchGetItem, self).__init__("BatchGetItem")
-        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__previous_unprocessed_keys = previous_unprocessed_keys
         self.__tables = {}
         self.__active_table = None
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
 
     def build(self):
         data = {}
-        data.update(self.__return_consumed_capacity.build())
         if self.__previous_unprocessed_keys:
             data["RequestItems"] = self.__previous_unprocessed_keys
         if self.__tables:
             data["RequestItems"] = {n: t.build() for n, t in self.__tables.iteritems()}
+        data.update(self.__return_consumed_capacity.build())
         return data
 
     @staticmethod
@@ -107,11 +113,11 @@ class BatchGetItem(Action):
 
         def build(self):
             data = {}
+            if self.keys:
+                data["Keys"] = [_convert_dict_to_db(k) for k in self.keys]
             data.update(self.consistent_read.build())
             data.update(self.expression_attribute_names.build())
             data.update(self.projection_expression.build())
-            if self.keys:
-                data["Keys"] = [_convert_dict_to_db(k) for k in self.keys]
             return data
 
     def table(self, name):

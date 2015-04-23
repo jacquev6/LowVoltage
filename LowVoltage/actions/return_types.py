@@ -256,8 +256,10 @@ class LocalSecondaryIndexDescription_(object):
             self.projection = Projection_(**Projection)
 
 
-class ConsumedCapacity_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ConsumedCapacity.html"""
+class ConsumedCapacity(object):
+    """
+    `ConsumedCapacity <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ConsumedCapacity.html>`__.
+    """
 
     def __init__(
         self,
@@ -268,42 +270,90 @@ class ConsumedCapacity_(object):
         TableName=None,
         **dummy
     ):
-        self.capacity_units = None
-        if _is_float(CapacityUnits):  # pragma no branch (Defensive code)
-            self.capacity_units = float(CapacityUnits)
+        self.__capacity_units = CapacityUnits
+        self.__global_secondary_indexes = GlobalSecondaryIndexes
+        self.__local_secondary_indexes = LocalSecondaryIndexes
+        self.__table = Table
+        self.__table_name = TableName
 
-        self.global_secondary_indexes = None
-        if _is_dict(GlobalSecondaryIndexes):  # pragma no branch (Defensive code)
-            self.global_secondary_indexes = {n: Capacity_(**v) for n, v in GlobalSecondaryIndexes.iteritems()}
+    @property
+    def capacity_units(self):
+        """
+        The total capacity units consumed by the request.
 
-        self.local_secondary_indexes = None
-        if _is_dict(LocalSecondaryIndexes):  # pragma no branch (Defensive code)
-            self.local_secondary_indexes = {n: Capacity_(**v) for n, v in LocalSecondaryIndexes.iteritems()}
+        :type: None or float
+        """
+        if _is_float(self.__capacity_units):  # pragma no branch (Defensive code)
+            return float(self.__capacity_units)
 
-        self.table = None
-        if _is_dict(Table):  # pragma no branch (Defensive code)
-            self.table = Capacity_(**Table)
+    @property
+    def global_secondary_indexes(self):
+        """
+        The capacity consumed on GSIs.
 
-        self.table_name = None
-        if _is_str(TableName):  # pragma no branch (Defensive code)
-            self.table_name = TableName
+        :type: None or dict of string (index name) to :class:`.Capacity`
+        """
+        if _is_dict(self.__global_secondary_indexes):  # pragma no branch (Defensive code)
+            return {n: Capacity(**v) for n, v in self.__global_secondary_indexes.iteritems()}
+
+    @property
+    def local_secondary_indexes(self):
+        """
+        The capacity consumed on LSIs.
+
+        :type: None or dict of string (index name) to :class:`.Capacity`
+        """
+        if _is_dict(self.__local_secondary_indexes):  # pragma no branch (Defensive code)
+            return {n: Capacity(**v) for n, v in self.__local_secondary_indexes.iteritems()}
+
+    @property
+    def table(self):
+        """
+        The capacity consumed on the table itself.
+
+        :type: None or :class:`.Capacity`
+        """
+        if _is_dict(self.__table):  # pragma no branch (Defensive code)
+            return Capacity(**self.__table)
+
+    @property
+    def table_name(self):
+        """
+        The name of the table.
+
+        :type: None or string
+        """
+        if _is_str(self.__table_name):  # pragma no branch (Defensive code)
+            return self.__table_name
 
 
-class Capacity_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Capacity.html"""
+class Capacity(object):
+    """
+    `Capacity <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Capacity.html>`__.
+    """
 
     def __init__(
         self,
         CapacityUnits=None,
         **dummy
     ):
-        self.capacity_units = None
-        if _is_float(CapacityUnits):  # pragma no branch (Defensive code)
-            self.capacity_units = float(CapacityUnits)
+        self.__capacity_units = CapacityUnits
+
+    @property
+    def capacity_units(self):
+        """
+        Actual units of consumed capacity.
+
+        :type: None or float
+        """
+        if _is_float(self.__capacity_units):  # pragma no branch (Defensive code)
+            return float(self.__capacity_units)
 
 
-class ItemCollectionMetrics_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ItemCollectionMetrics.html"""
+class ItemCollectionMetrics(object):
+    """
+    `ItemCollectionMetrics <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ItemCollectionMetrics.html>`__.
+    """
 
     def __init__(
         self,
@@ -311,10 +361,25 @@ class ItemCollectionMetrics_(object):
         SizeEstimateRangeGB=None,
         **dummy
     ):
-        self.item_collection_key = None
-        if _is_dict(ItemCollectionKey):  # pragma no branch (Defensive code)
-            self.item_collection_key = _convert_db_to_dict(ItemCollectionKey)
+        self.__item_collection_key
+        self.__size_estimate_range_gb = SizeEstimateRangeGB
 
-        self.size_estimate_range_gb = None
-        if _is_list_of_float(SizeEstimateRangeGB):  # pragma no branch (Defensive code)
-            self.size_estimate_range_gb = [float(e) for e in SizeEstimateRangeGB]
+    @property
+    def item_collection_key(self):
+        """
+        Hash key of the collection whose size is estimated.
+
+        :type: None or dict
+        """
+        if _is_dict(self.__item_collection_key):  # pragma no branch (Defensive code)
+            return _convert_db_to_dict(self.__item_collection_key)
+
+    @property
+    def size_estimate_range_gb(self):
+        """
+        Range of sizes of the collection in GB.
+
+        :type: None or list of two float
+        """
+        if _is_list_of_float(self.__size_estimate_range_gb):  # pragma no branch (Defensive code)
+            return [float(e) for e in self.__size_estimate_range_gb]

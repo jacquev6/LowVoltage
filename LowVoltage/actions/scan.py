@@ -19,7 +19,7 @@ Note that items are returned in an undefined order. Here we sort them to make th
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
-from .conversion import _convert_dict_to_db, _convert_db_to_dict
+from .conversion import _convert_db_to_dict
 from .next_gen_mixins import proxy
 from .next_gen_mixins import (
     ExclusiveStartKey,
@@ -32,7 +32,7 @@ from .next_gen_mixins import (
     ScalarValue,
     Select,
 )
-from .return_types import ConsumedCapacity_, _is_dict, _is_int, _is_list_of_dict
+from .return_types import ConsumedCapacity, _is_dict, _is_int, _is_list_of_dict
 
 
 class ScanResponse(object):
@@ -60,10 +60,10 @@ class ScanResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~.Scan.return_consumed_capacity_total`.
 
-        :type: None or :class:`.ConsumedCapacity_`
+        :type: None or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
-            return ConsumedCapacity_(**self.__consumed_capacity)
+            return ConsumedCapacity(**self.__consumed_capacity)
 
     @property
     def count(self):
@@ -114,15 +114,15 @@ class Scan(Action):
     def __init__(self, table_name):
         super(Scan, self).__init__("Scan")
         self.__table_name = table_name
+        self.__exclusive_start_key = ExclusiveStartKey(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__expression_attribute_values = ExpressionAttributeValues(self)
         self.__filter_expression = FilterExpression(self)
+        self.__limit = Limit(self)
         self.__projection_expression = ProjectionExpression(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
-        self.__exclusive_start_key = ExclusiveStartKey(self)
-        self.__limit = Limit(self)
-        self.__select = Select(self)
         self.__segment = ScalarValue("Segment")(self)
+        self.__select = Select(self)
         self.__total_segments = ScalarValue("TotalSegments")(self)
 
     def build(self):
@@ -131,11 +131,11 @@ class Scan(Action):
         data.update(self.__expression_attribute_names.build())
         data.update(self.__expression_attribute_values.build())
         data.update(self.__filter_expression.build())
+        data.update(self.__limit.build())
         data.update(self.__projection_expression.build())
         data.update(self.__return_consumed_capacity.build())
-        data.update(self.__limit.build())
-        data.update(self.__select.build())
         data.update(self.__segment.build())
+        data.update(self.__select.build())
         data.update(self.__total_segments.build())
         return data
 

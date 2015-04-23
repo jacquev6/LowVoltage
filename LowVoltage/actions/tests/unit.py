@@ -4,13 +4,6 @@
 
 from ..conversion import ConversionUnitTests
 from ..expressions import ConditionExpressionUnitTests
-from ..expression_mixins import (
-    ExpressionAttributeValuesMixinUnitTests,
-    ExpressionAttributeNamesMixinUnitTests,
-    FilterExpressionMixinUnitTests,
-    ProjectionExpressionMixinUnitTests,
-    ConditionExpressionMixinUnitTests,
-)
 
 from ..batch_get_item import BatchGetItemUnitTests
 from ..batch_write_item import BatchWriteItemUnitTests

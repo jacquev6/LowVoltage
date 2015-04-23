@@ -13,8 +13,16 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
-from .next_gen_mixins import proxy, ReturnValues, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ExpressionAttributeNames, ExpressionAttributeValues, ConditionExpression
-from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
+from .next_gen_mixins import proxy
+from .next_gen_mixins import (
+    ConditionExpression,
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    ReturnConsumedCapacity,
+    ReturnItemCollectionMetrics,
+    ReturnValues,
+)
+from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict
 
 
 class UpdateItemResponse(object):
@@ -50,20 +58,20 @@ class UpdateItemResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~.UpdateItem.return_consumed_capacity_total` or :meth:`~.UpdateItem.return_consumed_capacity_indexes`.
 
-        :type: None or :class:`.ConsumedCapacity_`
+        :type: None or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
-            return ConsumedCapacity_(**self.__consumed_capacity)
+            return ConsumedCapacity(**self.__consumed_capacity)
 
     @property
     def item_collection_metrics(self):
         """
         Metrics about the collection of the item you just updated. If a LSI was touched and you used :meth:`~.UpdateItem.return_item_collection_metrics_size`.
 
-        :type: None or :class:`.ItemCollectionMetrics_`
+        :type: None or :class:`.ItemCollectionMetrics`
         """
         if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
-            return ItemCollectionMetrics_(**self.__item_collection_metrics)
+            return ItemCollectionMetrics(**self.__item_collection_metrics)
 
 
 class UpdateItem(Action):
@@ -91,12 +99,6 @@ class UpdateItem(Action):
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        data.update(self.__condition_expression.build())
-        data.update(self.__expression_attribute_names.build())
-        data.update(self.__expression_attribute_values.build())
-        data.update(self.__return_consumed_capacity.build())
-        data.update(self.__return_item_collection_metrics.build())
-        data.update(self.__return_values.build())
         update = []
         if self.__set:
             update.append("SET {}".format(", ".join("{}={}".format(n, v) for n, v in self.__set.iteritems())))
@@ -108,6 +110,12 @@ class UpdateItem(Action):
             update.append("DELETE {}".format(", ".join("{} :{}".format(n, v) for n, v in self.__delete.iteritems())))
         if update:
             data["UpdateExpression"] = " ".join(update)
+        data.update(self.__condition_expression.build())
+        data.update(self.__expression_attribute_names.build())
+        data.update(self.__expression_attribute_values.build())
+        data.update(self.__return_consumed_capacity.build())
+        data.update(self.__return_item_collection_metrics.build())
+        data.update(self.__return_values.build())
         return data
 
     @staticmethod

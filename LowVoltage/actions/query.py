@@ -9,7 +9,7 @@
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
-from .conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict
+from .conversion import _convert_value_to_db, _convert_db_to_dict
 from .next_gen_mixins import proxy
 from .next_gen_mixins import (
     ConsistentRead,
@@ -23,7 +23,7 @@ from .next_gen_mixins import (
     ScalarValue,
     Select,
 )
-from .return_types import ConsumedCapacity_, _is_dict, _is_int, _is_list_of_dict
+from .return_types import ConsumedCapacity, _is_dict, _is_int, _is_list_of_dict
 
 
 class QueryResponse(object):
@@ -51,10 +51,10 @@ class QueryResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~.Query.return_consumed_capacity_total` or :meth:`~.Query.return_consumed_capacity_indexes`.
 
-        :type: None or :class:`.ConsumedCapacity_`
+        :type: None or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
-            return ConsumedCapacity_(**self.__consumed_capacity)
+            return ConsumedCapacity(**self.__consumed_capacity)
 
     @property
     def count(self):
@@ -105,6 +105,7 @@ class Query(Action):
     def __init__(self, table_name):
         super(Query, self).__init__("Query")
         self.__table_name = table_name
+        self.__conditions = {}
         self.__consistent_read = ConsistentRead(self)
         self.__exclusive_start_key = ExclusiveStartKey(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
@@ -116,10 +117,11 @@ class Query(Action):
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__scan_index_forward = ScalarValue("ScanIndexForward")(self)
         self.__select = Select(self)
-        self.__conditions = {}
 
     def build(self):
         data = {"TableName": self.__table_name}
+        if self.__conditions:
+            data["KeyConditions"] = self.__conditions
         data.update(self.__consistent_read.build())
         data.update(self.__exclusive_start_key.build())
         data.update(self.__expression_attribute_names.build())
@@ -131,8 +133,6 @@ class Query(Action):
         data.update(self.__return_consumed_capacity.build())
         data.update(self.__scan_index_forward.build())
         data.update(self.__select.build())
-        if self.__conditions:
-            data["KeyConditions"] = self.__conditions
         return data
 
     @staticmethod

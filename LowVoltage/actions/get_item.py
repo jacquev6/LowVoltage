@@ -22,9 +22,15 @@ None
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
-from .conversion import _convert_dict_to_db, _convert_value_to_db, _convert_db_to_dict, _convert_db_to_value
-from .next_gen_mixins import proxy, ReturnConsumedCapacity, ConsistentRead, ExpressionAttributeNames, ProjectionExpression
-from .return_types import ConsumedCapacity_, _is_dict
+from .conversion import _convert_dict_to_db, _convert_db_to_dict
+from .next_gen_mixins import proxy
+from .next_gen_mixins import (
+    ConsistentRead,
+    ExpressionAttributeNames,
+    ProjectionExpression,
+    ReturnConsumedCapacity,
+)
+from .return_types import ConsumedCapacity, _is_dict
 
 
 class GetItemResponse(object):
@@ -46,10 +52,10 @@ class GetItemResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~.GetItem.return_consumed_capacity_total`.
 
-        :type: None or :class:`.ConsumedCapacity_`
+        :type: None or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
-            return ConsumedCapacity_(**self.__consumed_capacity)
+            return ConsumedCapacity(**self.__consumed_capacity)
 
     @property
     def item(self):

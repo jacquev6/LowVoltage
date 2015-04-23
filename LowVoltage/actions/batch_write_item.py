@@ -15,8 +15,9 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db
-from .next_gen_mixins import proxy, ReturnConsumedCapacity, ReturnItemCollectionMetrics
-from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict, _is_list_of_dict
+from .next_gen_mixins import proxy
+from .next_gen_mixins import ReturnConsumedCapacity, ReturnItemCollectionMetrics
+from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict, _is_list_of_dict
 
 
 class BatchWriteItemResponse(object):
@@ -42,20 +43,20 @@ class BatchWriteItemResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~.BatchWriteItem.return_consumed_capacity_total` or :meth:`~.BatchWriteItem.return_consumed_capacity_index`.
 
-        :type: None or list of :class:`.ConsumedCapacity_`
+        :type: None or list of :class:`.ConsumedCapacity`
         """
         if _is_list_of_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
-            return [ConsumedCapacity_(**c) for c in self.__consumed_capacity]
+            return [ConsumedCapacity(**c) for c in self.__consumed_capacity]
 
     @property
     def item_collection_metrics(self):
         """
         Metrics about the collection of the items you just updated. If a LSI was touched and you used :meth:`~.BatchWriteItem.return_item_collection_metrics_size`.
 
-        :type: None or dict of string (table name) to list of :class:`.ItemCollectionMetrics_`
+        :type: None or dict of string (table name) to list of :class:`.ItemCollectionMetrics`
         """
         if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
-            return {n: [ItemCollectionMetrics_(**m) for m in v] for n, v in self.__item_collection_metrics.iteritems()}
+            return {n: [ItemCollectionMetrics(**m) for m in v] for n, v in self.__item_collection_metrics.iteritems()}
 
     @property
     def unprocessed_items(self):
@@ -74,20 +75,20 @@ class BatchWriteItem(Action):
 
     def __init__(self, previous_unprocessed_items=None):
         super(BatchWriteItem, self).__init__("BatchWriteItem")
-        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
-        self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__previous_unprocessed_items = previous_unprocessed_items
         self.__tables = {}
         self.__active_table = None
+        self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
 
     def build(self):
         data = {}
-        data.update(self.__return_consumed_capacity.build())
-        data.update(self.__return_item_collection_metrics.build())
         if self.__previous_unprocessed_items:
             data["RequestItems"] = self.__previous_unprocessed_items
         if self.__tables:
             data["RequestItems"] = {n: t.build() for n, t in self.__tables.iteritems()}
+        data.update(self.__return_consumed_capacity.build())
+        data.update(self.__return_item_collection_metrics.build())
         return data
 
     @staticmethod
