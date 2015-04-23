@@ -3,7 +3,6 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import textwrap
-import alabaster
 
 
 master_doc = "index"
@@ -15,14 +14,19 @@ extensions = []
 
 # https://github.com/bitprophet/alabaster
 # html_theme_path
-extensions.append('alabaster')
-html_theme = 'alabaster'
+extensions.append("alabaster")
+html_theme = "alabaster"
 html_sidebars = {
-    '**': [
-        'about.html', 'navigation.html', 'searchbox.html',
+    "**": [
+        "about.html", "navigation.html", "searchbox.html",
     ]
 }
-
+html_theme_options = {
+    "github_user": "jacquev6",
+    "github_repo": "LowVoltage",
+    "github_banner": True,
+    "travis_button": True,
+}
 
 # http://sphinx-doc.org/ext/autodoc.html
 extensions.append("sphinx.ext.autodoc")

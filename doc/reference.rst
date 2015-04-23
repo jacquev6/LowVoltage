@@ -2,8 +2,46 @@
 Reference
 =========
 
+.. automodule:: LowVoltage
+
+Connection
+==========
+
+.. automodule:: LowVoltage.connection
+
+Credentials
+-----------
+
+@todo Link to user guide (authentication).
+
+.. automodule:: LowVoltage.connection.credentials
+
+Retry policies
+--------------
+
+@todo Link to user guide (error management).
+
+.. automodule:: LowVoltage.connection.retry_policies
+
+Attribute types
+===============
+
+.. automodule:: LowVoltage.attribute_types
+
+Exceptions
+==========
+
+@todo Link to user guide (error management).
+
+.. toctree::
+
+    reference/exceptions
+
 Actions
 =======
+
+@todo Link to user guide (action/compound).
+@todo In actions that have a compound, link to this compound.
 
 Admin actions
 -------------
@@ -37,6 +75,8 @@ Batch actions
 
 Compounds
 =========
+
+@todo Link to user guide (action/compound).
 
 .. toctree::
 

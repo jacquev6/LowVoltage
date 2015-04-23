@@ -3,8 +3,7 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 """
-.. automodule:: LowVoltage.connection
-.. automodule:: LowVoltage.actions
+All public symbols are imported in the top-level module, no need to import submodules.
 """
 
 from actions import *
@@ -12,4 +11,3 @@ from attribute_types import *
 from compounds import *
 from connection import *
 from exceptions import *
-from policies import *

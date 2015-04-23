@@ -1,4 +1,9 @@
-LowVoltage is a standalone Python (2 and 3) client for DynamoDB that doesn't hide any feature of the API.
+LowVoltage is a standalone Python (2.7+ and 3.4+) client for `DynamoDB <http://aws.amazon.com/documentation/dynamodb/>`__
+that doesn't hide any feature of `the API <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html>`__.
+
+It's licensed under the `MIT license <http://choosealicense.com/licenses/mit/>`__.
+It depends only on the excellent `python-requests <http://python-requests.org>`__ library.
+It's available on the `Python package index <http://pypi.python.org/pypi/LowVoltage>`__, its `documentation is hosted by Python <http://pythonhosted.org/LowVoltage>`__ and its source code is on `GitHub <https://github.com/jacquev6/LowVoltage>`__.
 
 .. image:: https://img.shields.io/travis/jacquev6/LowVoltage/master.svg
     :target: https://travis-ci.org/jacquev6/LowVoltage
@@ -24,12 +29,6 @@ LowVoltage is a standalone Python (2 and 3) client for DynamoDB that doesn't hid
 .. image:: https://pypip.in/status/LowVoltage/badge.svg
     :target: https://pypi.python.org/pypi/LowVoltage
 
-.. image:: https://pypip.in/egg/LowVoltage/badge.svg
-    :target: https://pypi.python.org/pypi/LowVoltage
-
-.. image:: https://pypip.in/wheel/LowVoltage/badge.svg
-    :target: https://pypi.python.org/pypi/LowVoltage
-
 .. image:: https://img.shields.io/github/issues/jacquev6/LowVoltage.svg
     :target: https://github.com/jacquev6/LowVoltage/issues
 
@@ -39,20 +38,31 @@ LowVoltage is a standalone Python (2 and 3) client for DynamoDB that doesn't hid
 .. image:: https://img.shields.io/github/stars/jacquev6/LowVoltage.svg
     :target: https://github.com/jacquev6/LowVoltage/stargazers
 
+Quick start
+===========
 
-Why?
-====
+Install from PyPI::
 
-- I wanted to learn DynamoDB
-- I found out Boto is (was?) not up-to-date with newer API parameters and does (did?) not support Python 3
-- I had some time
+    $ pip install LowVoltage
 
-Tenets
-======
+Import the package and create a connection:
 
-- Users should be able to do everything that is permited by `the API <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference>`__.
-- Users should never risk a typo: we provide symbols for all DynamoDB constants.
-- Users should never have to use deprecated API parameters.
+.. doctest::
+
+    >>> from LowVoltage import *
+    >>> connection = make_connection("eu-west-1", EnvironmentCredentials())
+
+Assuming you have a table named "LowVoltage.DocTests" with a hash key on the number attribute "h", you can put an item and get it back:
+
+.. doctest::
+
+    >>> table = "LowVoltage.DocTests"
+
+    >>> connection(PutItem(table, {"h": 0, "a": 42, "b": u"bar"}))
+    <LowVoltage.actions.put_item.Result object at ...>
+
+    >>> connection(GetItem(table, {"h": 0})).item
+    {u'a': 42, u'h': 0, u'b': u'bar'}
 
 Todo
 ====

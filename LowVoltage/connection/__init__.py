@@ -2,10 +2,11 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import LowVoltage.policies as _pol
 # @todo Do we really need two Connection classes?
 from .signing import SigningConnection
 from .retrying import RetryingConnection
+from .retry_policies import ExponentialBackoffRetryPolicy
+from .credentials import StaticCredentials, EnvironmentCredentials
 
 
 # @todo Consider using a builder pattern... as everywhere else in LowVoltage
@@ -13,7 +14,7 @@ def make_connection(
     region,
     credentials,
     endpoint=None,
-    retry_policy=_pol.ExponentialBackoffRetryPolicy(1, 2, 5)
+    retry_policy=ExponentialBackoffRetryPolicy(1, 2, 5)
 ):
     """Create a connection using the provided retry policy"""
     # @todo Maybe allow injection of the Requests session to tweek low-level parameters (connection timeout, etc.)?

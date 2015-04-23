@@ -13,7 +13,7 @@ import requests
 import LowVoltage.testing as _tst
 from LowVoltage.actions.action import Action, ActionProxy
 import LowVoltage.exceptions as _exn
-import LowVoltage.policies as _pol
+from .credentials import StaticCredentials
 
 
 class SigningConnection(object):
@@ -138,7 +138,7 @@ class SigningConnectionUnitTests(_tst.UnitTests):
 
     def setUp(self):
         super(SigningConnectionUnitTests, self).setUp()
-        self.connection = SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
+        self.connection = SigningConnection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/")
 
     def testSign(self):
         self.assertEqual(
@@ -233,6 +233,6 @@ class SigningConnectionLocalIntegTests(_tst.UnitTests):
             return {}
 
     def test_network_error(self):
-        connection = SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/")
+        connection = SigningConnection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/")
         with self.assertRaises(_exn.NetworkError):
             connection(self.TestAction("ListTables"))

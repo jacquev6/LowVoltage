@@ -7,6 +7,9 @@ import LowVoltage.testing as _tst
 
 
 class ExponentialBackoffRetryPolicy(object):
+    """
+    Retry failed requests with a waiting time growing exponentialy.
+    """
     def __init__(self, first_wait, multiplier, max_tries):
         self.__first_wait = first_wait
         self.__multiplier = multiplier

@@ -8,7 +8,8 @@ import LowVoltage.testing as _tst
 from LowVoltage.actions.action import Action
 from .signing import SigningConnection
 import LowVoltage.exceptions as _exn
-import LowVoltage.policies as _pol
+from .credentials import StaticCredentials
+from .retry_policies import ExponentialBackoffRetryPolicy
 
 
 class RetryingConnection(object):
@@ -87,7 +88,7 @@ class RetryingConnectionLocalIntegTests(_tst.LocalIntegTests):
 
     def setUp(self):
         super(RetryingConnectionLocalIntegTests, self).setUp()
-        self.connection = RetryingConnection(SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), _pol.ExponentialBackoffRetryPolicy(1, 2, 5))
+        self.connection = RetryingConnection(SigningConnection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65432/"), ExponentialBackoffRetryPolicy(1, 2, 5))
 
     def test_request(self):
         r = self.connection(self.TestAction("ListTables"))
@@ -99,7 +100,7 @@ class RetryingConnectionLocalIntegTests(_tst.LocalIntegTests):
             self.connection(self.TestAction("UnexistingAction"))
 
     def test_network_error(self):
-        connection = RetryingConnection(SigningConnection("us-west-2", _pol.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/"), _pol.ExponentialBackoffRetryPolicy(0, 1, 4))
+        connection = RetryingConnection(SigningConnection("us-west-2", StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/"), ExponentialBackoffRetryPolicy(0, 1, 4))
         with self.assertRaises(_exn.NetworkError):
             connection(self.TestAction("ListTables"))
 
