@@ -20,10 +20,14 @@ class PutItem(
     ExpressionAttributeValuesMixin,
     ConditionExpressionMixin,
 ):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_RequestParameters"""
+    """
+    The `PutItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_RequestParameters>`__.
+    """
 
     class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_ResponseElements"""
+        """
+        The `PutItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_ResponseElements>`__.
+        """
 
         def __init__(
             self,
@@ -33,14 +37,17 @@ class PutItem(
             **dummy
         ):
             self.attributes = None
+            "@todo Document"
             if _is_dict(Attributes):  # pragma no branch (Defensive code)
                 self.attributes = _convert_db_to_dict(Attributes)
 
             self.consumed_capacity = None
+            "@todo Document"
             if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
                 self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
 
             self.item_collection_metrics = None
+            "@todo Document"
             if _is_dict(ItemCollectionMetrics):  # pragma no branch (Defensive code)
                 self.item_collection_metrics = ItemCollectionMetrics_(**ItemCollectionMetrics)
 

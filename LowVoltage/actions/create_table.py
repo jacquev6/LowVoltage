@@ -25,6 +25,8 @@ class CreateTable(Action):
             if _is_dict(TableDescription):  # pragma no branch (Defensive code)
                 self.table_description = TableDescription_(**TableDescription)
 
+    # @todo Should we add ctor parameters and allow use to choose between ctor and builder syntaxes? Same for .global_secondary_index. Same everywhere.
+
     def __init__(self, table_name):
         super(CreateTable, self).__init__("CreateTable")
         self.__table_name = table_name

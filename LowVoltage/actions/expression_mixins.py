@@ -20,6 +20,9 @@ class ExpressionAttributeValuesMixin(object):
         return data
 
     def expression_attribute_value(self, name, value):
+        """
+        Add a named value to ExpressionAttributeValues.
+        """
         self.__expression_attribute_values[name] = value
         return self
 
@@ -59,8 +62,25 @@ class ExpressionAttributeNamesMixin(object):
             }
         return data
 
-    def expression_attribute_name(self, name, value):
-        self.__expression_attribute_names[name] = value
+    def expression_attribute_name(self, name, path):
+        """
+        Add a name for a path to ExpressionAttributeNames.
+        Useful for attributes whose names don't play well with ProjectionExpression, ConditionExpression or UpdateExpression.
+
+            >>> connection(
+            ...   PutItem(table, {"h": 0, "a.b.c": {"d[e]f.g": 42, "c": 0}})
+            ... )
+            <LowVoltage.actions.put_item.Result object at ...>
+
+            >>> connection(
+            ...   GetItem(table, {"h": 0})
+            ...     .expression_attribute_name("a", "a.b.c")
+            ...     .expression_attribute_name("b", "d[e]f.g")
+            ...     .project("#a.#b")
+            ... ).item
+            {u'a.b.c': {u'd[e]f.g': 42}}
+        """
+        self.__expression_attribute_names[name] = path
         return self
 
 
@@ -97,6 +117,33 @@ class ConditionExpressionMixin(object):
         return data
 
     def condition_expression(self, expression):
+        """
+        Add a ConditionExpression, making the request conditional.
+        It will raise a :class:`ConditionalCheckFailedException` if the condition is not met.
+
+            >>> connection(PutItem(table, {"h": 0, "a": 42}))
+            <LowVoltage.actions.put_item.Result object at ...>
+
+        The condition is met so this :class:`PutItem` succeeds:
+
+            >>> connection(
+            ...   PutItem(table, {"h": 0, "a": 43})
+            ...     .condition_expression("a=:a")
+            ...     .expression_attribute_value("a", 42)
+            ... )
+            <LowVoltage.actions.put_item.Result object at ...>
+
+        The condition is not met anymore, so this :class:`PutItem` fails:
+
+            >>> connection(
+            ...   PutItem(table, {"h": 0, "a": 44})
+            ...     .condition_expression("a=:a")
+            ...     .expression_attribute_value("a", 42)
+            ... )
+            Traceback (most recent call last):
+              ...
+            ConditionalCheckFailedException
+        """
         self.__condition_expression = expression
         return self
 
@@ -128,6 +175,9 @@ class FilterExpressionMixin(object):
         return data
 
     def filter_expression(self, expression):
+        """
+        Add a FilterExpression.
+        """
         self.__filter_expression = expression
         return self
 
@@ -159,6 +209,21 @@ class ProjectionExpressionMixin(object):
         return data
 
     def project(self, *names):
+        """
+        Add name(s) to ProjectionExpression.
+
+            >>> connection(
+            ...   PutItem(table, {"h": 0, "a": {"b": 42, "c": 0}, "d": True})
+            ... )
+            <LowVoltage.actions.put_item.Result object at ...>
+
+            >>> connection(
+            ...   GetItem(table, {"h": 0})
+            ...     .project("a.b", "h")
+            ...     .project("d")
+            ... ).item
+            {u'a': {u'b': 42}, u'h': 0, u'd': True}
+        """
         for name in names:
             if isinstance(name, basestring):
                 name = [name]

@@ -4,9 +4,6 @@
 
 
 class Action(object):
-    is_completable = False
-    is_waitable = False
-
     def __init__(self, action):
         self.__action = action
 

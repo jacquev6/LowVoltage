@@ -17,10 +17,14 @@ class GetItem(
     ExpressionAttributeNamesMixin,
     ProjectionExpressionMixin,
 ):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_RequestParameters"""
+    """
+    The `GetItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_RequestParameters>`__
+    """
 
     class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_ResponseElements"""
+        """
+        The `GetItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_ResponseElements>`__
+        """
 
         def __init__(
             self,
@@ -29,10 +33,12 @@ class GetItem(
             **dummy
         ):
             self.consumed_capacity = None
+            "@todo Document"
             if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
                 self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
 
             self.item = None
+            "@todo Document"
             if _is_dict(Item):  # pragma no branch (Defensive code)
                 self.item = _convert_db_to_dict(Item)
 

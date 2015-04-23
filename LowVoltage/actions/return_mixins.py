@@ -16,9 +16,33 @@ class ReturnOldValuesMixin(object):
         return data
 
     def return_values_all_old(self):
+        """
+        Set ReturnValues to ALL_OLD.
+        The result will contain all the attributes of the item in its previous state.
+
+            >>> connection(PutItem(table, {"h": 0, "a": 1}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> connection(
+            ...   DeleteItem(table, {"h": 0})
+            ...     .return_values_all_old()
+            ... ).attributes
+            {u'a': 1, u'h': 0}
+        """
         return self._set_return_values("ALL_OLD")
 
     def return_values_none(self):
+        """
+        Set ReturnValues to NONE.
+        The result will not include the attributes of the item.
+
+            >>> connection(PutItem(table, {"h": 0, "a": 1}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> print connection(
+            ...   DeleteItem(table, {"h": 0})
+            ...     .return_values_none()
+            ... ).attributes
+            None
+        """
         return self._set_return_values("NONE")
 
     def _set_return_values(self, value):
@@ -48,12 +72,54 @@ class ReturnOldValuesMixinUnitTests(_tst.UnitTests):
 
 class ReturnValuesMixin(ReturnOldValuesMixin):
     def return_values_all_new(self):
+        """
+        Set ReturnValues to ALL_NEW.
+        The result will contain all the attributes of the item in its new state.
+
+            >>> connection(PutItem(table, {"h": 0, "a": 1}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> connection(
+            ...   UpdateItem(table, {"h": 0})
+            ...     .add("a", "one")
+            ...     .expression_attribute_value("one", 1)
+            ...     .return_values_all_new()
+            ... ).attributes
+            {u'a': 2, u'h': 0}
+        """
         return self._set_return_values("ALL_NEW")
 
     def return_values_updated_new(self):
+        """
+        Set ReturnValues to UPDATED_NEW.
+        The result will contain the just-updated attributes of the item in its new state.
+
+            >>> connection(PutItem(table, {"h": 0, "a": 1}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> connection(
+            ...   UpdateItem(table, {"h": 0})
+            ...     .add("a", "one")
+            ...     .expression_attribute_value("one", 1)
+            ...     .return_values_updated_new()
+            ... ).attributes
+            {u'a': 2}
+        """
         return self._set_return_values("UPDATED_NEW")
 
     def return_values_updated_old(self):
+        """
+        Set ReturnValues to UPDATED_OLD.
+        The result will contain the just-updated attributes of the item in its previous state.
+
+            >>> connection(PutItem(table, {"h": 0, "a": 1}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> connection(
+            ...   UpdateItem(table, {"h": 0})
+            ...     .add("a", "one")
+            ...     .expression_attribute_value("one", 1)
+            ...     .return_values_updated_old()
+            ... ).attributes
+            {u'a': 1}
+        """
         return self._set_return_values("UPDATED_OLD")
 
 
@@ -106,12 +172,47 @@ class ReturnConsumedCapacityMixin(object):
         return data
 
     def return_consumed_capacity_total(self):
+        """
+        Set ReturnConsumedCapacity to TOTAL.
+        The result will contain the total capacity consumed by this request.
+
+            >>> connection(
+            ...   PutItem(table, {"h": 0})
+            ...     .return_consumed_capacity_total()
+            ... ).consumed_capacity.capacity_units
+            1.0
+        """
         return self._set_return_consumed_capacity("TOTAL")
 
     def return_consumed_capacity_indexes(self):
+        """
+        Set ReturnConsumedCapacity to INDEXES.
+        The result will contain the capacity consumed by this request detailled on the table and the indexes.
+
+            >>> c = connection(
+            ...   PutItem(table, {"h": 0, "gh": 0, "gr": 0})
+            ...     .return_consumed_capacity_indexes()
+            ... ).consumed_capacity
+            >>> c.capacity_units
+            2.0
+            >>> c.table.capacity_units
+            1.0
+            >>> c.global_secondary_indexes["gsi"].capacity_units
+            1.0
+        """
         return self._set_return_consumed_capacity("INDEXES")
 
     def return_consumed_capacity_none(self):
+        """
+        Set ReturnConsumedCapacity to NONE.
+        The result will not contain the capacity consumed by this request.
+
+            >>> print connection(
+            ...   PutItem(table, {"h": 0})
+            ...     .return_consumed_capacity_none()
+            ... ).consumed_capacity
+            None
+        """
         return self._set_return_consumed_capacity("NONE")
 
     def _set_return_consumed_capacity(self, value):
@@ -156,9 +257,23 @@ class ReturnItemCollectionMetricsMixin(object):
         return data
 
     def return_item_collection_metrics_size(self):
+        """
+        Set ReturnItemCollectionMetrics to SIZE.
+        If the table has a local secondary index, the result will contain size item collection metrics.
+        """
         return self._set_return_item_collection_metrics("SIZE")
 
     def return_item_collection_metrics_none(self):
+        """
+        Set ReturnItemCollectionMetrics to NONE.
+        The result will not contain any item collection metrics.
+
+            >>> print connection(
+            ...   PutItem(table, {"h": 0})
+            ...     .return_item_collection_metrics_none()
+            ... ).item_collection_metrics
+            None
+        """
         return self._set_return_item_collection_metrics("NONE")
 
     def _set_return_item_collection_metrics(self, value):

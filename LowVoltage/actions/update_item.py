@@ -2,6 +2,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
@@ -20,10 +21,14 @@ class UpdateItem(
     ExpressionAttributeValuesMixin,
     ConditionExpressionMixin,
 ):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_RequestParameters"""
+    """
+    The `UpdateItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_RequestParameters>`__.
+    """
 
     class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_ResponseElements"""
+        """
+        The `UpdateItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_ResponseElements>`__.
+        """
 
         def __init__(
             self,
@@ -33,14 +38,17 @@ class UpdateItem(
             **dummy
         ):
             self.attributes = None
+            "@todo Document"
             if _is_dict(Attributes):  # pragma no branch (Defensive code)
                 self.attributes = _convert_db_to_dict(Attributes)
 
             self.consumed_capacity = None
+            "@todo Document"
             if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
                 self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
 
             self.item_collection_metrics = None
+            "@todo Document"
             if _is_dict(ItemCollectionMetrics):  # pragma no branch (Defensive code)
                 self.item_collection_metrics = ItemCollectionMetrics_(**ItemCollectionMetrics)
 
@@ -72,34 +80,104 @@ class UpdateItem(
         data.update(self._build_condition_expression())
         update = []
         if self.__set:
-            # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.SET
             update.append("SET {}".format(", ".join("{}=:{}".format(n, v) for n, v in self.__set.iteritems())))
         if self.__remove:
-            # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.REMOVE
             update.append("REMOVE {}".format(", ".join(self.__remove)))
         if self.__add:
-            # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.ADD
             update.append("ADD {}".format(", ".join("{} :{}".format(n, v) for n, v in self.__add.iteritems())))
         if self.__delete:
-            # http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.DELETE
             update.append("DELETE {}".format(", ".join("{} :{}".format(n, v) for n, v in self.__delete.iteritems())))
         if update:
             data["UpdateExpression"] = " ".join(update)
         return data
 
+    # @todo should we provide bundle methods for set, add, delete that do an implicit expression_attribute_value with a generated value_name?
+    # @todo should we provide add_to_int (accepting an int), add_to_set and delete_from_set (accepting several ints, strs or binaries)?
+
     def set(self, attribute_name, value_name):
+        """
+        Add a value to SET as an attribute to UpdateExpression.
+        As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.SET>`__.
+
+            >>> connection(PutItem(table, {"h": 0}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> connection(
+            ...   UpdateItem(table, {"h": 0})
+            ...     .set("a", "forty_two")
+            ...     .expression_attribute_value("forty_two", 42)
+            ...     .return_values_all_new()
+            ... ).attributes
+            {u'a': 42, u'h': 0}
+        """
         self.__set[attribute_name] = value_name
         return self
 
     def remove(self, path):
+        """
+        Add an attribute to REMOVE to UpdateExpression.
+        As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.REMOVE>`__.
+
+            >>> connection(PutItem(table, {"h": 0, "a": 42}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> connection(
+            ...   UpdateItem(table, {"h": 0})
+            ...     .remove("a")
+            ...     .return_values_all_new()
+            ... ).attributes
+            {u'h': 0}
+        """
         self.__remove.append(path)
         return self
 
     def add(self, attribute_name, value_name):
+        """
+        Add a (set of) value(s) to ADD to a number (or a set) attribute to UpdateExpression.
+        As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.ADD>`__.
+
+            >>> connection(PutItem(table, {"h": 0, "a": 42, "b": {2, 3}}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> connection(
+            ...   UpdateItem(table, {"h": 0})
+            ...     .add("a", "one")
+            ...     .expression_attribute_value("one", 1)
+            ...     .return_values_all_new()
+            ... ).attributes
+            {u'a': 43, u'h': 0, u'b': set([2, 3])}
+            >>> connection(
+            ...   UpdateItem(table, {"h": 0})
+            ...     .add("b", "vals")
+            ...     .expression_attribute_value("vals", set([1, 2]))
+            ...     .return_values_all_new()
+            ... ).attributes
+            {u'a': 43, u'h': 0, u'b': set([1, 2, 3])}
+        """
         self.__add[attribute_name] = value_name
         return self
 
+    # @todo What happens if you add and delete from the same set? The same values?
+    # @todo What happens if you add twice to the same number?
+    # @todo What happens if you add twice to the same set?
+    # @todo What happens if you delete twice from the same set?
+    # @todo What happens if you set the same attribute twice?
+    # @todo What happens if you remove the same attribute twice?
+    # @todo What happens if you set and remove the same attribute?
+    # @todo Should we handle those cases in a "the last call wins" manner like we do for return_values_xxx?
+
     def delete(self, attribute_name, value_name):
+        """
+        Add a set of values to DELETE from a set attribute to UpdateExpression.
+        As described in the `developer guide <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html#Expressions.Modifying.UpdateExpressions.DELETE>`__.
+
+            >>> connection(PutItem(table, {"h": 0, "a": {1, 2, 3}}))
+            <LowVoltage.actions.put_item.Result object at ...>
+            >>> connection(
+            ...   UpdateItem(table, {"h": 0})
+            ...     .delete("a", "vals")
+            ...     .expression_attribute_value("vals", set([1, 2]))
+            ...     .return_values_all_new()
+            ... ).attributes
+            {u'a': set([3]), u'h': 0}
+        """
         self.__delete[attribute_name] = value_name
         return self
 
