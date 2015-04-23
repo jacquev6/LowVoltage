@@ -22,7 +22,8 @@ def fix_table_description(d):
 
 def main():  # pragma no cover (Test code)
     try:
-        import testresources, MockMockMock
+        import testresources
+        import MockMockMock
     except ImportError:
         warnings.warn("You are running a subset of LowVoltage's tests. 'pip install testresources MockMockMock' to enable the full test suite.")
     unittest.main(catchbreak=True, testLoader=TestLoader())

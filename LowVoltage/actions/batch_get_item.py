@@ -4,7 +4,7 @@
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
-from .action import Action, ActionProxy
+from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
 from .expression_mixins import ExpressionAttributeNamesMixin, ProjectionExpressionMixin
 from .next_gen_mixins import proxy, ReturnConsumedCapacity, ConsistentRead
