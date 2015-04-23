@@ -45,16 +45,12 @@ Install from PyPI::
 
     $ pip install LowVoltage
 
-Import the package and create a connection:
-
-.. doctest::
+Import the package and create a connection::
 
     >>> from LowVoltage import *
     >>> connection = make_connection("eu-west-1", EnvironmentCredentials())
 
-Assuming you have a table named "LowVoltage.DocTests" with a hash key on the number attribute "h", you can put an item and get it back:
-
-.. doctest::
+Assuming you have a table named "LowVoltage.DocTests" with a hash key on the number attribute "h", you can put an item and get it back::
 
     >>> table = "LowVoltage.DocTests"
 
