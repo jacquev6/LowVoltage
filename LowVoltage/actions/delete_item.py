@@ -2,97 +2,150 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`DeleteItem`, the connection will return a :class:`DeleteItemResponse`:
+
+>>> connection(DeleteItem(table, {"h": 0}))
+<LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
+
+Note that deleting the same item twice is not an error (deleting is idempotent). To know if an item was actually deleted, use :meth:`return_values_all_old`:
+
+>>> connection(
+...   DeleteItem(table, {"h": 1})
+...     .return_values_all_old()
+... ).attributes
+{u'h': 1, u'gr': 0, u'gh': 0}
+>>> print connection(
+...   DeleteItem(table, {"h": 1})
+...     .return_values_all_old()
+... ).attributes
+None
+"""
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
-from .expression_mixins import ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin
-from .next_gen_mixins import proxy, ReturnValues, ReturnConsumedCapacity, ReturnItemCollectionMetrics
+from .next_gen_mixins import proxy, ReturnValues, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ExpressionAttributeNames, ExpressionAttributeValues, ConditionExpression
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
 
 
-class DeleteItem(
-    Action,
-    ExpressionAttributeNamesMixin,
-    ExpressionAttributeValuesMixin,
-    ConditionExpressionMixin,
-):
+
+class DeleteItemResponse(object):
+    """
+    The `DeleteItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_ResponseElements>`__
+    """
+
+    def __init__(
+        self,
+        Attributes=None,
+        ConsumedCapacity=None,
+        ItemCollectionMetrics=None,
+        **dummy
+    ):
+        self.__attributes =  Attributes
+        self.__consumed_capacity =  ConsumedCapacity
+        self.__item_collection_metrics =  ItemCollectionMetrics
+
+    @property
+    def attributes(self):
+        """
+        The previous attributes of the item you just deleted. If you used :meth:`~.DeleteItem.return_values_all_old`.
+
+        :type: None or dict
+        """
+        if _is_dict(self.__attributes):  # pragma no branch (Defensive code)
+            return _convert_db_to_dict(self.__attributes)
+
+    @property
+    def consumed_capacity(self):
+        """
+        The capacity consumed by the request. If you used :meth:`~.DeleteItem.return_consumed_capacity_total` or :meth:`~.DeleteItem.return_consumed_capacity_indexes`.
+
+        :type: None or :class:`.ConsumedCapacity_`
+        """
+        if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+            return ConsumedCapacity_(**self.__consumed_capacity)
+
+    @property
+    def item_collection_metrics(self):
+        """
+        Metrics about the collection of the item you just deleted. If a LSI was touched and you used :meth:`~.DeleteItem.return_item_collection_metrics_size`.
+
+        :type: None or :class:`.ItemCollectionMetrics_`
+        """
+        if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
+            return ItemCollectionMetrics_(**self.__item_collection_metrics)
+
+
+class DeleteItem(Action):
     """
     The `DeleteItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_RequestParameters>`__
-
-    Note that deleting the same item twice is not an error (deleting is idempotent). To know if an item was actually deleted, use :meth:`return_values_all_old`:
-
-        >>> connection(
-        ...   DeleteItem(table, {"h": 0})
-        ...     .return_values_all_old()
-        ... ).attributes
-        {u'h': 0, u'gr': 0, u'gh': 0}
-        >>> print connection(
-        ...   DeleteItem(table, {"h": 0})
-        ...     .return_values_all_old()
-        ... ).attributes
-        None
     """
-
-    class Result(object):
-        """
-        The `DeleteItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_ResponseElements>`__
-        """
-
-        def __init__(
-            self,
-            Attributes=None,
-            ConsumedCapacity=None,
-            ItemCollectionMetrics=None,
-            **dummy
-        ):
-            self.attributes = None
-            "@todo Document"
-            if _is_dict(Attributes):  # pragma no branch (Defensive code)
-                self.attributes = _convert_db_to_dict(Attributes)
-
-            self.consumed_capacity = None
-            "@todo Document"
-            if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
-
-            self.item_collection_metrics = None
-            "@todo Document"
-            if _is_dict(ItemCollectionMetrics):  # pragma no branch (Defensive code)
-                self.item_collection_metrics = ItemCollectionMetrics_(**ItemCollectionMetrics)
 
     def __init__(self, table_name, key):
         super(DeleteItem, self).__init__("DeleteItem")
         self.__table_name = table_name
         self.__key = key
-        self.__return_values = ReturnValues(self)
+        self.__condition_expression = ConditionExpression(self)
+        self.__expression_attribute_names = ExpressionAttributeNames(self)
+        self.__expression_attribute_values = ExpressionAttributeValues(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
-        ExpressionAttributeNamesMixin.__init__(self)
-        ExpressionAttributeValuesMixin.__init__(self)
-        ConditionExpressionMixin.__init__(self)
+        self.__return_values = ReturnValues(self)
 
     def build(self):
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        data.update(self.__return_values.build())
+        data.update(self.__condition_expression.build())
+        data.update(self.__expression_attribute_names.build())
+        data.update(self.__expression_attribute_values.build())
         data.update(self.__return_consumed_capacity.build())
         data.update(self.__return_item_collection_metrics.build())
-        data.update(self._build_expression_attribute_names())
-        data.update(self._build_expression_attribute_values())
-        data.update(self._build_condition_expression())
+        data.update(self.__return_values.build())
         return data
+
+    @staticmethod
+    def Result(**kwds):
+        return DeleteItemResponse(**kwds)
+
+    @proxy
+    def condition_expression(self, expression):
+        """
+        >>> connection(
+        ...   DeleteItem(table, {"h": 2})
+        ...     .condition_expression("#syn=:val")
+        ...     .expression_attribute_name("syn", "gr")
+        ...     .expression_attribute_value("val", 0)
+        ... )
+        <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
+        """
+        return self.__condition_expression.set(expression)
+
+    @proxy
+    def expression_attribute_name(self, synonym, name):
+        """
+        See :meth:`~.DeleteItem.condition_expression` for an example.
+        """
+        return self.__expression_attribute_names.add(synonym, name)
+
+    @proxy
+    def expression_attribute_value(self, name, value):
+        """
+        See :meth:`~.DeleteItem.condition_expression` for an example.
+        """
+        return self.__expression_attribute_values.add(name, value)
 
     @proxy
     def return_values_all_old(self):
         """
         >>> connection(
-        ...   DeleteItem(table, {"h": 1})
+        ...   DeleteItem(table, {"h": 3})
         ...     .return_values_all_old()
         ... ).attributes
-        {u'h': 1, u'gr': 0, u'gh': 0}
+        {u'h': 3, u'gr': 0, u'gh': 0}
         """
         return self.__return_values.all_old()
 
@@ -100,7 +153,7 @@ class DeleteItem(
     def return_values_none(self):
         """
         >>> print connection(
-        ...   DeleteItem(table, {"h": 2})
+        ...   DeleteItem(table, {"h": 4})
         ...     .return_values_none()
         ... ).attributes
         None
@@ -111,7 +164,7 @@ class DeleteItem(
     def return_consumed_capacity_total(self):
         """
         >>> connection(
-        ...   DeleteItem(table, {"h": 3})
+        ...   DeleteItem(table, {"h": 5})
         ...     .return_consumed_capacity_total()
         ... ).consumed_capacity.capacity_units
         2.0
@@ -122,7 +175,7 @@ class DeleteItem(
     def return_consumed_capacity_indexes(self):
         """
         >>> c = connection(
-        ...   DeleteItem(table, {"h": 4})
+        ...   DeleteItem(table, {"h": 6})
         ...     .return_consumed_capacity_indexes()
         ... ).consumed_capacity
         >>> c.capacity_units
@@ -138,7 +191,7 @@ class DeleteItem(
     def return_consumed_capacity_none(self):
         """
         >>> print connection(
-        ...   DeleteItem(table, {"h": 5})
+        ...   DeleteItem(table, {"h": 7})
         ...     .return_consumed_capacity_none()
         ... ).consumed_capacity
         None
@@ -243,7 +296,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testExpressionAttributeValue(self):
+    def test_expression_attribute_value(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
             {
@@ -253,7 +306,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testExpressionAttributeName(self):
+    def test_expression_attribute_name(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
             {
@@ -263,7 +316,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
             }
         )
 
-    def testConditionExpression(self):
+    def test_condition_expression(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": 42}).condition_expression("a=b").build(),
             {

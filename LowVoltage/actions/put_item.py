@@ -2,7 +2,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 """
-When passed a :class:`PutItem`, the connection will return a :class:`PutItemResponse`:
+When given a :class:`PutItem`, the connection will return a :class:`PutItemResponse`:
 
 >>> connection(PutItem(table, {"h": 0}))
 <LowVoltage.actions.put_item.PutItemResponse object at ...>

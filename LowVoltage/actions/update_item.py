@@ -2,52 +2,74 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`UpdateItem`, the connection will return a :class:`UpdateItemResponse`:
+
+>>> connection(UpdateItem(table, {"h": 0}).remove("a"))
+<LowVoltage.actions.update_item.UpdateItemResponse object at ...>
+"""
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
-from .expression_mixins import ExpressionAttributeNamesMixin, ExpressionAttributeValuesMixin, ConditionExpressionMixin
-from .next_gen_mixins import proxy, ReturnValues, ReturnConsumedCapacity, ReturnItemCollectionMetrics
+from .next_gen_mixins import proxy, ReturnValues, ReturnConsumedCapacity, ReturnItemCollectionMetrics, ExpressionAttributeNames, ExpressionAttributeValues, ConditionExpression
 from .return_types import ConsumedCapacity_, ItemCollectionMetrics_, _is_dict
 
 
-class UpdateItem(
-    Action,
-    ExpressionAttributeNamesMixin,
-    ExpressionAttributeValuesMixin,
-    ConditionExpressionMixin,
-):
+class UpdateItemResponse(object):
+    """
+    The `UpdateItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        Attributes=None,
+        ConsumedCapacity=None,
+        ItemCollectionMetrics=None,
+        **dummy
+    ):
+        self.__attributes = Attributes
+        self.__consumed_capacity = ConsumedCapacity
+        self.__item_collection_metrics = ItemCollectionMetrics
+
+    @property
+    def attributes(self):
+        """
+        The (previous or new) attributes of the item you just updated. If you used :meth:`~.UpdateItem.return_values_all_old`, :meth:`~.UpdateItem.return_values_all_new`, :meth:`~.UpdateItem.return_values_updated_old` or :meth:`~.UpdateItem.return_values_updated_new`.
+
+        :type: None or dict
+        """
+        if _is_dict(self.__attributes):  # pragma no branch (Defensive code)
+            return _convert_db_to_dict(self.__attributes)
+
+    # @todo Remove '_' prefix from classes in .return_types.
+
+    @property
+    def consumed_capacity(self):
+        """
+        The capacity consumed by the request. If you used :meth:`~.UpdateItem.return_consumed_capacity_total` or :meth:`~.UpdateItem.return_consumed_capacity_indexes`.
+
+        :type: None or :class:`.ConsumedCapacity_`
+        """
+        if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+            return ConsumedCapacity_(**self.__consumed_capacity)
+
+    @property
+    def item_collection_metrics(self):
+        """
+        Metrics about the collection of the item you just updated. If a LSI was touched and you used :meth:`~.UpdateItem.return_item_collection_metrics_size`.
+
+        :type: None or :class:`.ItemCollectionMetrics_`
+        """
+        if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
+            return ItemCollectionMetrics_(**self.__item_collection_metrics)
+
+
+class UpdateItem(Action):
     """
     The `UpdateItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_RequestParameters>`__.
     """
-
-    class Result(object):
-        """
-        The `UpdateItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_ResponseElements>`__.
-        """
-
-        def __init__(
-            self,
-            Attributes=None,
-            ConsumedCapacity=None,
-            ItemCollectionMetrics=None,
-            **dummy
-        ):
-            self.attributes = None
-            "@todo Document"
-            if _is_dict(Attributes):  # pragma no branch (Defensive code)
-                self.attributes = _convert_db_to_dict(Attributes)
-
-            self.consumed_capacity = None
-            "@todo Document"
-            if _is_dict(ConsumedCapacity):  # pragma no branch (Defensive code)
-                self.consumed_capacity = ConsumedCapacity_(**ConsumedCapacity)
-
-            self.item_collection_metrics = None
-            "@todo Document"
-            if _is_dict(ItemCollectionMetrics):  # pragma no branch (Defensive code)
-                self.item_collection_metrics = ItemCollectionMetrics_(**ItemCollectionMetrics)
 
     def __init__(self, table_name, key):
         super(UpdateItem, self).__init__("UpdateItem")
@@ -57,24 +79,24 @@ class UpdateItem(
         self.__remove = []
         self.__add = {}
         self.__delete = {}
-        self.__return_values = ReturnValues(self)
+        self.__condition_expression = ConditionExpression(self)
+        self.__expression_attribute_names = ExpressionAttributeNames(self)
+        self.__expression_attribute_values = ExpressionAttributeValues(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
-        ExpressionAttributeNamesMixin.__init__(self)
-        ExpressionAttributeValuesMixin.__init__(self)
-        ConditionExpressionMixin.__init__(self)
+        self.__return_values = ReturnValues(self)
 
     def build(self):
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        data.update(self.__return_values.build())
+        data.update(self.__condition_expression.build())
+        data.update(self.__expression_attribute_names.build())
+        data.update(self.__expression_attribute_values.build())
         data.update(self.__return_consumed_capacity.build())
         data.update(self.__return_item_collection_metrics.build())
-        data.update(self._build_expression_attribute_names())
-        data.update(self._build_expression_attribute_values())
-        data.update(self._build_condition_expression())
+        data.update(self.__return_values.build())
         update = []
         if self.__set:
             update.append("SET {}".format(", ".join("{}={}".format(n, v) for n, v in self.__set.iteritems())))
@@ -87,6 +109,10 @@ class UpdateItem(
         if update:
             data["UpdateExpression"] = " ".join(update)
         return data
+
+    @staticmethod
+    def Result(**kwds):
+        return UpdateItemResponse(**kwds)
 
     # @todo should we provide bundle methods for set, add, delete that do an implicit expression_attribute_value with a generated value_name?
     # @todo should we provide add_to_int (accepting an int), add_to_set and delete_from_set (accepting several ints, strs or binaries)?
@@ -180,6 +206,34 @@ class UpdateItem(
         """
         self.__delete[attribute_name] = value_name
         return self
+
+    @proxy
+    def condition_expression(self, expression):
+        """
+        >>> connection(
+        ...   UpdateItem(table, {"h": 1})
+        ...     .remove("gh")
+        ...     .condition_expression("#syn=:val")
+        ...     .expression_attribute_name("syn", "gr")
+        ...     .expression_attribute_value("val", 0)
+        ... )
+        <LowVoltage.actions.update_item.UpdateItemResponse object at ...>
+        """
+        return self.__condition_expression.set(expression)
+
+    @proxy
+    def expression_attribute_name(self, synonym, name):
+        """
+        See :meth:`~.UpdateItem.condition_expression` for an example.
+        """
+        return self.__expression_attribute_names.add(synonym, name)
+
+    @proxy
+    def expression_attribute_value(self, name, value):
+        """
+        See :meth:`~.UpdateItem.condition_expression` for an example.
+        """
+        return self.__expression_attribute_values.add(name, value)
 
     @proxy
     def return_values_all_old(self):

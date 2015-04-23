@@ -3,7 +3,7 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 """
-When passed a :class:`GetItem`, the connection will return a :class:`GetItemResponse`:
+When given a :class:`GetItem`, the connection will return a :class:`GetItemResponse`:
 
 >>> connection(GetItem(table, {"h": 0}))
 <LowVoltage.actions.get_item.GetItemResponse object at ...>
