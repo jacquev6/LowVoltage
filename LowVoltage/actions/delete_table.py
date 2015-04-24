@@ -7,23 +7,34 @@ import datetime
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
-from .return_types import TableDescription_, _is_dict
+from .return_types import TableDescription, _is_dict
+
+
+class DeleteTableResponse(object):
+    """
+    The `DeleteTable response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        TableDescription=None,
+        **dummy
+    ):
+        self.__table_description = TableDescription
+
+    @property
+    def table_description(self):
+        """
+        :type: None or :class:`.TableDescription`
+        """
+        if _is_dict(self.__table_description):  # pragma no branch (Defensive code)
+            return TableDescription(**self.__table_description)
 
 
 class DeleteTable(Action):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_RequestParameters"""
-
-    class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_ResponseElements"""
-
-        def __init__(
-            self,
-            TableDescription=None,
-            **dummy
-        ):
-            self.table_description = None
-            if _is_dict(TableDescription):  # pragma no branch (Defensive code)
-                self.table_description = TableDescription_(**TableDescription)
+    """
+    The `DeleteTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_RequestParameters>`__.
+    """
 
     def __init__(self, table_name):
         super(DeleteTable, self).__init__("DeleteTable")
@@ -31,6 +42,10 @@ class DeleteTable(Action):
 
     def build(self):
         return {"TableName": self.__table_name}
+
+    @staticmethod
+    def Result(**kwds):
+        return DeleteTableResponse(**kwds)
 
 
 class DeleteTableUnitTests(_tst.UnitTests):

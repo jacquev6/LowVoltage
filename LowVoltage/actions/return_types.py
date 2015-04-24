@@ -35,8 +35,10 @@ def _is_list_of_float(l):
     return isinstance(l, list) and all(_is_float(e) for e in l)
 
 
-class TableDescription_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html"""
+class TableDescription(object):
+    """
+    `TableDescription <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TableDescription.html>`__.
+    """
 
     def __init__(
         self,
@@ -52,49 +54,102 @@ class TableDescription_(object):
         TableStatus=None,
         **dummy
     ):
-        self.attribute_definitions = None
-        if _is_list_of_dict(AttributeDefinitions):  # pragma no branch (Defensive code)
-            self.attribute_definitions = [AttributeDefinition_(**d) for d in AttributeDefinitions]
+        self.__attribute_definitions = AttributeDefinitions
+        self.__creation_date_time = CreationDateTime
+        self.__global_secondary_indexes = GlobalSecondaryIndexes
+        self.__item_count = ItemCount
+        self.__key_schema = KeySchema
+        self.__local_secondary_indexes = LocalSecondaryIndexes
+        self.__provisioned_throughput = ProvisionedThroughput
+        self.__table_name = TableName
+        self.__table_size_bytes = TableSizeBytes
+        self.__table_status = TableStatus
 
-        self.creation_date_time = None
-        if _is_float(CreationDateTime):  # pragma no branch (Defensive code)
-            self.creation_date_time = datetime.datetime.utcfromtimestamp(CreationDateTime)
+    @property
+    def attribute_definitions(self):
+        """
+        :type: None or list of :class:`.AttributeDefinition`
+        """
+        if _is_list_of_dict(self.__attribute_definitions):  # pragma no branch (Defensive code)
+            return [AttributeDefinition(**d) for d in self.__attribute_definitions]
 
-        self.global_secondary_indexes = None
-        if _is_list_of_dict(GlobalSecondaryIndexes):  # pragma no branch (Defensive code)
-            self.global_secondary_indexes = [GlobalSecondaryIndexDescription_(**d) for d in GlobalSecondaryIndexes]
+    @property
+    def creation_date_time(self):
+        """
+        :type: None or :class:`~datetime.datetime`
+        """
+        if _is_float(self.__creation_date_time):  # pragma no branch (Defensive code)
+            return datetime.datetime.utcfromtimestamp(self.__creation_date_time)
 
-        self.item_count = None
-        if _is_int(ItemCount):  # pragma no branch (Defensive code)
-            self.item_count = long(ItemCount)
+    @property
+    def global_secondary_indexes(self):
+        """
+        :type: None or list of :class:`.GlobalSecondaryIndexDescription`
+        """
+        if _is_list_of_dict(self.__global_secondary_indexes):  # pragma no branch (Defensive code)
+            return [GlobalSecondaryIndexDescription(**d) for d in self.__global_secondary_indexes]
 
-        self.key_schema = None
-        if _is_list_of_dict(KeySchema):  # pragma no branch (Defensive code)
-            self.key_schema = [KeySchemaElement_(**e) for e in KeySchema]
+    @property
+    def item_count(self):
+        """
+        :type: None or long
+        """
+        if _is_int(self.__item_count):  # pragma no branch (Defensive code)
+            return long(self.__item_count)
 
-        self.local_secondary_indexes = None
-        if _is_list_of_dict(LocalSecondaryIndexes):  # pragma no branch (Defensive code)
-            self.local_secondary_indexes = [LocalSecondaryIndexDescription_(**d) for d in LocalSecondaryIndexes]
+    @property
+    def key_schema(self):
+        """
+        :type: None or list of :class:`.KeySchemaElement`
+        """
+        if _is_list_of_dict(self.__key_schema):  # pragma no branch (Defensive code)
+            return [KeySchemaElement(**e) for e in self.__key_schema]
 
-        self.provisioned_throughput = None
-        if _is_dict(ProvisionedThroughput):  # pragma no branch (Defensive code)
-            self.provisioned_throughput = ProvisionedThroughputDescription_(**ProvisionedThroughput)
+    @property
+    def local_secondary_indexes(self):
+        """
+        :type: None or list of :class:`.LocalSecondaryIndexDescription`
+        """
+        if _is_list_of_dict(self.__local_secondary_indexes):  # pragma no branch (Defensive code)
+            return [LocalSecondaryIndexDescription(**d) for d in self.__local_secondary_indexes]
 
-        self.table_name = None
-        if _is_str(TableName):  # pragma no branch (Defensive code)
-            self.table_name = TableName
+    @property
+    def provisioned_throughput(self):
+        """
+        :type: None or :class:`.ProvisionedThroughputDescription`
+        """
+        if _is_dict(self.__provisioned_throughput):  # pragma no branch (Defensive code)
+            return ProvisionedThroughputDescription(**self.__provisioned_throughput)
 
-        self.table_size_bytes = None
-        if _is_int(TableSizeBytes):  # pragma no branch (Defensive code)
-            self.table_size_bytes = long(TableSizeBytes)
+    @property
+    def table_name(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__table_name):  # pragma no branch (Defensive code)
+            return self.__table_name
 
-        self.table_status = None
-        if _is_str(TableStatus):  # pragma no branch (Defensive code)
-            self.table_status = TableStatus
+    @property
+    def table_size_bytes(self):
+        """
+        :type: None or long
+        """
+        if _is_int(self.__table_size_bytes):  # pragma no branch (Defensive code)
+            return long(self.__table_size_bytes)
+
+    @property
+    def table_status(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__table_status):  # pragma no branch (Defensive code)
+            return self.__table_status
 
 
-class AttributeDefinition_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeDefinition.html"""
+class AttributeDefinition(object):
+    """
+    `AttributeDefinition <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeDefinition.html>`__.
+    """
 
     def __init__(
         self,
@@ -102,17 +157,30 @@ class AttributeDefinition_(object):
         AttributeType=None,
         **dummy
     ):
-        self.attribute_name = None
-        if _is_str(AttributeName):  # pragma no branch (Defensive code)
-            self.attribute_name = AttributeName
+        self.__attribute_name = AttributeName
+        self.__attribute_type = AttributeType
 
-        self.attribute_type = None
-        if _is_str(AttributeType):  # pragma no branch (Defensive code)
-            self.attribute_type = AttributeType
+    @property
+    def attribute_name(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__attribute_name):  # pragma no branch (Defensive code)
+            return self.__attribute_name
+
+    @property
+    def attribute_type(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__attribute_type):  # pragma no branch (Defensive code)
+            return self.__attribute_type
 
 
-class GlobalSecondaryIndexDescription_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GlobalSecondaryIndexDescription.html"""
+class GlobalSecondaryIndexDescription(object):
+    """
+    `GlobalSecondaryIndexDescription <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GlobalSecondaryIndexDescription.html>`__.
+    """
 
     def __init__(
         self,
@@ -125,37 +193,75 @@ class GlobalSecondaryIndexDescription_(object):
         ProvisionedThroughput=None,
         **dummy
     ):
-        self.index_name = None
-        if _is_str(IndexName):  # pragma no branch (Defensive code)
-            self.index_name = IndexName
+        self.__index_name = IndexName
+        self.__index_size_bytes = IndexSizeBytes
+        self.__index_status = IndexStatus
+        self.__item_count = ItemCount
+        self.__key_schema = KeySchema
+        self.__projection = Projection
+        self.__provisioned_throughput = ProvisionedThroughput
 
-        self.index_size_bytes = None
-        if _is_int(IndexSizeBytes):  # pragma no branch (Defensive code)
-            self.index_size_bytes = long(IndexSizeBytes)
+    @property
+    def index_name(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__index_name):  # pragma no branch (Defensive code)
+            return self.__index_name
 
-        self.index_status = None
-        if _is_str(IndexStatus):  # pragma no branch (Defensive code)
-            self.index_status = IndexStatus
+    @property
+    def index_size_bytes(self):
+        """
+        :type: None or long
+        """
+        if _is_int(self.__index_size_bytes):  # pragma no branch (Defensive code)
+            return long(self.__index_size_bytes)
 
-        self.item_count = None
-        if _is_int(ItemCount):  # pragma no branch (Defensive code)
-            self.item_count = long(ItemCount)
+    @property
+    def index_status(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__index_status):  # pragma no branch (Defensive code)
+            return self.__index_status
 
-        self.key_schema = None
-        if _is_list_of_dict(KeySchema):  # pragma no branch (Defensive code)
-            self.key_schema = [KeySchemaElement_(**e) for e in KeySchema]
+    @property
+    def item_count(self):
+        """
+        :type: None or long
+        """
+        if _is_int(self.__item_count):  # pragma no branch (Defensive code)
+            return long(self.__item_count)
 
-        self.projection = None
-        if _is_dict(Projection):  # pragma no branch (Defensive code)
-            self.projection = Projection_(**Projection)
+    @property
+    def key_schema(self):
+        """
+        :type: None or list of :class:`.KeySchemaElement`
+        """
+        if _is_list_of_dict(self.__key_schema):  # pragma no branch (Defensive code)
+            return [KeySchemaElement(**e) for e in self.__key_schema]
 
-        self.provisioned_throughput = None
-        if _is_dict(ProvisionedThroughput):  # pragma no branch (Defensive code)
-            self.provisioned_throughput = ProvisionedThroughputDescription_(**ProvisionedThroughput)
+    @property
+    def projection(self):
+        """
+        :type: None or :class:`.Projection`
+        """
+        if _is_dict(self.__projection):  # pragma no branch (Defensive code)
+            return Projection(**self.__projection)
+
+    @property
+    def provisioned_throughput(self):
+        """
+        :type: None or :class:`.ProvisionedThroughputDescription`
+        """
+        if _is_dict(self.__provisioned_throughput):  # pragma no branch (Defensive code)
+            return ProvisionedThroughputDescription(**self.__provisioned_throughput)
 
 
-class Projection_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Projection.html"""
+class Projection(object):
+    """
+    `Projection <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Projection.html>`__.
+    """
 
     def __init__(
         self,
@@ -163,17 +269,30 @@ class Projection_(object):
         ProjectionType=None,
         **dummy
     ):
-        self.non_key_attributes = None
-        if _is_list_of_str(NonKeyAttributes):  # pragma no branch (Defensive code)
-            self.non_key_attributes = NonKeyAttributes
+        self.__non_key_attributes = NonKeyAttributes
+        self.__projection_type = ProjectionType
 
-        self.projection_type = None
-        if _is_str(ProjectionType):  # pragma no branch (Defensive code)
-            self.projection_type = ProjectionType
+    @property
+    def non_key_attributes(self):
+        """
+        :type: None or list of string
+        """
+        if _is_list_of_str(self.__non_key_attributes):  # pragma no branch (Defensive code)
+            return self.__non_key_attributes
+
+    @property
+    def projection_type(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__projection_type):  # pragma no branch (Defensive code)
+            return self.__projection_type
 
 
-class ProvisionedThroughputDescription_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughputDescription.html"""
+class ProvisionedThroughputDescription(object):
+    """
+    `ProvisionedThroughputDescription <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughputDescription.html>`__.
+    """
 
     def __init__(
         self,
@@ -184,29 +303,57 @@ class ProvisionedThroughputDescription_(object):
         WriteCapacityUnits=None,
         **dummy
     ):
-        self.last_decrease_date_time = None
-        if _is_float(LastDecreaseDateTime):  # pragma no branch (Defensive code)
-            self.last_decrease_date_time = datetime.datetime.utcfromtimestamp(LastDecreaseDateTime)
+        self.__last_decrease_date_time = LastDecreaseDateTime
+        self.__last_increase_date_time = LastIncreaseDateTime
+        self.__number_of_decreases_today = NumberOfDecreasesToday
+        self.__read_capacity_units = ReadCapacityUnits
+        self.__write_capacity_units = WriteCapacityUnits
 
-        self.last_increase_date_time = None
-        if _is_float(LastIncreaseDateTime):  # pragma no branch (Defensive code)
-            self.last_increase_date_time = datetime.datetime.utcfromtimestamp(LastIncreaseDateTime)
+    @property
+    def last_decrease_date_time(self):
+        """
+        :type: None or :class:`~datetime.datetime`
+        """
+        if _is_float(self.__last_decrease_date_time):  # pragma no branch (Defensive code)
+            return datetime.datetime.utcfromtimestamp(self.__last_decrease_date_time)
 
-        self.number_of_decreases_today = None
-        if _is_int(NumberOfDecreasesToday):  # pragma no branch (Defensive code)
-            self.number_of_decreases_today = long(NumberOfDecreasesToday)
+    @property
+    def last_increase_date_time(self):
+        """
+        :type: None or :class:`~datetime.datetime`
+        """
+        if _is_float(self.__last_increase_date_time):  # pragma no branch (Defensive code)
+            return datetime.datetime.utcfromtimestamp(self.__last_increase_date_time)
 
-        self.read_capacity_units = None
-        if _is_int(ReadCapacityUnits):  # pragma no branch (Defensive code)
-            self.read_capacity_units = long(ReadCapacityUnits)
+    @property
+    def number_of_decreases_today(self):
+        """
+        :type: None or long
+        """
+        if _is_int(self.__number_of_decreases_today):  # pragma no branch (Defensive code)
+            return long(self.__number_of_decreases_today)
 
-        self.write_capacity_units = None
-        if _is_int(WriteCapacityUnits):  # pragma no branch (Defensive code)
-            self.write_capacity_units = long(WriteCapacityUnits)
+    @property
+    def read_capacity_units(self):
+        """
+        :type: None or long
+        """
+        if _is_int(self.__read_capacity_units):  # pragma no branch (Defensive code)
+            return long(self.__read_capacity_units)
+
+    @property
+    def write_capacity_units(self):
+        """
+        :type: None or long
+        """
+        if _is_int(self.__write_capacity_units):  # pragma no branch (Defensive code)
+            return long(self.__write_capacity_units)
 
 
-class KeySchemaElement_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_KeySchemaElement.html"""
+class KeySchemaElement(object):
+    """
+    `KeySchemaElement <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_KeySchemaElement.html>`__.
+    """
 
     def __init__(
         self,
@@ -214,17 +361,30 @@ class KeySchemaElement_(object):
         KeyType=None,
         **dummy
     ):
-        self.attribute_name = None
-        if _is_str(AttributeName):  # pragma no branch (Defensive code)
-            self.attribute_name = AttributeName
+        self.__attribute_name = AttributeName
+        self.__key_type = KeyType
 
-        self.key_type = None
-        if _is_str(KeyType):  # pragma no branch (Defensive code)
-            self.key_type = KeyType
+    @property
+    def attribute_name(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__attribute_name):  # pragma no branch (Defensive code)
+            return self.__attribute_name
+
+    @property
+    def key_type(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__key_type):  # pragma no branch (Defensive code)
+            return self.__key_type
 
 
-class LocalSecondaryIndexDescription_(object):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_LocalSecondaryIndexDescription.html"""
+class LocalSecondaryIndexDescription(object):
+    """
+    `LocalSecondaryIndexDescription <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_LocalSecondaryIndexDescription.html>`__.
+    """
 
     def __init__(
         self,
@@ -235,25 +395,51 @@ class LocalSecondaryIndexDescription_(object):
         Projection=None,
         **dummy
     ):
-        self.index_name = None
-        if _is_str(IndexName):  # pragma no branch (Defensive code)
-            self.index_name = IndexName
+        self.__index_name = IndexName
+        self.__index_size_bytes = IndexSizeBytes
+        self.__item_count = ItemCount
+        self.__key_schema = KeySchema
+        self.__projection = Projection
 
-        self.index_size_bytes = None
-        if _is_int(IndexSizeBytes):  # pragma no branch (Defensive code)
-            self.index_size_bytes = long(IndexSizeBytes)
+    @property
+    def index_name(self):
+        """
+        :type: None or string
+        """
+        if _is_str(self.__index_name):  # pragma no branch (Defensive code)
+            return self.__index_name
 
-        self.item_count = None
-        if ItemCount is not None:  # pragma no branch (Defensive code)
-            self.item_count = long(ItemCount)
+    @property
+    def index_size_bytes(self):
+        """
+        :type: None or 
+        """
+        if _is_int(self.__index_size_bytes):  # pragma no branch (Defensive code)
+            return long(self.__index_size_bytes)
 
-        self.key_schema = None
-        if KeySchema is not None:  # pragma no branch (Defensive code)
-            self.key_schema = [KeySchemaElement_(**e) for e in KeySchema]
+    @property
+    def item_count(self):
+        """
+        :type: None or long
+        """
+        if _is_int(self.__item_count):  # pragma no branch (Defensive code)
+            return long(self.__item_count)
 
-        self.projection = None
-        if Projection is not None:  # pragma no branch (Defensive code)
-            self.projection = Projection_(**Projection)
+    @property
+    def key_schema(self):
+        """
+        :type: None or list of :class:`.KeySchemaElement`
+        """
+        if _is_list_of_dict(self.__key_schema):  # pragma no branch (Defensive code)
+            return [KeySchemaElement(**e) for e in self.__key_schema]
+
+    @property
+    def projection(self):
+        """
+        :type: None or 
+        """
+        if _is_dict(self.__projection):  # pragma no branch (Defensive code)
+            return Projection(**self.__projection)
 
 
 class ConsumedCapacity(object):

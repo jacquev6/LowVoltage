@@ -16,6 +16,9 @@ extensions = []
 
 
 nitpicky = True
+nitpick_ignore = [
+    ("py:class", "datetime.datetime")
+]
 
 # http://stackoverflow.com/a/28778969/905845
 acknowledged_warnings = [

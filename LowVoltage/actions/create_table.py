@@ -7,23 +7,34 @@ import datetime
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action, ActionProxy
-from .return_types import TableDescription_, _is_dict
+from .return_types import TableDescription, _is_dict
+
+
+class CreateTableResponse(object):
+    """
+    The `CreateTable response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        TableDescription=None,
+        **dummy
+    ):
+        self.__table_description = TableDescription
+
+    @property
+    def table_description(self):
+        """
+        :type: None or :class:`.TableDescription`
+        """
+        if _is_dict(self.__table_description):  # pragma no branch (Defensive code)
+            return TableDescription(**self.__table_description)
 
 
 class CreateTable(Action):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_RequestParameters"""
-
-    class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_ResponseElements"""
-
-        def __init__(
-            self,
-            TableDescription=None,
-            **dummy
-        ):
-            self.table_description = None
-            if _is_dict(TableDescription):  # pragma no branch (Defensive code)
-                self.table_description = TableDescription_(**TableDescription)
+    """
+    The `CreateTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_RequestParameters>`__.
+    """
 
     # @todo Should we add ctor parameters and allow use to choose between ctor and builder syntaxes? Same for .global_secondary_index. Same everywhere.
 
@@ -64,6 +75,10 @@ class CreateTable(Action):
         if self.__lsis:
             data["LocalSecondaryIndexes"] = [i._build() for i in self.__lsis.itervalues()]
         return data
+
+    @staticmethod
+    def Result(**kwds):
+        return CreateTableResponse(**kwds)
 
     class _Index(ActionProxy):
         def __init__(self, action, name):
@@ -143,32 +158,50 @@ class CreateTable(Action):
             return data
 
     def hash_key(self, name, typ=None):
+        """
+        @todo Document
+        """
         self.__hash_key = name
         if typ is not None:
             self.attribute_definition(name, typ)
         return self
 
     def range_key(self, name, typ=None):
+        """
+        @todo Document
+        """
         self.__range_key = name
         if typ is not None:
             self.attribute_definition(name, typ)
         return self
 
     def attribute_definition(self, name, typ):
+        """
+        @todo Document
+        """
         self.__attribute_definitions[name] = typ
         return self
 
     def provisioned_throughput(self, read_capacity_units, write_capacity_units):
+        """
+        @todo Document
+        """
         self.__read_capacity_units = read_capacity_units
         self.__write_capacity_units = write_capacity_units
         return self
 
     def global_secondary_index(self, name):
+        """
+        @todo Document
+        """
         if name not in self.__gsis:
             self.__gsis[name] = self._IndexWithThroughput(self, name)
         return self.__gsis[name]
 
     def local_secondary_index(self, name):
+        """
+        @todo Document
+        """
         if name not in self.__lsis:
             self.__lsis[name] = self._Index(self, name)
         return self.__lsis[name]

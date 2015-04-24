@@ -7,24 +7,36 @@ import datetime
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action, ActionProxy
-from .return_types import TableDescription_, _is_dict
+from .return_types import TableDescription, _is_dict
+
+
+class UpdateTableResponse(object):
+    """
+    The `UpdateTable response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        TableDescription=None,
+        **dummy
+    ):
+        self.__table_description = TableDescription
+
+    @property
+    def table_description(self):
+        """
+        :type: None or :class:`.TableDescription`
+        """
+        if _is_dict(self.__table_description):  # pragma no branch (Defensive code)
+            return TableDescription(**self.__table_description)
 
 
 class UpdateTable(Action):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_RequestParameters"""
+    """
+    The `UpdateTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_RequestParameters>`__.
+    """
 
     # @todo Create and delete secondary indexes!
-
-    class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_ResponseElements"""
-        def __init__(
-            self,
-            TableDescription=None,
-            **dummy
-        ):
-            self.table_description = None
-            if _is_dict(TableDescription):  # pragma no branch (Defensive code)
-                self.table_description = TableDescription_(**TableDescription)
 
     def __init__(self, table_name):
         super(UpdateTable, self).__init__("UpdateTable")
@@ -45,6 +57,10 @@ class UpdateTable(Action):
         if self.__gsis:
             data["GlobalSecondaryIndexUpdates"] = [{"Update": i._build()} for i in self.__gsis.itervalues()]
         return data
+
+    @staticmethod
+    def Result(**kwds):
+        return UpdateTableResponse(**kwds)
 
     class _IndexWithThroughput(ActionProxy):
         def __init__(self, action, name):
@@ -73,11 +89,17 @@ class UpdateTable(Action):
             return data
 
     def provisioned_throughput(self, read_capacity_units, write_capacity_units):
+        """
+        @todo Document
+        """
         self.__read_capacity_units = read_capacity_units
         self.__write_capacity_units = write_capacity_units
         return self
 
     def global_secondary_index(self, name):
+        """
+        @todo Document
+        """
         if name not in self.__gsis:
             self.__gsis[name] = self._IndexWithThroughput(self, name)
         return self.__gsis[name]

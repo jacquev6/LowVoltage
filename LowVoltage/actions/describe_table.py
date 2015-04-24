@@ -7,23 +7,34 @@ import datetime
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
-from .return_types import TableDescription_, _is_dict
+from .return_types import TableDescription, _is_dict
+
+
+class DescribeTableResponse(object):
+    """
+    The `DescribeTable response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        Table=None,
+        **dummy
+    ):
+        self.__table = Table
+
+    @property
+    def table(self):
+        """
+        :type: None or :class:`.TableDescription`
+        """
+        if _is_dict(self.__table):  # pragma no branch (Defensive code)
+            return TableDescription(**self.__table)
 
 
 class DescribeTable(Action):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_RequestParameters"""
-
-    class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_ResponseElements"""
-
-        def __init__(
-            self,
-            Table=None,
-            **dummy
-        ):
-            self.table = None
-            if _is_dict(Table):  # pragma no branch (Defensive code)
-                self.table = TableDescription_(**Table)
+    """
+    The `DescribeTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_RequestParameters>`__.
+    """
 
     def __init__(self, table_name):
         super(DescribeTable, self).__init__("DescribeTable")
@@ -31,6 +42,10 @@ class DescribeTable(Action):
 
     def build(self):
         return {"TableName": self.__table_name}
+
+    @staticmethod
+    def Result(**kwds):
+        return DescribeTableResponse(**kwds)
 
 
 class DescribeTableUnitTests(_tst.UnitTests):

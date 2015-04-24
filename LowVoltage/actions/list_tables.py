@@ -8,25 +8,43 @@ from .action import Action
 from .return_types import _is_str, _is_list_of_str
 
 
+class ListTablesResponse(object):
+    """
+    The `ListTables request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_ResponseElements>`__.
+    """
+
+    def __init__(
+        self,
+        LastEvaluatedTableName=None,
+        TableNames=None,
+        **dummy
+    ):
+        self.__last_evaluated_table_name = LastEvaluatedTableName
+        self.__table_names = TableNames
+
+    @property
+    def last_evaluated_table_name(self):
+        """
+        If not None, you should give it to :meth:`.exclusive_start_table_name` in a subsequent :class:`.ListTables`.
+
+        :type: None or string
+        """
+        if _is_str(self.__last_evaluated_table_name):  # pragma no branch (Defensive code)
+            return self.__last_evaluated_table_name
+
+    @property
+    def table_names(self):
+        """
+        :type: None or list of string
+        """
+        if _is_list_of_str(self.__table_names):  # pragma no branch (Defensive code)
+            return self.__table_names
+
+
 class ListTables(Action):
-    """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_RequestParameters"""
-
-    class Result(object):
-        """http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_ResponseElements"""
-
-        def __init__(
-            self,
-            LastEvaluatedTableName=None,
-            TableNames=None,
-            **dummy
-        ):
-            self.last_evaluated_table_name = None
-            if _is_str(LastEvaluatedTableName):  # pragma no branch (Defensive code)
-                self.last_evaluated_table_name = LastEvaluatedTableName
-
-            self.table_names = None
-            if _is_list_of_str(TableNames):  # pragma no branch (Defensive code)
-                self.table_names = TableNames
+    """
+    The `ListTables response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_RequestParameters>`__.
+    """
 
     def __init__(self):
         super(ListTables, self).__init__("ListTables")
@@ -41,11 +59,21 @@ class ListTables(Action):
             data["ExclusiveStartTableName"] = self.__exclusive_start_table_name
         return data
 
+    @staticmethod
+    def Result(**kwds):
+        return ListTablesResponse(**kwds)
+
     def limit(self, limit):
+        """
+        @todo Document
+        """
         self.__limit = limit
         return self
 
     def exclusive_start_table_name(self, table_name):
+        """
+        @todo Document
+        """
         self.__exclusive_start_table_name = table_name
         return self
 
