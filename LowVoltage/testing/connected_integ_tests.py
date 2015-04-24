@@ -21,7 +21,7 @@ _execution_date = datetime.datetime.now()
 
 class DynamoDbResourceManager(TestResourceManager):
     def make(self, dependencies):
-        connection = _lv.make_connection("eu-west-1", _lv.EnvironmentCredentials())
+        connection = _lv.Connection("eu-west-1", _lv.EnvironmentCredentials())
 
         table = _execution_date.strftime("LowVoltage.IntegTests.%Y-%m-%d.%H-%M-%S.%f")
 
@@ -35,7 +35,7 @@ class DynamoDbResourceManager(TestResourceManager):
         return table
 
     def clean(self, table):
-        connection = _lv.make_connection("eu-west-1", _lv.EnvironmentCredentials())
+        connection = _lv.Connection("eu-west-1", _lv.EnvironmentCredentials())
         connection(_lv.DeleteTable(table))
 
 
@@ -56,7 +56,7 @@ class ConnectedIntegTests(ResourcedTestCase):
 
     def setUp(self):
         super(ConnectedIntegTests, self).setUp()
-        self.connection = _lv.make_connection("eu-west-1", _lv.EnvironmentCredentials())
+        self.connection = _lv.Connection("eu-west-1", _lv.EnvironmentCredentials())
 
     @classmethod
     def make_table_name(cls):

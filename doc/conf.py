@@ -72,7 +72,7 @@ extensions.append("sphinx.ext.doctest")
 # doctest_path
 doctest_global_setup = textwrap.dedent("""
     from LowVoltage import *
-    connection = make_connection("eu-west-1", EnvironmentCredentials())
+    connection = Connection("eu-west-1", EnvironmentCredentials())
 
     table = "LowVoltage.DocTests"
     table2 = "LowVoltage.DocTests2"

@@ -3,7 +3,7 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 """
-All public symbols are imported in the top-level module, no need to import submodules.
+All public symbols are visible in the top-level module, no need to import submodules.
 """
 
 from actions import *

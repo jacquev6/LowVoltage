@@ -7,19 +7,20 @@ Reference
 Connection
 ==========
 
-.. automodule:: LowVoltage.connection
+.. automodule:: LowVoltage.connection.connection
+    :no-members:
+
+.. autoclass:: LowVoltage.connection.connection.Connection
+
+    .. automethod:: __call__
 
 Credentials
 -----------
-
-@todo Link to user guide (authentication).
 
 .. automodule:: LowVoltage.connection.credentials
 
 Retry policies
 --------------
-
-@todo Link to user guide (error management).
 
 .. automodule:: LowVoltage.connection.retry_policies
 
@@ -30,8 +31,6 @@ Attribute types
 
 Exceptions
 ==========
-
-@todo Link to user guide (error management).
 
 .. toctree::
 

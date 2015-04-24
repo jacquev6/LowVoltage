@@ -2,6 +2,10 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+@todo Link to user guide (error management).
+"""
+
 
 class Error(Exception):
     """

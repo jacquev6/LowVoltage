@@ -34,7 +34,7 @@ class DynamoDbLocalResourceManager(TestResourceManager):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
-        return _lv.make_connection(
+        return _lv.Connection(
             "us-west-2",
             _lv.StaticCredentials("DummyKey", "DummySecret"),
             endpoint="http://localhost:65432/",
