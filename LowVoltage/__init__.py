@@ -14,7 +14,6 @@ from exceptions import *
 
 # @todo __str__ and __repr__
 # @todo docs
-# @todo credential provider for AWS's AIM roles
 # @todo create builder for attribute paths
 # @todo improve builder for expressions
 # @todo metrics

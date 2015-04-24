@@ -72,9 +72,11 @@ class Connection(object):
                     raise
 
     def __request_once(self, action):
-        key, secret = self.__credentials.get()
+        key, secret, token = self.__credentials.get()
         payload = json.dumps(action.build())
         headers = self.__signer(key, secret, self.__now(), action.name, payload)
+        if token is not None:
+            headers["X-Amz-Security-Token"] = token
         try:
             r = self.__session.post(self.__endpoint, data=payload, headers=headers)
         except requests.exceptions.RequestException as e:
@@ -104,7 +106,7 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
         self.action = self.mocks.create("action")
 
     def __expect_post(self):
-        self.credentials.expect.get().andReturn(("a", "b"))
+        self.credentials.expect.get().andReturn(("a", "b", None))
         self.action.expect.build().andReturn({"d": "e"})
         self.now.expect().andReturn("f")
         self.action.expect.name.andReturn("c")
@@ -201,6 +203,18 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
         with self.assertRaises(_exn.UnknownError) as catcher:
             self.connection(self.action.object)
         self.assertEqual(catcher.exception.args, (exception,))
+
+    def test_success_after_network_error_during_credentials(self):
+        exception = _exn.NetworkError()
+        self.credentials.expect.get().andRaise(exception)
+        self.retry_policy.expect.retry(self.action.object, [exception]).andReturn(0)
+
+        self.__expect_post().andReturn("k")
+        self.action.expect.Result.andReturn("l")
+        exception2 = _exn.ProvisionedThroughputExceededException()
+        self.responder.expect("l", "k").andReturn("m")
+
+        self.assertEqual(self.connection(self.action.object), "m")
 
 
 class ConnectionLocalIntegTests(_tst.LocalIntegTests):

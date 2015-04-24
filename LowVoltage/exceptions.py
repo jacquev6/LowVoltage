@@ -205,14 +205,24 @@ class ValidationException(ClientError):
 
 class AccessDeniedException(ClientError):
     """
-    @todo Document
+    Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
+    Seems to be raised when credentials are valid, but the operation is not allowed by IAM policies.
     """
     pass
 
 
 class InvalidSignatureException(ClientError):
     """
-    @todo Document
+    Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
+    Seems to be raised when credentials are not valid.
+    """
+    pass
+
+
+class UnrecognizedClientException(ClientError):
+    """
+    Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
+    Seems to be raised when using (valid) temporary credentials but an invalid token.
     """
     pass
 
@@ -241,8 +251,10 @@ client_errors = sorted(
         ("Throttling", Throttling),
         ("ValidationError", ValidationError),
         ("ValidationException", ValidationException),
+
         ("AccessDeniedException", AccessDeniedException),
         ("InvalidSignatureException", InvalidSignatureException),
+        ("UnrecognizedClientException", UnrecognizedClientException),
     ],
     key=lambda (prefix, cls): -len(prefix)
 )

@@ -4,4 +4,4 @@
 
 from .connection import Connection
 from .retry_policies import ExponentialBackoffRetryPolicy
-from .credentials import StaticCredentials, EnvironmentCredentials
+from .credentials import StaticCredentials, EnvironmentCredentials, Ec2RoleCredentials
