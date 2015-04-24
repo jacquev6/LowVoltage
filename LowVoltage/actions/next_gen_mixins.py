@@ -241,42 +241,38 @@ class Select(ScalarValue("Select")):
         return self.set("COUNT")
 
 
-def proxy(class_or_method):
-    def decorator(method):
-        bases = {
-            "condition_expression": ConditionExpression.set,
-            "consistent_read_false": ConsistentRead.false,
-            "consistent_read_true": ConsistentRead.true,
-            "exclusive_start_key": ExclusiveStartKey.set,
-            "expression_attribute_name": ExpressionAttributeNames.add,
-            "expression_attribute_value": ExpressionAttributeValues.add,
-            "filter_expression": FilterExpression.set,
-            "limit": Limit.set,
-            "project": ProjectionExpression.add,
-            "return_consumed_capacity_indexes": ReturnConsumedCapacity.indexes,
-            "return_consumed_capacity_none": ReturnConsumedCapacity.none,
-            "return_consumed_capacity_total": ReturnConsumedCapacity.total,
-            "return_item_collection_metrics_none": ReturnItemCollectionMetrics.none,
-            "return_item_collection_metrics_size": ReturnItemCollectionMetrics.size,
-            "return_values_all_new": ReturnValues.all_new,
-            "return_values_all_old": ReturnValues.all_old,
-            "return_values_none": ReturnValues.none,
-            "return_values_updated_new": ReturnValues.updated_new,
-            "return_values_updated_old": ReturnValues.updated_old,
-            "select_all_attributes": Select.all_attributes,
-            "select_all_projected_attributes": Select.all_projected_attributes,
-            "select_count": Select.count,
-        }
+def proxy(*proxy_args):
+    bases = {
+        "condition_expression": ConditionExpression.set,
+        "consistent_read_false": ConsistentRead.false,
+        "consistent_read_true": ConsistentRead.true,
+        "exclusive_start_key": ExclusiveStartKey.set,
+        "expression_attribute_name": ExpressionAttributeNames.add,
+        "expression_attribute_value": ExpressionAttributeValues.add,
+        "filter_expression": FilterExpression.set,
+        "limit": Limit.set,
+        "project": ProjectionExpression.add,
+        "return_consumed_capacity_indexes": ReturnConsumedCapacity.indexes,
+        "return_consumed_capacity_none": ReturnConsumedCapacity.none,
+        "return_consumed_capacity_total": ReturnConsumedCapacity.total,
+        "return_item_collection_metrics_none": ReturnItemCollectionMetrics.none,
+        "return_item_collection_metrics_size": ReturnItemCollectionMetrics.size,
+        "return_values_all_new": ReturnValues.all_new,
+        "return_values_all_old": ReturnValues.all_old,
+        "return_values_none": ReturnValues.none,
+        "return_values_updated_new": ReturnValues.updated_new,
+        "return_values_updated_old": ReturnValues.updated_old,
+        "select_all_attributes": Select.all_attributes,
+        "select_all_projected_attributes": Select.all_projected_attributes,
+        "select_count": Select.count,
+    }
 
-        args = ()
-
-        if method.__name__ == "exclusive_start_key":
-            args = class_or_method
-
-        method.__doc__ = bases[method.__name__].__doc__.format(args) + "\n" + method.__doc__
-        return method
-
-    if isinstance(class_or_method, basestring):
+    if len(proxy_args) != 1 or isinstance(proxy_args[0], basestring):
+        def decorator(method):
+            method.__doc__ = bases[method.__name__].__doc__.format(*proxy_args) + "\n" + method.__doc__
+            return method
         return decorator
     else:
-        return decorator(class_or_method)
+        method, = proxy_args
+        method.__doc__ = bases[method.__name__].__doc__.format() + "\n" + method.__doc__
+        return method
