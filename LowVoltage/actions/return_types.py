@@ -547,7 +547,7 @@ class ItemCollectionMetrics(object):
         SizeEstimateRangeGB=None,
         **dummy
     ):
-        self.__item_collection_key
+        self.__item_collection_key = ItemCollectionKey
         self.__size_estimate_range_gb = SizeEstimateRangeGB
 
     @property

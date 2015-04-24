@@ -607,7 +607,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
 
 class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
-    def testSet(self):
+    def test_set(self):
         r = self.connection(
             _lv.UpdateItem("Aaa", {"h": u"set"})
                 .set("a", ":v")
@@ -617,17 +617,12 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
                 .expression_attribute_name("p", "b")
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.attributes, None)
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.item_collection_metrics, None)
-
         self.assertEqual(
             self.connection(_lv.GetItem("Aaa", {"h": u"set"})).item,
             {"h": "set", "a": "aaa", "b": "bbb"}
         )
 
-    def testComplexUpdate(self):
+    def test_complex_update(self):
         self.connection(
             _lv.PutItem(
                 "Aaa",
@@ -658,23 +653,20 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
                 .return_values_all_new()
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(
-                r.attributes,
-                {
-                    "h": u"complex",
-                    "a": set([42, 43]),
-                    "b": 52,
-                    "d": set([41, 42, 43]),
-                    "e": 94,
-                    "f": set([41]),
-                    "g": set([39, 40]),
-                }
-            )
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.item_collection_metrics, None)
+        self.assertEqual(
+            r.attributes,
+            {
+                "h": u"complex",
+                "a": set([42, 43]),
+                "b": 52,
+                "d": set([41, 42, 43]),
+                "e": 94,
+                "f": set([41]),
+                "g": set([39, 40]),
+            }
+        )
 
-    def testConditionExpression(self):
+    def test_condition_expression(self):
         self.connection(_lv.PutItem("Aaa", {"h": u"expr", "a": 42, "b": 42}))
 
         r = self.connection(
@@ -685,13 +677,10 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
                 .return_values_all_new()
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(
-                r.attributes,
-                {"h": u"expr", "a": 42, "b": 42, "checked": True}
-            )
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.item_collection_metrics, None)
+        self.assertEqual(
+            r.attributes,
+            {"h": u"expr", "a": 42, "b": 42, "checked": True}
+        )
 
 
 class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
@@ -706,14 +695,11 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
                 .return_consumed_capacity_indexes()
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.attributes, None)
-            self.assertEqual(r.consumed_capacity.capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.table_name, self.table)
-            self.assertEqual(r.item_collection_metrics, None)
+        self.assertEqual(r.consumed_capacity.capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.table_name, self.table)
 
     def test_return_consumed_capacity_indexes(self):
         r = self.connection(
@@ -724,14 +710,11 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
                 .return_consumed_capacity_indexes()
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.attributes, None)
-            self.assertEqual(r.consumed_capacity.global_secondary_indexes["gsi"].capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.local_secondary_indexes["lsi"].capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.capacity_units, 3.0)
-            self.assertEqual(r.consumed_capacity.table_name, self.table)
-            self.assertEqual(r.item_collection_metrics, None)
+        self.assertEqual(r.consumed_capacity.global_secondary_indexes["gsi"].capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.local_secondary_indexes["lsi"].capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.capacity_units, 3.0)
+        self.assertEqual(r.consumed_capacity.table_name, self.table)
 
     def test_return_consumed_capacity_indexes_with_locally_indexed_attribute_only(self):
         r = self.connection(
@@ -740,14 +723,11 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
                 .return_consumed_capacity_indexes()
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.attributes, None)
-            self.assertEqual(r.consumed_capacity.capacity_units, 2.0)
-            self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.local_secondary_indexes["lsi"].capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.table_name, self.table)
-            self.assertEqual(r.item_collection_metrics, None)
+        self.assertEqual(r.consumed_capacity.capacity_units, 2.0)
+        self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity.local_secondary_indexes["lsi"].capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.table_name, self.table)
 
     def test_return_consumed_capacity_indexes_with_globally_indexed_attribute_only(self):
         r = self.connection(
@@ -757,14 +737,11 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
                 .return_consumed_capacity_indexes()
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.attributes, None)
-            self.assertEqual(r.consumed_capacity.capacity_units, 2.0)
-            self.assertEqual(r.consumed_capacity.global_secondary_indexes["gsi"].capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
-            self.assertEqual(r.consumed_capacity.table_name, self.table)
-            self.assertEqual(r.item_collection_metrics, None)
+        self.assertEqual(r.consumed_capacity.capacity_units, 2.0)
+        self.assertEqual(r.consumed_capacity.global_secondary_indexes["gsi"].capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity.table.capacity_units, 1.0)
+        self.assertEqual(r.consumed_capacity.table_name, self.table)
 
     def test_return_item_collection_metrics_size(self):
         r = self.connection(
@@ -773,9 +750,6 @@ class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
                 .return_item_collection_metrics_size()
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.attributes, None)
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.item_collection_metrics.item_collection_key, {"tab_h": u"0"})
-            self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[0], 0.0)
-            self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[1], 1.0)
+        self.assertEqual(r.item_collection_metrics.item_collection_key, {"tab_h": u"0"})
+        self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[0], 0.0)
+        self.assertEqual(r.item_collection_metrics.size_estimate_range_gb[1], 1.0)

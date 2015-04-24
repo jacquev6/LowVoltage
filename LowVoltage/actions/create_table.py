@@ -436,30 +436,29 @@ class CreateTableLocalIntegTests(_tst.LocalIntegTests):
         self.connection(_lv.DeleteTable("Aaa"))
         super(CreateTableLocalIntegTests, self).tearDown()
 
-    def testSimplestTable(self):
+    def test_simplest_table(self):
         r = self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
-            self.assertEqual(r.table_description.global_secondary_indexes, None)
-            self.assertEqual(r.table_description.item_count, 0)
-            self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
-            self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
-            self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
-            self.assertEqual(r.table_description.table_name, "Aaa")
-            self.assertEqual(r.table_description.table_size_bytes, 0)
-            self.assertEqual(r.table_description.table_status, "ACTIVE")
+        self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
+        self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
+        self.assertEqual(r.table_description.global_secondary_indexes, None)
+        self.assertEqual(r.table_description.item_count, 0)
+        self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes, None)
+        self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
+        self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
+        self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
+        self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
+        self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
+        self.assertEqual(r.table_description.table_name, "Aaa")
+        self.assertEqual(r.table_description.table_size_bytes, 0)
+        self.assertEqual(r.table_description.table_status, "ACTIVE")
 
-    def testSimpleGlobalSecondaryIndex(self):
+    def test_simple_global_secondary_index(self):
         r = self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
                 .global_secondary_index("the_gsi")
@@ -468,81 +467,37 @@ class CreateTableLocalIntegTests(_tst.LocalIntegTests):
                 .provisioned_throughput(3, 4)
         )
 
-        _tst.fix_table_description(r.table_description)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "ALL")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_decrease_date_time, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_increase_date_time, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 3)
+        self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 4)
 
-        with _tst.cover("r", r) as r:
-            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "ALL")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_decrease_date_time, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_increase_date_time, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 3)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 4)
-            self.assertEqual(r.table_description.item_count, 0)
-            self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
-            self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
-            self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
-            self.assertEqual(r.table_description.table_name, "Aaa")
-            self.assertEqual(r.table_description.table_size_bytes, 0)
-            self.assertEqual(r.table_description.table_status, "ACTIVE")
-
-    def testSimpleLocalSecondaryIndex(self):
+    def test_simple_local_secondary_index(self):
         r = self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).range_key("r", _lv.STRING).provisioned_throughput(1, 2)
                 .local_secondary_index("the_lsi").hash_key("h").range_key("rr", _lv.STRING).project_all()
         )
 
-        _tst.fix_table_description(r.table_description)
+        self.assertEqual(r.table_description.local_secondary_indexes[0].index_name, "the_lsi")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].index_size_bytes, 0)
+        self.assertEqual(r.table_description.local_secondary_indexes[0].item_count, 0)
+        self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[0].attribute_name, "h")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[0].key_type, "HASH")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[1].attribute_name, "rr")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[1].key_type, "RANGE")
+        self.assertEqual(r.table_description.local_secondary_indexes[0].projection.non_key_attributes, None)
+        self.assertEqual(r.table_description.local_secondary_indexes[0].projection.projection_type, "ALL")
 
-        with _tst.cover("r", r) as r:
-            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "r")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
-            self.assertEqual(r.table_description.attribute_definitions[2].attribute_name, "rr")
-            self.assertEqual(r.table_description.attribute_definitions[2].attribute_type, "S")
-            self.assertEqual(r.table_description.global_secondary_indexes, None)
-            self.assertEqual(r.table_description.item_count, 0)
-            self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.key_schema[1].attribute_name, "r")
-            self.assertEqual(r.table_description.key_schema[1].key_type, "RANGE")
-            self.assertEqual(r.table_description.local_secondary_indexes[0].index_name, "the_lsi")
-            self.assertEqual(r.table_description.local_secondary_indexes[0].index_size_bytes, 0)
-            self.assertEqual(r.table_description.local_secondary_indexes[0].item_count, 0)
-            self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[1].attribute_name, "rr")
-            self.assertEqual(r.table_description.local_secondary_indexes[0].key_schema[1].key_type, "RANGE")
-            self.assertEqual(r.table_description.local_secondary_indexes[0].projection.non_key_attributes, None)
-            self.assertEqual(r.table_description.local_secondary_indexes[0].projection.projection_type, "ALL")
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
-            self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
-            self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
-            self.assertEqual(r.table_description.table_name, "Aaa")
-            self.assertEqual(r.table_description.table_size_bytes, 0)
-            self.assertEqual(r.table_description.table_status, "ACTIVE")
-
-    def testGlobalSecondaryIndexWithProjection(self):
+    def test_global_secondary_index_with_projection(self):
         r = self.connection(
             _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
                 .global_secondary_index("the_gsi")
@@ -551,44 +506,13 @@ class CreateTableLocalIntegTests(_tst.LocalIntegTests):
                 .provisioned_throughput(3, 4)
         )
 
-        _tst.fix_table_description(r.table_description)
-
-        with _tst.cover("r", r) as r:
-            self.assertDateTimeIsReasonable(r.table_description.creation_date_time)
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_name, "h")
-            self.assertEqual(r.table_description.attribute_definitions[0].attribute_type, "S")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_name, "hh")
-            self.assertEqual(r.table_description.attribute_definitions[1].attribute_type, "S")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_name, "the_gsi")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_size_bytes, 0)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "ACTIVE")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].item_count, 0)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].attribute_name, "hh")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes[0], "toto")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes[1], "titi")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "INCLUDE")
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_decrease_date_time, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.last_increase_date_time, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.number_of_decreases_today, None)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.read_capacity_units, 3)
-            self.assertEqual(r.table_description.global_secondary_indexes[0].provisioned_throughput.write_capacity_units, 4)
-            self.assertEqual(r.table_description.item_count, 0)
-            self.assertEqual(r.table_description.key_schema[0].attribute_name, "h")
-            self.assertEqual(r.table_description.key_schema[0].key_type, "HASH")
-            self.assertEqual(r.table_description.local_secondary_indexes, None)
-            self.assertEqual(r.table_description.provisioned_throughput.last_decrease_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.last_increase_date_time, datetime.datetime(1970, 1, 1))
-            self.assertEqual(r.table_description.provisioned_throughput.number_of_decreases_today, 0)
-            self.assertEqual(r.table_description.provisioned_throughput.read_capacity_units, 1)
-            self.assertEqual(r.table_description.provisioned_throughput.write_capacity_units, 2)
-            self.assertEqual(r.table_description.table_name, "Aaa")
-            self.assertEqual(r.table_description.table_size_bytes, 0)
-            self.assertEqual(r.table_description.table_status, "ACTIVE")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes[0], "toto")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.non_key_attributes[1], "titi")
+        self.assertEqual(r.table_description.global_secondary_indexes[0].projection.projection_type, "INCLUDE")
 
 
 class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
-    def testDefineUnusedAttribute(self):
+    def test_define_unused_attribute(self):
         with self.assertRaises(_lv.ValidationException) as catcher:
             self.connection(
                 _lv.CreateTable("Aaa").hash_key("h", _lv.STRING).provisioned_throughput(1, 2)
@@ -602,7 +526,7 @@ class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
             },)
         )
 
-    def testDontDefineKeyAttribute(self):
+    def test_dont_define_key_attribute(self):
         with self.assertRaises(_lv.ValidationException) as catcher:
             self.connection(
                 _lv.CreateTable("Aaa").hash_key("h").provisioned_throughput(1, 2)
@@ -616,7 +540,7 @@ class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
             },)
         )
 
-    def testDontDefineAnyAttribute(self):
+    def test_dont_define_any_attribute(self):
         with self.assertRaises(_lv.ValidationException) as catcher:
             self.connection(
                 _lv.CreateTable("Aaa").hash_key("h").provisioned_throughput(1, 2)

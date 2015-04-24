@@ -111,18 +111,15 @@ class ListTablesLocalIntegTests(_tst.LocalIntegTests):
         self.connection(_lv.DeleteTable("Ccc"))
         super(ListTablesLocalIntegTests, self).tearDown()
 
-    def testAllArguments(self):
+    def test_all_arguments(self):
         r = self.connection(_lv.ListTables().exclusive_start_table_name("Aaa").limit(1))
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.last_evaluated_table_name, "Bbb")
-            self.assertEqual(r.table_names[0], "Bbb")
+        self.assertEqual(r.last_evaluated_table_name, "Bbb")
+        self.assertEqual(r.table_names[0], "Bbb")
 
-    def testNoArguments(self):
+    def test_no_arguments(self):
         r = self.connection(_lv.ListTables())
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.last_evaluated_table_name, None)
-            self.assertEqual(r.table_names[0], "Aaa")
-            self.assertEqual(r.table_names[1], "Bbb")
-            self.assertEqual(r.table_names[2], "Ccc")
+        self.assertEqual(r.table_names[0], "Aaa")
+        self.assertEqual(r.table_names[1], "Bbb")
+        self.assertEqual(r.table_names[2], "Ccc")

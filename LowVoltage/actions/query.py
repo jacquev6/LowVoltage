@@ -487,19 +487,17 @@ class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
             {"h": u"2", "r": 42, "v": 3},
         ))
 
-    def testSimpleQuery(self):
+    def test_simple_query(self):
         r = self.connection(
             _lv.Query("Aaa").key_eq("h", u"1")
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.count, 1)
-            self.assertEqual(r.items[0], {"h": "1", "r": 42, "v": 2})
-            self.assertEqual(r.last_evaluated_key, None)
-            self.assertEqual(r.scanned_count, 1)
+        self.assertEqual(r.count, 1)
+        self.assertEqual(r.items[0], {"h": "1", "r": 42, "v": 2})
+        self.assertEqual(r.last_evaluated_key, None)
+        self.assertEqual(r.scanned_count, 1)
 
-    def testComplexQuery(self):
+    def test_complex_query(self):
         r = self.connection(
             _lv.Query("Aaa").key_eq("h", u"0").key_between("r", 42, 44)
                 .scan_index_forward_false()
@@ -510,12 +508,10 @@ class QueryLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
                 .limit(2)
         )
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.count, 1)
-            self.assertEqual(r.items[0], {"r": 44, "v": 3})
-            self.assertEqual(r.last_evaluated_key, {"h": u"0", "r": 43})
-            self.assertEqual(r.scanned_count, 2)
+        self.assertEqual(r.count, 1)
+        self.assertEqual(r.items[0], {"r": 44, "v": 3})
+        self.assertEqual(r.last_evaluated_key, {"h": u"0", "r": 43})
+        self.assertEqual(r.scanned_count, 2)
 
 
 class QueryConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
@@ -529,13 +525,9 @@ class QueryConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
 
     def test_return_consumed_capacity_total(self):
         r = self.connection(_lv.Query(self.table).key_eq("tab_h", u"0").return_consumed_capacity_total())
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
-            self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.table, None)
-            self.assertEqual(r.consumed_capacity.table_name, self.table)
-            self.assertEqual(r.count, 1)
-            self.assertEqual(r.items[0], self.item)
-            self.assertEqual(r.last_evaluated_key, None)
-            self.assertEqual(r.scanned_count, 1)
+
+        self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
+        self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity.table, None)
+        self.assertEqual(r.consumed_capacity.table_name, self.table)

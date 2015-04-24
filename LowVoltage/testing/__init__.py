@@ -10,14 +10,9 @@ try:
 except ImportError:  # pragma no cover (Test code)
     from unittest import TestLoader
 
-from .cover import cover
 from .unit_tests import *
 from .local_integ_tests import *
 from .connected_integ_tests import *
-
-
-def fix_table_description(d):
-    d.attribute_definitions = sorted(d.attribute_definitions, key=lambda d: d.attribute_name)
 
 
 def main():  # pragma no cover (Test code)

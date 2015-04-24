@@ -247,18 +247,14 @@ class GetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
         r = self.connection(_lv.GetItem("Aaa", {"h": u"get"}))
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.item, {"h": "get", "a": "yyy"})
+        self.assertEqual(r.item, {"h": "get", "a": "yyy"})
 
     def test_get_with_projections(self):
         self.connection(_lv.PutItem("Aaa", {"h": u"attrs", "a": "yyy", "b": {"c": ["d1", "d2", "d3"]}, "e": 42, "f": "nope"}))
 
         r = self.connection(_lv.GetItem("Aaa", {"h": u"attrs"}).project("b.c[1]", "e"))
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.item, {"b": {"c": ["d2"]}, "e": 42})
+        self.assertEqual(r.item, {"b": {"c": ["d2"]}, "e": 42})
 
     def test_unexisting_table(self):
         with self.assertRaises(_lv.ResourceNotFoundException):
@@ -280,10 +276,9 @@ class GetItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
 
     def test_return_consumed_capacity_total(self):
         r = self.connection(_lv.GetItem(self.table, self.tab_key).return_consumed_capacity_total())
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
-            self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity.table, None)
-            self.assertEqual(r.consumed_capacity.table_name, self.table)
-            self.assertEqual(r.item, self.item)
+
+        self.assertEqual(r.consumed_capacity.capacity_units, 0.5)
+        self.assertEqual(r.consumed_capacity.global_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity.local_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity.table, None)
+        self.assertEqual(r.consumed_capacity.table_name, self.table)

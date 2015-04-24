@@ -31,7 +31,6 @@ from .next_gen_mixins import (
 )
 from .return_types import ConsumedCapacity, _is_dict, _is_list_of_dict
 
-# @todo Document return types
 
 class BatchGetItemResponse(object):
     """
@@ -342,8 +341,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
 
 
 class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
-    # @todo pep8 test names (everywhere)
-    def testSimpleBatchGet(self):
+    def test_simple_batch_get(self):
         self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "xxx"},
             {"h": u"2", "a": "yyy"},
@@ -352,16 +350,13 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
         r = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.responses.keys(), ["Aaa"])
-            self.assertEqual(
-                sorted(r.responses["Aaa"], key=lambda i: i["h"]),
-                [{"h": u"1", "a": "xxx"}, {"h": u"2", "a": "yyy"}, {"h": u"3", "a": "zzz"}]
-            )
-            self.assertEqual(r.unprocessed_keys, {})
+        self.assertEqual(r.responses.keys(), ["Aaa"])
+        self.assertEqual(
+            sorted(r.responses["Aaa"], key=lambda i: i["h"]),
+            [{"h": u"1", "a": "xxx"}, {"h": u"2", "a": "yyy"}, {"h": u"3", "a": "zzz"}]
+        )
 
-    def testBatchGetWithProjections(self):
+    def test_batch_get_with_projections(self):
         self.connection(_lv.BatchWriteItem().table("Aaa").put(
             {"h": u"1", "a": "a1", "b": "b1", "c": "c1"},
             {"h": u"2", "a": "a2", "b": "b2", "c": "c2"},
@@ -371,15 +366,10 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         r = self.connection(
             _lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}).expression_attribute_name("p", "b").project("h").project("a", ["#p"])
         )
-
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.responses.keys(), ["Aaa"])
-            self.assertEqual(
-                sorted(r.responses["Aaa"], key=lambda i: i["h"]),
-                [{"h": u"1", "a": "a1", "b": "b1"}, {"h": u"2", "a": "a2", "b": "b2"}, {"h": u"3", "a": "a3", "b": "b3"}]
-            )
-            self.assertEqual(r.unprocessed_keys, {})
+        self.assertEqual(
+            sorted(r.responses["Aaa"], key=lambda i: i["h"]),
+            [{"h": u"1", "a": "a1", "b": "b1"}, {"h": u"2", "a": "a2", "b": "b2"}, {"h": u"3", "a": "a3", "b": "b3"}]
+        )
 
     def test_get_unexisting_keys(self):
         self.connection(_lv.BatchWriteItem().table("Aaa").put(
@@ -389,19 +379,17 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
         r = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": u"1"}, {"h": u"2"}, {"h": u"3"}))
 
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity, None)
-            self.assertEqual(r.responses.keys(), ["Aaa"])
-            self.assertEqual(
-                sorted(r.responses["Aaa"], key=lambda i: i["h"]),
-                [{"h": u"1", "a": "xxx"}, {"h": u"2", "a": "yyy"}]
-            )
-            self.assertEqual(r.unprocessed_keys, {})
+        self.assertEqual(
+            sorted(r.responses["Aaa"], key=lambda i: i["h"]),
+            [{"h": u"1", "a": "xxx"}, {"h": u"2", "a": "yyy"}]
+        )
+        self.assertEqual(r.unprocessed_keys, {})
 
     def test_get_without_unprocessed_keys(self):
         _lv.BatchPutItem(self.connection, "Aaa", [{"h": unicode(i)} for i in range(100)])
 
         r = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
+
         self.assertEqual(r.unprocessed_keys, {})
         self.assertEqual(len(r.responses["Aaa"]), 100)
 
@@ -409,6 +397,7 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         _lv.BatchPutItem(self.connection, "Aaa", [{"h": unicode(i), "xs": "x" * 300000} for i in range(100)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
 
         r1 = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
+
         self.assertEqual(len(r1.unprocessed_keys["Aaa"]["Keys"]), 45)
         self.assertEqual(len(r1.responses["Aaa"]), 55)
 
@@ -424,11 +413,9 @@ class BatchGetItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
 
     def test_return_consumed_capacity_total(self):
         r = self.connection(_lv.BatchGetItem().table(self.table).keys(self.tab_key).return_consumed_capacity_total())
-        with _tst.cover("r", r) as r:
-            self.assertEqual(r.consumed_capacity[0].capacity_units, 0.5)
-            self.assertEqual(r.consumed_capacity[0].global_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity[0].local_secondary_indexes, None)
-            self.assertEqual(r.consumed_capacity[0].table, None)
-            self.assertEqual(r.consumed_capacity[0].table_name, self.table)
-            self.assertEqual(r.responses[self.table][0], self.item)
-            self.assertEqual(r.unprocessed_keys, {})
+
+        self.assertEqual(r.consumed_capacity[0].capacity_units, 0.5)
+        self.assertEqual(r.consumed_capacity[0].global_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity[0].local_secondary_indexes, None)
+        self.assertEqual(r.consumed_capacity[0].table, None)
+        self.assertEqual(r.consumed_capacity[0].table_name, self.table)
