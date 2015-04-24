@@ -4,26 +4,44 @@
 
 
 class Error(Exception):
+    """
+    @todo Document
+    """
     retryable = False
 
 
 class UnknownError(Error):
+    """
+    @todo Document
+    """
     pass
 
 
 class ServerError(Error):
+    """
+    @todo Document
+    """
     retryable = True
 
 
 class NetworkError(Error):
+    """
+    @todo Document
+    """
     retryable = True
 
 
 class ClientError(Error):
+    """
+    @todo Document
+    """
     pass
 
 
 class UnknownClientError(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
@@ -32,86 +50,149 @@ class UnknownClientError(ClientError):
 
 
 class ConditionalCheckFailedException(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class IncompleteSignature(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class InvalidAction(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class InvalidClientTokenId(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class InvalidParameterCombination(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class InvalidParameterValue(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class InvalidQueryParameter(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class ItemCollectionSizeLimitExceededException(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class LimitExceededException(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class MalformedQueryString(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class MissingAction(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class MissingAuthenticationToken(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class MissingParameter(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class OptInRequired(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class ProvisionedThroughputExceededException(ClientError):
+    """
+    @todo Document
+    """
     retryable = True
 
 
 class RequestExpired(ClientError):
+    """
+    @todo Document
+    """
     retryable = True
 
 
 class ResourceInUseException(ClientError):
+    """
+    @todo Document
+    """
     retryable = True
 
 
 class ResourceNotFoundException(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class Throttling(ClientError):
+    """
+    @todo Document
+    """
     retryable = True
 
 
 class ValidationError(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class ValidationException(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
@@ -119,10 +200,16 @@ class ValidationException(ClientError):
 
 
 class AccessDeniedException(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 
 class InvalidSignatureException(ClientError):
+    """
+    @todo Document
+    """
     pass
 
 

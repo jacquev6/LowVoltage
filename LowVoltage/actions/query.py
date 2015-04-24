@@ -188,7 +188,7 @@ class Query(Action):
         self.__conditions[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [_convert_value_to_db(lo), _convert_value_to_db(hi)]}
         return self
 
-    @proxy
+    @proxy("Query")
     def exclusive_start_key(self, key):
         """
         @todo doctest

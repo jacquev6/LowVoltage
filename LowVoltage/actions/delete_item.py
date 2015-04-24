@@ -8,7 +8,7 @@ When given a :class:`DeleteItem`, the connection will return a :class:`DeleteIte
 >>> connection(DeleteItem(table, {"h": 0}))
 <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
 
-Note that deleting the same item twice is not an error (deleting is idempotent). To know if an item was actually deleted, use :meth:`return_values_all_old`:
+Note that deleting the same item twice is not an error (deleting is idempotent). To know if an item was actually deleted, use :meth:`.DeleteItem.return_values_all_old`:
 
 >>> connection(
 ...   DeleteItem(table, {"h": 1})

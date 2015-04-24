@@ -95,7 +95,7 @@ class ExclusiveStartKey(ScalarValue("ExclusiveStartKey")):
     def set(self, key):
         """
         Set ExclusiveStartKey. The request will only scan items that are after this key.
-        This is typically the :attr:`last_evaluated_key` of a previous response.
+        This is typically the :attr:`~.{}Response.last_evaluated_key` of a previous response.
         """
         return super(ExclusiveStartKey, self).set(_convert_dict_to_db(key))
 
@@ -137,7 +137,9 @@ class ProjectionExpression(CommaSeparatedStringsValue("ProjectionExpression")):
     def add(self, *names):
         """
         Add name(s) to ProjectionExpression.
-        This method accepts a variable number of names or iterables.
+        The request will return only projected attributes.
+
+        Note that this method accepts a variable number of names or iterables.  @todo A section in the user guide describing those methods.
         """
         return super(ProjectionExpression, self).add(*names)
 
@@ -176,7 +178,7 @@ class ReturnItemCollectionMetrics(ScalarValue("ReturnItemCollectionMetrics")):
     def size(self):
         """
         Set ReturnItemCollectionMetrics to SIZE.
-        If the table has a local secondary index, the response will contain size item collection metrics.
+        If the table has a local secondary index, the response will contain metrics about the size of item collections that were touched.
         """
         return self.set("SIZE")
 
@@ -239,31 +241,42 @@ class Select(ScalarValue("Select")):
         return self.set("COUNT")
 
 
-def proxy(method):
-    bases = {
-        "condition_expression": ConditionExpression.set,
-        "consistent_read_false": ConsistentRead.false,
-        "consistent_read_true": ConsistentRead.true,
-        "exclusive_start_key": ExclusiveStartKey.set,
-        "expression_attribute_name": ExpressionAttributeNames.add,
-        "expression_attribute_value": ExpressionAttributeValues.add,
-        "filter_expression": FilterExpression.set,
-        "limit": Limit.set,
-        "project": ProjectionExpression.add,
-        "return_consumed_capacity_indexes": ReturnConsumedCapacity.indexes,
-        "return_consumed_capacity_none": ReturnConsumedCapacity.none,
-        "return_consumed_capacity_total": ReturnConsumedCapacity.total,
-        "return_item_collection_metrics_none": ReturnItemCollectionMetrics.none,
-        "return_item_collection_metrics_size": ReturnItemCollectionMetrics.size,
-        "return_values_all_new": ReturnValues.all_new,
-        "return_values_all_old": ReturnValues.all_old,
-        "return_values_none": ReturnValues.none,
-        "return_values_updated_new": ReturnValues.updated_new,
-        "return_values_updated_old": ReturnValues.updated_old,
-        "select_all_attributes": Select.all_attributes,
-        "select_all_projected_attributes": Select.all_projected_attributes,
-        "select_count": Select.count,
-    }
+def proxy(class_or_method):
+    def decorator(method):
+        bases = {
+            "condition_expression": ConditionExpression.set,
+            "consistent_read_false": ConsistentRead.false,
+            "consistent_read_true": ConsistentRead.true,
+            "exclusive_start_key": ExclusiveStartKey.set,
+            "expression_attribute_name": ExpressionAttributeNames.add,
+            "expression_attribute_value": ExpressionAttributeValues.add,
+            "filter_expression": FilterExpression.set,
+            "limit": Limit.set,
+            "project": ProjectionExpression.add,
+            "return_consumed_capacity_indexes": ReturnConsumedCapacity.indexes,
+            "return_consumed_capacity_none": ReturnConsumedCapacity.none,
+            "return_consumed_capacity_total": ReturnConsumedCapacity.total,
+            "return_item_collection_metrics_none": ReturnItemCollectionMetrics.none,
+            "return_item_collection_metrics_size": ReturnItemCollectionMetrics.size,
+            "return_values_all_new": ReturnValues.all_new,
+            "return_values_all_old": ReturnValues.all_old,
+            "return_values_none": ReturnValues.none,
+            "return_values_updated_new": ReturnValues.updated_new,
+            "return_values_updated_old": ReturnValues.updated_old,
+            "select_all_attributes": Select.all_attributes,
+            "select_all_projected_attributes": Select.all_projected_attributes,
+            "select_count": Select.count,
+        }
 
-    method.__doc__ = bases[method.__name__].__doc__ + "\n" + method.__doc__
-    return method
+        args = ()
+
+        if method.__name__ == "exclusive_start_key":
+            args = class_or_method
+
+        method.__doc__ = bases[method.__name__].__doc__.format(args) + "\n" + method.__doc__
+        return method
+
+    if isinstance(class_or_method, basestring):
+        return decorator
+    else:
+        return decorator(class_or_method)

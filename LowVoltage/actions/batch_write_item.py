@@ -41,7 +41,7 @@ class BatchWriteItemResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.BatchWriteItem.return_consumed_capacity_total` or :meth:`~.BatchWriteItem.return_consumed_capacity_index`.
+        The capacity consumed by the request. If you used :meth:`~.BatchWriteItem.return_consumed_capacity_total` or :meth:`~.BatchWriteItem.return_consumed_capacity_indexes`.
 
         :type: None or list of :class:`.ConsumedCapacity`
         """

@@ -152,7 +152,7 @@ class Scan(Action):
         self.__segment.set(segment)
         return self.__total_segments.set(total_segments)
 
-    @proxy
+    @proxy("Scan")
     def exclusive_start_key(self, key):
         """
         @todo doctest
