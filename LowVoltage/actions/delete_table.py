@@ -2,6 +2,28 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`DeleteTable`, the connection will return a :class:`DeleteTableResponse`:
+
+.. testsetup::
+
+    table = "LowVoltage.DocTests.DeleteTable.1"
+    connection(CreateTable(table).hash_key("h", STRING).provisioned_throughput(1, 1))
+    WaitForTableActivation(connection, table)
+
+>>> r = connection(DeleteTable(table))
+>>> r
+<LowVoltage.actions.delete_table.DeleteTableResponse object at ...>
+>>> r.table_description.table_status
+u'DELETING'
+
+Note that you can use :func:`.WaitForTableDeletion` to poll the table status until it's deleted.
+
+.. testcleanup::
+
+    WaitForTableDeletion(connection, table)
+"""
+
 import datetime
 
 import LowVoltage as _lv
@@ -25,6 +47,8 @@ class DeleteTableResponse(object):
     @property
     def table_description(self):
         """
+        The description of the table you just deleted.
+
         :type: None or :class:`.TableDescription`
         """
         if _is_dict(self.__table_description):  # pragma no branch (Defensive code)

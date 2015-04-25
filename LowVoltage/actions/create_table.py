@@ -2,6 +2,32 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`CreateTable`, the connection will return a :class:`CreateTableResponse`:
+
+.. testsetup::
+
+    table = "LowVoltage.DocTests.CreateTable.1"
+
+>>> r = connection(
+...   CreateTable(table)
+...     .hash_key("h", STRING)
+...     .provisioned_throughput(1, 1)
+... )
+>>> r
+<LowVoltage.actions.create_table.CreateTableResponse object at ...>
+>>> r.table_description.table_status
+u'CREATING'
+
+Note that you can use :func:`.WaitForTableActivation` to poll the table status until it's usable.
+
+.. testcleanup::
+
+    WaitForTableActivation(connection, table)
+    connection(DeleteTable(table))
+    WaitForTableDeletion(connection, table)
+"""
+
 import datetime
 
 import LowVoltage as _lv
@@ -25,6 +51,8 @@ class CreateTableResponse(object):
     @property
     def table_description(self):
         """
+        The description of the table you just created.
+
         :type: None or :class:`.TableDescription`
         """
         if _is_dict(self.__table_description):  # pragma no branch (Defensive code)
@@ -37,6 +65,7 @@ class CreateTable(Action):
     """
 
     # @todo Should we add ctor parameters and allow use to choose between ctor and builder syntaxes? Same for .global_secondary_index. Same everywhere.
+    # @todo Remove the proxy. Document methods on CreateTable level.
 
     def __init__(self, table_name):
         super(CreateTable, self).__init__("CreateTable")

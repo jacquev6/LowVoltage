@@ -2,6 +2,33 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`UpdateTable`, the connection will return a :class:`UpdateTableResponse`:
+
+.. testsetup::
+
+    table = "LowVoltage.DocTests.UpdateTable.1"
+    connection(CreateTable(table).hash_key("h", STRING).provisioned_throughput(1, 1))
+    WaitForTableActivation(connection, table)
+
+>>> r = connection(
+...   UpdateTable(table)
+...     .provisioned_throughput(2, 2)
+... )
+>>> r
+<LowVoltage.actions.update_table.UpdateTableResponse object at ...>
+>>> r.table_description.table_status
+u'UPDATING'
+
+Note that you can use :func:`.WaitForTableActivation` to poll the table status until it's updated.
+
+.. testcleanup::
+
+    WaitForTableActivation(connection, table)
+    connection(DeleteTable(table))
+    WaitForTableDeletion(connection, table)
+"""
+
 import datetime
 
 import LowVoltage as _lv
@@ -25,6 +52,8 @@ class UpdateTableResponse(object):
     @property
     def table_description(self):
         """
+        The description of the table you just updated.
+
         :type: None or :class:`.TableDescription`
         """
         if _is_dict(self.__table_description):  # pragma no branch (Defensive code)
@@ -37,6 +66,7 @@ class UpdateTable(Action):
     """
 
     # @todo Create and delete secondary indexes!
+    # @todo Remove the proxy. Document methods on UpdateTable level.
 
     def __init__(self, table_name):
         super(UpdateTable, self).__init__("UpdateTable")

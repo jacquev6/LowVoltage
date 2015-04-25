@@ -2,6 +2,20 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`DescribeTable`, the connection will return a :class:`DescribeTableResponse`:
+
+>>> r = connection(DescribeTable(table))
+>>> r
+<LowVoltage.actions.describe_table.DescribeTableResponse ...>
+>>> r.table.table_status
+u'ACTIVE'
+>>> r.table.key_schema[0].attribute_name
+u'h'
+>>> r.table.key_schema[0].key_type
+u'HASH'
+"""
+
 import datetime
 
 import LowVoltage as _lv
@@ -25,6 +39,8 @@ class DescribeTableResponse(object):
     @property
     def table(self):
         """
+        The description of the table.
+
         :type: None or :class:`.TableDescription`
         """
         if _is_dict(self.__table):  # pragma no branch (Defensive code)

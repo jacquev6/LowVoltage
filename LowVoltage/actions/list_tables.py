@@ -2,6 +2,16 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+When given a :class:`ListTables`, the connection will return a :class:`ListTablesResponse`:
+
+>>> r = connection(ListTables())
+>>> r
+<LowVoltage.actions.list_tables.ListTablesResponse ...>
+>>> r.table_names
+[u'LowVoltage.DocTests.1', u'LowVoltage.DocTests.2']
+"""
+
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
@@ -10,7 +20,7 @@ from .return_types import _is_str, _is_list_of_str
 
 class ListTablesResponse(object):
     """
-    The `ListTables request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_ResponseElements>`__.
+    The `ListTables response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_ResponseElements>`__.
     """
 
     def __init__(
@@ -25,6 +35,7 @@ class ListTablesResponse(object):
     @property
     def last_evaluated_table_name(self):
         """
+        The name of the last table that was considered during the request.
         If not None, you should give it to :meth:`.exclusive_start_table_name` in a subsequent :class:`.ListTables`.
 
         :type: None or string
@@ -35,6 +46,8 @@ class ListTablesResponse(object):
     @property
     def table_names(self):
         """
+        The names of the tables.
+
         :type: None or list of string
         """
         if _is_list_of_str(self.__table_names):  # pragma no branch (Defensive code)
@@ -43,7 +56,7 @@ class ListTablesResponse(object):
 
 class ListTables(Action):
     """
-    The `ListTables response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_RequestParameters>`__.
+    The `ListTables request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_RequestParameters>`__.
     """
 
     def __init__(self):
@@ -65,14 +78,27 @@ class ListTables(Action):
 
     def limit(self, limit):
         """
-        @todo Document
+        Set Limit. The response will contain at most this number of table names.
+
+        >>> r = connection(ListTables().limit(1))
+        >>> r.table_names
+        [u'LowVoltage.DocTests.1']
+        >>> r.last_evaluated_table_name
+        u'LowVoltage.DocTests.1'
         """
         self.__limit = limit
         return self
 
     def exclusive_start_table_name(self, table_name):
         """
-        @todo Document
+        Set ExclusiveStartTableName. The response will contains tables that are after this one.
+        Typically the :attr:`.last_evaluated_table_name` of a previous response.
+
+        >>> connection(
+        ...   ListTables()
+        ...     .exclusive_start_table_name("LowVoltage.DocTests.1")
+        ... ).table_names
+        [u'LowVoltage.DocTests.2']
         """
         self.__exclusive_start_table_name = table_name
         return self
