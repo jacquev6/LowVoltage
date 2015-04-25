@@ -107,13 +107,25 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
         self.responder = self.mocks.replace("self.connection._Connection__responder")
         self.action = self.mocks.create("action")
 
+    def test_identification_with_token(self):
+        self.credentials.expect.get().andReturn(("a", "b", "t"))
+        self.action.expect.payload.andReturn({"d": "e"})
+        self.now.expect().andReturn("f")
+        self.action.expect.name.andReturn("c")
+        self.signer.expect("a", "b", "f", "c", '{"d": "e"}').andReturn({"g": "h"})
+        self.session.expect.post("http://endpoint.com:8000/", data='{"d": "e"}', headers={"g": "h", "X-Amz-Security-Token": "t"}).andReturn("i")
+        self.action.expect.response_class.andReturn("j")
+        self.responder.expect("j", "i").andReturn("k")
+
+        self.assertEqual(self.connection(self.action.object), "k")
+
     def __expect_post(self):
         self.credentials.expect.get().andReturn(("a", "b", None))
         self.action.expect.payload.andReturn({"d": "e"})
         self.now.expect().andReturn("f")
         self.action.expect.name.andReturn("c")
         self.signer.expect("a", "b", "f", "c", '{"d": "e"}').andReturn({"g": "h"})
-        return self.session.expect.post("http://endpoint.com:8000/", data='{"d": "e"}', headers={"g": "h"})        
+        return self.session.expect.post("http://endpoint.com:8000/", data='{"d": "e"}', headers={"g": "h"})
 
     def test_success_on_first_try(self):
         self.__expect_post().andReturn("i")
