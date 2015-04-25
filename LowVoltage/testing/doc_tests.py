@@ -43,4 +43,16 @@ def global_setup():
         [{"h": h, "r1": 0, "r2": 0} for h in range(10)],
     )
 
+    _lv.BatchPutItem(
+        connection,
+        table2,
+        [{"h": 42, "r1": r1, "r2": 10 - r1} for r1 in range(6)],
+    )
+
+    _lv.BatchPutItem(
+        connection,
+        table2,
+        [{"h": 42, "r1": r1} for r1 in range(6, 10)],
+    )
+
     return connection, table1, table2

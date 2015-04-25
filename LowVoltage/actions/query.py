@@ -3,7 +3,15 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 """
-@todo Document
+When given a :class:`Query`, the connection will return a :class:`QueryResponse`:
+
+>>> connection(Query(table2).key_eq("h", 42))
+<LowVoltage.actions.query.QueryResponse ...>
+
+Items are accessed like this:
+
+>>> connection(Query(table2).key_eq("h", 42)).items
+[{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}, {u'h': 42, u'r1': 2, u'r2': 8}, {u'h': 42, u'r1': 3, u'r2': 7}, {u'h': 42, u'r1': 4, u'r2': 6}, {u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 6}, {u'h': 42, u'r1': 7}, {u'h': 42, u'r1': 8}, {u'h': 42, u'r1': 9}]
 """
 
 import LowVoltage as _lv
@@ -138,49 +146,94 @@ class Query(Action):
 
     def key_eq(self, name, value):
         """
-        @todo Document
+        Add a EQ condition to KeyConditions. Usable on both the hash key and the range key.
+        The response will contain items whose key attribute ``name`` is equal to ``value``.
+
+        >>> connection(Query(table2).key_eq("h", 42)).items
+        [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}, {u'h': 42, u'r1': 2, u'r2': 8}, ...]
         """
         self.__conditions[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_le(self, name, value):
         """
-        @todo Document
+        Add a LE condition to KeyConditions. Usable only on the range key.
+        The response will contain items whose key attribute ``name`` is less than or equal to ``value``.
+
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .key_le("r1", 1)
+        ... ).items
+        [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}]
         """
         self.__conditions[name] = {"ComparisonOperator": "LE", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_lt(self, name, value):
         """
-        @todo Document
+        Add a LT condition to KeyConditions. Usable only on the range key.
+        The response will contain items whose key attribute ``name`` is strictly less than ``value``.
+
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .key_lt("r1", 2)
+        ... ).items
+        [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}]
         """
         self.__conditions[name] = {"ComparisonOperator": "LT", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_ge(self, name, value):
         """
-        @todo Document
+        Add a GE condition to KeyConditions. Usable only on the range key.
+        The response will contain items whose key attribute ``name`` is greater than or equal to ``value``.
+
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .key_ge("r1", 7)
+        ... ).items
+        [{u'h': 42, u'r1': 7}, {u'h': 42, u'r1': 8}, {u'h': 42, u'r1': 9}]
         """
         self.__conditions[name] = {"ComparisonOperator": "GE", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_gt(self, name, value):
         """
-        @todo Document
+        Add a GT condition to KeyConditions. Usable only on the range key.
+        The response will contain items whose key attribute ``name`` is strictly greater than ``value``.
+
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .key_gt("r1", 6)
+        ... ).items
+        [{u'h': 42, u'r1': 7}, {u'h': 42, u'r1': 8}, {u'h': 42, u'r1': 9}]
         """
         self.__conditions[name] = {"ComparisonOperator": "GT", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_begins_with(self, name, value):
         """
-        @todo Document
+        Add a BEGINS_WITH condition to KeyConditions. Usable only on the range key if it is a string.
+        The response will contain items whose key attribute ``name`` begins with ``value``.
         """
         self.__conditions[name] = {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [_convert_value_to_db(value)]}
         return self
 
     def key_between(self, name, lo, hi):
         """
-        @todo Document
+        Add a BETWEEN condition to KeyConditions. Usable only on the range key.
+        The response will contain items whose key attribute ``name`` is greater than or equal to ``lo`` and less than or equal to ``hi``.
+
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .key_between("r1", 4, 6)
+        ... ).items
+        [{u'h': 42, u'r1': 4, u'r2': 6}, {u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 6}]
         """
         self.__conditions[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [_convert_value_to_db(lo), _convert_value_to_db(hi)]}
         return self
@@ -188,35 +241,72 @@ class Query(Action):
     @proxy("Query")
     def exclusive_start_key(self, key):
         """
-        @todo doctest
+        >>> r = connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .limit(2)
+        ... )
+        >>> r.items
+        [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}]
+        >>> r.last_evaluated_key
+        {u'h': 42, u'r1': 1}
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .limit(2)
+        ...     .exclusive_start_key({u'h': 42, u'r1': 1})
+        ... ).items
+        [{u'h': 42, u'r1': 2, u'r2': 8}, {u'h': 42, u'r1': 3, u'r2': 7}]
         """
         return self.__exclusive_start_key.set(key)
 
     @proxy
     def limit(self, limit):
         """
-        @todo doctest
+        See :meth:`exclusive_start_key` for an example.
         """
         return self.__limit.set(limit)
 
     @proxy
     def select_count(self):
         """
-        @todo doctest
+        >>> r = connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .select_count()
+        ... )
+        >>> r.count
+        10L
+        >>> print r.items
+        None
         """
         return self.__select.count()
 
     @proxy
     def select_all_attributes(self):
         """
-        @todo doctest
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .index_name("lsi")
+        ...     .select_all_attributes()
+        ...     .limit(2)
+        ... ).items
+        [{u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 4, u'r2': 6}]
         """
         return self.__select.all_attributes()
 
     @proxy
     def select_all_projected_attributes(self):
         """
-        @todo doctest
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .index_name("lsi")
+        ...     .select_all_projected_attributes()
+        ...     .limit(2)
+        ... ).items
+        [{u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 4, u'r2': 6}]
         """
         return self.__select.all_projected_attributes()
 
@@ -224,47 +314,82 @@ class Query(Action):
         """
         Set Index. The request will use this index instead of the table key.
 
-        @todo doctest
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .index_name("lsi")
+        ... ).items
+        [{u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 4, u'r2': 6}, {u'h': 42, u'r1': 3, u'r2': 7}, {u'h': 42, u'r1': 2, u'r2': 8}, {u'h': 42, u'r1': 1, u'r2': 9}, {u'h': 42, u'r1': 0, u'r2': 10}]
         """
         return self.__index_name.set(name)
 
     def scan_index_forward_true(self):
         """
-        @todo Document
+        Set ScanIndexForward to true. Items in the response will be sorted with ascending range keys.
+
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .project("r1")
+        ...     .scan_index_forward_true()
+        ... ).items
+        [{u'r1': 0}, {u'r1': 1}, {u'r1': 2}, {u'r1': 3}, {u'r1': 4}, {u'r1': 5}, {u'r1': 6}, {u'r1': 7}, {u'r1': 8}, {u'r1': 9}]
         """
         return self.__scan_index_forward.set(True)
 
     def scan_index_forward_false(self):
         """
-        @todo Document
+        Set ScanIndexForward to false. Items in the response will be sorted with descending range keys.
+
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .project("r1")
+        ...     .scan_index_forward_false()
+        ... ).items
+        [{u'r1': 9}, {u'r1': 8}, {u'r1': 7}, {u'r1': 6}, {u'r1': 5}, {u'r1': 4}, {u'r1': 3}, {u'r1': 2}, {u'r1': 1}, {u'r1': 0}]
         """
         return self.__scan_index_forward.set(False)
 
     @proxy
     def project(self, *names):
         """
-        @todo doctest
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .project("r2")
+        ... ).items
+        [{u'r2': 10}, {u'r2': 9}, {u'r2': 8}, {u'r2': 7}, {u'r2': 6}, {u'r2': 5}, {}, {}, {}, {}]
         """
         return self.__projection_expression.add(*names)
 
     @proxy
     def filter_expression(self, expression):
         """
-        @todo doctest
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ...     .key_ge("r1", 2)
+        ...     .filter_expression("#syn IN (:val1, :val2)")
+        ...     .expression_attribute_name("syn", "r2")
+        ...     .expression_attribute_value("val1", 5)
+        ...     .expression_attribute_value("val2", 7)
+        ... ).items
+        [{u'h': 42, u'r1': 3, u'r2': 7}, {u'h': 42, u'r1': 5, u'r2': 5}]
         """
         return self.__filter_expression.set(expression)
 
     @proxy
     def expression_attribute_name(self, synonym, name):
         """
-        @todo doctest
+        See :meth:`filter_expression` for an example.
         """
         return self.__expression_attribute_names.add(synonym, name)
 
     @proxy
     def expression_attribute_value(self, name, value):
         """
-        @todo doctest
+        See :meth:`filter_expression` for an example.
         """
         return self.__expression_attribute_values.add(name, value)
 
