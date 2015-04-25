@@ -36,7 +36,7 @@ class ListTablesResponse(object):
     def last_evaluated_table_name(self):
         """
         The name of the last table that was considered during the request.
-        If not None, you should give it to :meth:`.exclusive_start_table_name` in a subsequent :class:`.ListTables`.
+        If not None, you should give it to :meth:`~ListTables.exclusive_start_table_name` in a subsequent :class:`ListTables`.
 
         :type: None or string
         """
@@ -89,7 +89,7 @@ class ListTables(Action):
     def exclusive_start_table_name(self, table_name):
         """
         Set ExclusiveStartTableName. The response will contains tables that are after this one.
-        Typically the :attr:`.last_evaluated_table_name` of a previous response.
+        Typically the :attr:`~ListTablesResponse.last_evaluated_table_name` of a previous response.
 
         >>> connection(
         ...   ListTables()

@@ -155,11 +155,11 @@ class UpdateTable(Action):
     def hash_key(self, name, typ=None):
         """
         Set the hash key in KeySchema for the active index.
-        If you provide a second argument, :meth:`~.CreateTable.attribute_definition` will be called as well.
+        If you provide a second argument, :meth:`attribute_definition` will be called as well.
 
         :raise: :exc:`.BuilderError` if called when no index is active or if the active index is not being created.
 
-        See :meth:`~.UpdateTable.create_global_secondary_index` for an example.
+        See :meth:`create_global_secondary_index` for an example.
         """
         self.__check_active_index()
         self.__active_index._hash_key = name
@@ -170,11 +170,11 @@ class UpdateTable(Action):
     def range_key(self, name, typ=None):
         """
         Set the range key in KeySchema for the active index.
-        If you provide a second argument, :meth:`~.CreateTable.attribute_definition` will be called as well.
+        If you provide a second argument, :meth:`attribute_definition` will be called as well.
 
         :raise: :exc:`.BuilderError` if called when no index is active or if the active index is not being created.
 
-        See :meth:`~.UpdateTable.create_global_secondary_index` for an example.
+        See :meth:`create_global_secondary_index` for an example.
         """
         self.__check_active_index()
         self.__active_index._range_key = name
@@ -194,7 +194,7 @@ class UpdateTable(Action):
         """
         Set the new provisioned throughput for the table or the active index.
 
-        See :meth:`~.UpdateTable.create_global_secondary_index` for an example.
+        See :meth:`create_global_secondary_index` for an example.
         """
         self.__active_index._read_capacity_units = read_capacity_units
         self.__active_index._write_capacity_units = write_capacity_units
@@ -203,7 +203,7 @@ class UpdateTable(Action):
     def create_global_secondary_index(self, name):
         """
         Create a new GSI.
-        This method sets the active index: methods like :meth:`~.UpdateTable.provisioned_throughput` will apply to the index.
+        This method sets the active index: methods like :meth:`provisioned_throughput` will apply to the index.
 
         >>> connection(
         ...   UpdateTable(table4)
@@ -223,7 +223,7 @@ class UpdateTable(Action):
     def update_global_secondary_index(self, name):
         """
         Update an existing GSI.
-        This method sets the active index: methods like :meth:`~.UpdateTable.provisioned_throughput` will apply to the index.
+        This method sets the active index: methods like :meth:`provisioned_throughput` will apply to the index.
 
         >>> connection(
         ...   UpdateTable(table2)
@@ -254,7 +254,7 @@ class UpdateTable(Action):
 
     def table(self):
         """
-        Reset the active index: methods like :meth:`~.UpdateTable.provisioned_throughput` will apply to the table.
+        Reset the active index: methods like :meth:`provisioned_throughput` will apply to the table.
         """
         self.__active_index = self
         return self
@@ -265,7 +265,7 @@ class UpdateTable(Action):
 
         :raise: :exc:`.BuilderError` if called when no index is active or if the active index is not being created.
 
-        See :meth:`~.UpdateTable.create_global_secondary_index` for an example.
+        See :meth:`create_global_secondary_index` for an example.
         """
         self.__check_active_index()
         self.__active_index._projection = "ALL"

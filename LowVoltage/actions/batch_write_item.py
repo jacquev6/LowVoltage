@@ -41,7 +41,7 @@ class BatchWriteItemResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.BatchWriteItem.return_consumed_capacity_total` or :meth:`~.BatchWriteItem.return_consumed_capacity_indexes`.
+        The capacity consumed by the request. If you used :meth:`~BatchWriteItem.return_consumed_capacity_total` or :meth:`~BatchWriteItem.return_consumed_capacity_indexes`.
 
         :type: None or list of :class:`.ConsumedCapacity`
         """
@@ -51,7 +51,7 @@ class BatchWriteItemResponse(object):
     @property
     def item_collection_metrics(self):
         """
-        Metrics about the collection of the items you just updated. If a LSI was touched and you used :meth:`~.BatchWriteItem.return_item_collection_metrics_size`.
+        Metrics about the collection of the items you just updated. If a LSI was touched and you used :meth:`~BatchWriteItem.return_item_collection_metrics_size`.
 
         :type: None or dict of string (table name) to list of :class:`.ItemCollectionMetrics`
         """
@@ -61,7 +61,7 @@ class BatchWriteItemResponse(object):
     @property
     def unprocessed_items(self):
         """
-        Items that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`.BatchWriteItem`.
+        Items that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchWriteItem`.
 
         :type: None or exactly as returned by DynamoDB
         """

@@ -58,7 +58,7 @@ class ScanResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.Scan.return_consumed_capacity_total`.
+        The capacity consumed by the request. If you used :meth:`~Scan.return_consumed_capacity_total`.
 
         :type: None or :class:`.ConsumedCapacity`
         """
@@ -88,7 +88,7 @@ class ScanResponse(object):
     @property
     def last_evaluated_key(self):
         """
-        The key of the last item evaluated by the scan. If not None, it should be given to :meth:`~.Scan.exclusive_start_key` is a subsequent :class:`.Scan`.
+        The key of the last item evaluated by the scan. If not None, it should be given to :meth:`~Scan.exclusive_start_key` is a subsequent :class:`Scan`.
 
         :type: None or dict
         """
@@ -98,7 +98,7 @@ class ScanResponse(object):
     @property
     def scanned_count(self):
         """
-        The number of item scanned during the scan. This can be different from :attr:`~.ScanResponse.count` when using :meth:`~.Scan.filter_expression`.
+        The number of item scanned during the scan. This can be different from :attr:`count` when using :meth:`~Scan.filter_expression`.
 
         :type: None or long
         """
@@ -189,7 +189,7 @@ class Scan(Action):
     @proxy
     def limit(self, limit):
         """
-        See :meth:`~.Scan.exclusive_start_key` for an example.
+        See :meth:`exclusive_start_key` for an example.
         """
         return self.__limit.set(limit)
 
@@ -236,14 +236,14 @@ class Scan(Action):
     @proxy
     def expression_attribute_name(self, synonym, name):
         """
-        See :meth:`~.Scan.filter_expression` for an example.
+        See :meth:`filter_expression` for an example.
         """
         return self.__expression_attribute_names.add(synonym, name)
 
     @proxy
     def expression_attribute_value(self, name, value):
         """
-        See :meth:`~.Scan.filter_expression` for an example.
+        See :meth:`filter_expression` for an example.
         """
         return self.__expression_attribute_values.add(name, value)
 

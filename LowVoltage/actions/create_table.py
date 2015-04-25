@@ -162,9 +162,9 @@ class CreateTable(Action):
     def hash_key(self, name, typ=None):
         """
         Set the hash key in KeySchema for the table or the active index.
-        If you provide a second argument, :meth:`~.CreateTable.attribute_definition` will be called as well.
+        If you provide a second argument, :meth:`attribute_definition` will be called as well.
 
-        See :meth:`~.CreateTable.range_key` for examples.
+        See :meth:`range_key` for examples.
         """
         self.__active_index._hash_key = name
         if typ is not None:
@@ -174,7 +174,7 @@ class CreateTable(Action):
     def range_key(self, name, typ=None):
         """
         Set the range key in KeySchema for the table or the active index.
-        If you provide a second argument, :meth:`~.CreateTable.attribute_definition` will be called as well.
+        If you provide a second argument, :meth:`attribute_definition` will be called as well.
 
         >>> connection(
         ...   CreateTable(table2)
@@ -195,7 +195,7 @@ class CreateTable(Action):
         Set the type of an attribute in AttributeDefinitions.
         Key attribute must be typed. See :mod:`.attribute_types` for constants to be passed to this method.
 
-        See :meth:`~.CreateTable.range_key` for an example.
+        See :meth:`range_key` for an example.
         """
         self.__attribute_definitions[name] = typ
         return self
@@ -204,7 +204,7 @@ class CreateTable(Action):
         """
         Set the read and write provisioned throughput for the table or the active index.
 
-        See :meth:`~.CreateTable.range_key`, :meth:`~.CreateTable.global_secondary_index` or :meth:`~.CreateTable.local_secondary_index` for examples.
+        See :meth:`range_key`, :meth:`global_secondary_index` or :meth:`local_secondary_index` for examples.
         """
         self.__active_index._read_capacity_units = read_capacity_units
         self.__active_index._write_capacity_units = write_capacity_units
@@ -212,7 +212,7 @@ class CreateTable(Action):
 
     def global_secondary_index(self, name):
         """
-        Add a GSI. This method sets the active index: methods like :meth:`~.CreateTable.hash_key` will apply to the index.
+        Add a GSI. This method sets the active index: methods like :meth:`hash_key` will apply to the index.
 
         >>> connection(
         ...   CreateTable(table3)
@@ -233,7 +233,7 @@ class CreateTable(Action):
 
     def local_secondary_index(self, name):
         """
-        Add a LSI. This method sets the active index: methods like :meth:`~.CreateTable.hash_key` will apply to the index.
+        Add a LSI. This method sets the active index: methods like :meth:`hash_key` will apply to the index.
 
         >>> connection(
         ...   CreateTable(table4)
@@ -256,7 +256,7 @@ class CreateTable(Action):
 
     def table(self):
         """
-        Reset the active index: methods like :meth:`~.CreateTable.hash_key` will apply to the table.
+        Reset the active index: methods like :meth:`hash_key` will apply to the table.
         """
         self.__active_index = self
         return self
@@ -267,7 +267,7 @@ class CreateTable(Action):
 
         :raise: :exc:`.BuilderError` if called when no index is active.
 
-        See :meth:`~CreateTable.global_secondary_index` for an example.
+        See :meth:`global_secondary_index` for an example.
         """
         self.__check_active_index()
         self.__active_index._projection = "ALL"
@@ -289,7 +289,7 @@ class CreateTable(Action):
 
         :raise: :exc:`.BuilderError` if called when no index is active.
 
-        See :meth:`~CreateTable.local_secondary_index` for an example.
+        See :meth:`local_secondary_index` for an example.
         """
         self.__check_active_index()
         if not isinstance(self.__active_index._projection, list):

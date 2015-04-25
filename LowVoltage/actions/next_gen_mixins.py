@@ -73,7 +73,7 @@ class ConditionExpression(ScalarValue("ConditionExpression")):
     def set(self, expression):
         """
         Set the ConditionExpression, making the request conditional.
-        It will raise a :class:`.ConditionalCheckFailedException` if the condition is not met.
+        It will raise a :exc:`.ConditionalCheckFailedException` if the condition is not met.
         """
         return super(ConditionExpression, self).set(expression)
 
@@ -98,7 +98,7 @@ class ExclusiveStartKey(ScalarValue("ExclusiveStartKey")):
     def set(self, key):
         """
         Set ExclusiveStartKey. The request will only scan items that are after this key.
-        This is typically the :attr:`~.{}Response.last_evaluated_key` of a previous response.
+        This is typically the :attr:`~{}Response.last_evaluated_key` of a previous response.
         """
         return super(ExclusiveStartKey, self).set(_convert_dict_to_db(key))
 

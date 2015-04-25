@@ -44,7 +44,7 @@ class UpdateItemResponse(object):
     @property
     def attributes(self):
         """
-        The (previous or new) attributes of the item you just updated. If you used :meth:`~.UpdateItem.return_values_all_old`, :meth:`~.UpdateItem.return_values_all_new`, :meth:`~.UpdateItem.return_values_updated_old` or :meth:`~.UpdateItem.return_values_updated_new`.
+        The (previous or new) attributes of the item you just updated. If you used :meth:`~UpdateItem.return_values_all_old`, :meth:`~UpdateItem.return_values_all_new`, :meth:`~UpdateItem.return_values_updated_old` or :meth:`~UpdateItem.return_values_updated_new`.
 
         :type: None or dict
         """
@@ -56,7 +56,7 @@ class UpdateItemResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.UpdateItem.return_consumed_capacity_total` or :meth:`~.UpdateItem.return_consumed_capacity_indexes`.
+        The capacity consumed by the request. If you used :meth:`~UpdateItem.return_consumed_capacity_total` or :meth:`~UpdateItem.return_consumed_capacity_indexes`.
 
         :type: None or :class:`.ConsumedCapacity`
         """
@@ -66,7 +66,7 @@ class UpdateItemResponse(object):
     @property
     def item_collection_metrics(self):
         """
-        Metrics about the collection of the item you just updated. If a LSI was touched and you used :meth:`~.UpdateItem.return_item_collection_metrics_size`.
+        Metrics about the collection of the item you just updated. If a LSI was touched and you used :meth:`~UpdateItem.return_item_collection_metrics_size`.
 
         :type: None or :class:`.ItemCollectionMetrics`
         """
@@ -229,14 +229,14 @@ class UpdateItem(Action):
     @proxy
     def expression_attribute_name(self, synonym, name):
         """
-        See :meth:`~.UpdateItem.condition_expression` for an example.
+        See :meth:`condition_expression` for an example.
         """
         return self.__expression_attribute_names.add(synonym, name)
 
     @proxy
     def expression_attribute_value(self, name, value):
         """
-        See :meth:`~.UpdateItem.condition_expression` for an example.
+        See :meth:`condition_expression` for an example.
         """
         return self.__expression_attribute_values.add(name, value)
 

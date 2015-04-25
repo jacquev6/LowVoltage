@@ -51,7 +51,7 @@ class BatchGetItemResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.BatchGetItem.return_consumed_capacity_total`.
+        The capacity consumed by the request. If you used :meth:`~BatchGetItem.return_consumed_capacity_total`.
 
         :type: None or list of :class:`.ConsumedCapacity`
         """
@@ -71,7 +71,7 @@ class BatchGetItemResponse(object):
     @property
     def unprocessed_keys(self):
         """
-        Keys that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`.BatchGetItem`.
+        Keys that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchGetItem`.
 
         :type: None or exactly as returned by DynamoDB
         """

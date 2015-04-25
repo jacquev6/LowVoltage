@@ -49,7 +49,7 @@ class QueryResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.Query.return_consumed_capacity_total` or :meth:`~.Query.return_consumed_capacity_indexes`.
+        The capacity consumed by the request. If you used :meth:`~Query.return_consumed_capacity_total` or :meth:`~Query.return_consumed_capacity_indexes`.
 
         :type: None or :class:`.ConsumedCapacity`
         """
@@ -69,7 +69,7 @@ class QueryResponse(object):
     @property
     def items(self):
         """
-        The items matching the query. Unless you used :meth:`.Query.select_count`.
+        The items matching the query. Unless you used :meth:`~Query.select_count`.
 
         :type: None or list of dict
         """
@@ -79,7 +79,7 @@ class QueryResponse(object):
     @property
     def last_evaluated_key(self):
         """
-        The key of the last item evaluated by the query. If not None, it should be given to :meth:`~.Query.exclusive_start_key` is a subsequent :class:`.Query`.
+        The key of the last item evaluated by the query. If not None, it should be given to :meth:`~Query.exclusive_start_key` is a subsequent :class:`Query`.
 
         :type: None or dict
         """
@@ -89,7 +89,7 @@ class QueryResponse(object):
     @property
     def scanned_count(self):
         """
-        The number of item scanned during the query. This can be different from :attr:`~.QueryResponse.count` when using :meth:`~.Query.filter_expression`.
+        The number of item scanned during the query. This can be different from :attr:`count` when using :meth:`~Query.filter_expression`.
 
         :type: None or long
         """

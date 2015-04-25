@@ -43,7 +43,7 @@ class PutItemResponse(object):
     @property
     def attributes(self):
         """
-        The previous attributes of the item you just put. If you used :meth:`~.PutItem.return_values_all_old`.
+        The previous attributes of the item you just put. If you used :meth:`~PutItem.return_values_all_old`.
 
         :type: None or dict
         """
@@ -53,7 +53,7 @@ class PutItemResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.PutItem.return_consumed_capacity_total` or :meth:`~.PutItem.return_consumed_capacity_indexes`.
+        The capacity consumed by the request. If you used :meth:`~PutItem.return_consumed_capacity_total` or :meth:`~PutItem.return_consumed_capacity_indexes`.
 
         :type: None or :class:`.ConsumedCapacity`
         """
@@ -63,7 +63,7 @@ class PutItemResponse(object):
     @property
     def item_collection_metrics(self):
         """
-        Metrics about the collection of the item you just put. If a LSI was touched and you used :meth:`~.PutItem.return_item_collection_metrics_size`.
+        Metrics about the collection of the item you just put. If a LSI was touched and you used :meth:`~PutItem.return_item_collection_metrics_size`.
 
         :type: None or :class:`.ItemCollectionMetrics`
         """
@@ -117,14 +117,14 @@ class PutItem(Action):
     @proxy
     def expression_attribute_name(self, synonym, name):
         """
-        See :meth:`~.PutItem.condition_expression` for an example.
+        See :meth:`condition_expression` for an example.
         """
         return self.__expression_attribute_names.add(synonym, name)
 
     @proxy
     def expression_attribute_value(self, name, value):
         """
-        See :meth:`~.PutItem.condition_expression` for an example.
+        See :meth:`condition_expression` for an example.
         """
         return self.__expression_attribute_values.add(name, value)
 

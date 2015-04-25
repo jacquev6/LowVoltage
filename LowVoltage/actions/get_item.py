@@ -50,7 +50,7 @@ class GetItemResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.GetItem.return_consumed_capacity_total`.
+        The capacity consumed by the request. If you used :meth:`~GetItem.return_consumed_capacity_total`.
 
         :type: None or :class:`.ConsumedCapacity`
         """

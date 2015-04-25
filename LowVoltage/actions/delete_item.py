@@ -8,7 +8,7 @@ When given a :class:`DeleteItem`, the connection will return a :class:`DeleteIte
 >>> connection(DeleteItem(table, {"h": 0}))
 <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
 
-Note that deleting the same item twice is not an error (deleting is idempotent). To know if an item was actually deleted, use :meth:`.DeleteItem.return_values_all_old`:
+Note that deleting the same item twice is not an error (deleting is idempotent). To know if an item was actually deleted, use :meth:`~DeleteItem.return_values_all_old`:
 
 >>> connection(
 ...   DeleteItem(table, {"h": 1})
@@ -58,7 +58,7 @@ class DeleteItemResponse(object):
     @property
     def attributes(self):
         """
-        The previous attributes of the item you just deleted. If you used :meth:`~.DeleteItem.return_values_all_old`.
+        The previous attributes of the item you just deleted. If you used :meth:`~DeleteItem.return_values_all_old`.
 
         :type: None or dict
         """
@@ -68,7 +68,7 @@ class DeleteItemResponse(object):
     @property
     def consumed_capacity(self):
         """
-        The capacity consumed by the request. If you used :meth:`~.DeleteItem.return_consumed_capacity_total` or :meth:`~.DeleteItem.return_consumed_capacity_indexes`.
+        The capacity consumed by the request. If you used :meth:`~DeleteItem.return_consumed_capacity_total` or :meth:`~DeleteItem.return_consumed_capacity_indexes`.
 
         :type: None or :class:`.ConsumedCapacity`
         """
@@ -78,7 +78,7 @@ class DeleteItemResponse(object):
     @property
     def item_collection_metrics(self):
         """
-        Metrics about the collection of the item you just deleted. If a LSI was touched and you used :meth:`~.DeleteItem.return_item_collection_metrics_size`.
+        Metrics about the collection of the item you just deleted. If a LSI was touched and you used :meth:`~DeleteItem.return_item_collection_metrics_size`.
 
         :type: None or :class:`.ItemCollectionMetrics`
         """
@@ -132,14 +132,14 @@ class DeleteItem(Action):
     @proxy
     def expression_attribute_name(self, synonym, name):
         """
-        See :meth:`~.DeleteItem.condition_expression` for an example.
+        See :meth:`condition_expression` for an example.
         """
         return self.__expression_attribute_names.add(synonym, name)
 
     @proxy
     def expression_attribute_value(self, name, value):
         """
-        See :meth:`~.DeleteItem.condition_expression` for an example.
+        See :meth:`condition_expression` for an example.
         """
         return self.__expression_attribute_values.add(name, value)
 
