@@ -165,7 +165,7 @@ class BatchWriteItem(Action):
         ...     .return_consumed_capacity_total()
         ... ).consumed_capacity
         >>> c[0].table_name
-        u'LowVoltage.DocTests'
+        u'LowVoltage.DocTests.1'
         >>> c[0].capacity_units
         2.0
         """

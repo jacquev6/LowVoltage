@@ -163,7 +163,7 @@ class BatchGetItem(Action):
         ...     .return_consumed_capacity_total()
         ... ).consumed_capacity
         >>> c[0].table_name
-        u'LowVoltage.DocTests'
+        u'LowVoltage.DocTests.1'
         >>> c[0].capacity_units
         1.0
         """
@@ -181,7 +181,7 @@ class BatchGetItem(Action):
         ...     .return_consumed_capacity_total()
         ... ).consumed_capacity
         >>> c[0].table_name
-        u'LowVoltage.DocTests'
+        u'LowVoltage.DocTests.1'
         >>> c[0].capacity_units
         0.5
         """
@@ -230,11 +230,11 @@ class BatchGetItem(Action):
         ...     .return_consumed_capacity_total()
         ... ).consumed_capacity
         >>> c[0].table_name
-        u'LowVoltage.DocTests'
+        u'LowVoltage.DocTests.1'
         >>> c[0].capacity_units
         1.5
         >>> c[1].table_name
-        u'LowVoltage.DocTests2'
+        u'LowVoltage.DocTests.2'
         >>> c[1].capacity_units
         1.0
         """

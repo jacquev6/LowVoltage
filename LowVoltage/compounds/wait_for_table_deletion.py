@@ -8,6 +8,7 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 
 
+# @todo Should we abort if the table_status is not "DELETING"?
 def WaitForTableDeletion(connection, table):
     """Make "DescribeTable" actions until a ResourceNotFoundException is raised."""
 

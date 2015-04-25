@@ -52,9 +52,9 @@ Import the package and create a connection (assuming your AWS_ACCESS_KEY_ID and 
     >>> from LowVoltage import *
     >>> connection = Connection("eu-west-1", EnvironmentCredentials())
 
-Assuming you have a table named "LowVoltage.DocTests" with a hash key on the number attribute "h", you can put an item and get it back::
+Assuming you have a table named "LowVoltage.DocTests.1" with a hash key on the number attribute "h", you can put an item and get it back::
 
-    >>> table = "LowVoltage.DocTests"
+    >>> table = "LowVoltage.DocTests.1"
 
     >>> connection(PutItem(table, {"h": 0, "a": 42, "b": u"bar"}))
     <LowVoltage.actions.put_item.PutItemResponse object at ...>

@@ -74,8 +74,8 @@ doctest_global_setup = textwrap.dedent("""
     from LowVoltage import *
     connection = Connection("eu-west-1", EnvironmentCredentials())
 
-    table = "LowVoltage.DocTests"
-    table2 = "LowVoltage.DocTests2"
+    table = "LowVoltage.DocTests.1"
+    table2 = "LowVoltage.DocTests.2"
 
     try:
         connection(DescribeTable(table))

@@ -2,6 +2,9 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+# @todo Accept the response class as a ctor parameter and change Result to response_class
+# @todo change build() to @property payload
+
 
 class Action(object):
     def __init__(self, action):
