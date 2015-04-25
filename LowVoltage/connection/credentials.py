@@ -45,7 +45,7 @@ class StaticCredentials(object):
 
 class EnvironmentCredentials(object):
     """
-    Credential provider reading the AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and optionally AWS_SECURITY_TOKEN environment variables.
+    Credential provider reading the ``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY`` and optionally ``AWS_SECURITY_TOKEN`` environment variables.
     """
 
     def __init__(self):

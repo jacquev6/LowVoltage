@@ -53,7 +53,7 @@ class BatchGetItemResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~BatchGetItem.return_consumed_capacity_total`.
 
-        :type: None or list of :class:`.ConsumedCapacity`
+        :type: ``None`` or list of :class:`.ConsumedCapacity`
         """
         if _is_list_of_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
             return [ConsumedCapacity(**c) for c in self.__consumed_capacity]
@@ -63,7 +63,7 @@ class BatchGetItemResponse(object):
         """
         The items you just got.
 
-        :type: None or dict of string (table name) to list of dict
+        :type: ``None`` or dict of string (table name) to list of dict
         """
         if _is_dict(self.__responses):  # pragma no branch (Defensive code)
             return {t: [_convert_db_to_dict(v) for v in vs] for t, vs in self.__responses.iteritems()}
@@ -73,7 +73,7 @@ class BatchGetItemResponse(object):
         """
         Keys that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchGetItem`.
 
-        :type: None or exactly as returned by DynamoDB
+        :type: ``None`` or exactly as returned by DynamoDB
         """
         return self.__unprocessed_keys
 

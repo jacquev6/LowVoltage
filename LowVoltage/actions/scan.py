@@ -60,7 +60,7 @@ class ScanResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~Scan.return_consumed_capacity_total`.
 
-        :type: None or :class:`.ConsumedCapacity`
+        :type: ``None`` or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
             return ConsumedCapacity(**self.__consumed_capacity)
@@ -70,7 +70,7 @@ class ScanResponse(object):
         """
         The number of items matching the scan.
 
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__count):  # pragma no branch (Defensive code)
             return long(self.__count)
@@ -80,7 +80,7 @@ class ScanResponse(object):
         """
         The items matching the scan. Unless you used :meth:`.Scan.select_count`.
 
-        :type: None or list of dict
+        :type: ``None`` or list of dict
         """
         if _is_list_of_dict(self.__items):  # pragma no branch (Defensive code)
             return [_convert_db_to_dict(i) for i in self.__items]
@@ -90,7 +90,7 @@ class ScanResponse(object):
         """
         The key of the last item evaluated by the scan. If not None, it should be given to :meth:`~Scan.exclusive_start_key` is a subsequent :class:`Scan`.
 
-        :type: None or dict
+        :type: ``None`` or dict
         """
         if _is_dict(self.__last_evaluated_key):  # pragma no branch (Defensive code)
             return _convert_db_to_dict(self.__last_evaluated_key)
@@ -100,7 +100,7 @@ class ScanResponse(object):
         """
         The number of item scanned during the scan. This can be different from :attr:`count` when using :meth:`~Scan.filter_expression`.
 
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__scanned_count):  # pragma no branch (Defensive code)
             return long(self.__scanned_count)

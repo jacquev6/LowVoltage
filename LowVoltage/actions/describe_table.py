@@ -41,7 +41,7 @@ class DescribeTableResponse(object):
         """
         The description of the table.
 
-        :type: None or :class:`.TableDescription`
+        :type: ``None`` or :class:`.TableDescription`
         """
         if _is_dict(self.__table):  # pragma no branch (Defensive code)
             return TableDescription(**self.__table)

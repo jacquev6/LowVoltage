@@ -65,7 +65,7 @@ class CreateTableResponse(object):
         """
         The description of the table you just created.
 
-        :type: None or :class:`.TableDescription`
+        :type: ``None`` or :class:`.TableDescription`
         """
         if _is_dict(self.__table_description):  # pragma no branch (Defensive code)
             return TableDescription(**self.__table_description)

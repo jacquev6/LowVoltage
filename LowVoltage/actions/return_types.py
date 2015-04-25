@@ -68,7 +68,7 @@ class TableDescription(object):
     @property
     def attribute_definitions(self):
         """
-        :type: None or list of :class:`.AttributeDefinition`
+        :type: ``None`` or list of :class:`.AttributeDefinition`
         """
         if _is_list_of_dict(self.__attribute_definitions):  # pragma no branch (Defensive code)
             return [AttributeDefinition(**d) for d in self.__attribute_definitions]
@@ -76,7 +76,7 @@ class TableDescription(object):
     @property
     def creation_date_time(self):
         """
-        :type: None or :class:`~datetime.datetime`
+        :type: ``None`` or :class:`~datetime.datetime`
         """
         if _is_float(self.__creation_date_time):  # pragma no branch (Defensive code)
             return datetime.datetime.utcfromtimestamp(self.__creation_date_time)
@@ -84,7 +84,7 @@ class TableDescription(object):
     @property
     def global_secondary_indexes(self):
         """
-        :type: None or list of :class:`.GlobalSecondaryIndexDescription`
+        :type: ``None`` or list of :class:`.GlobalSecondaryIndexDescription`
         """
         if _is_list_of_dict(self.__global_secondary_indexes):  # pragma no branch (Defensive code)
             return [GlobalSecondaryIndexDescription(**d) for d in self.__global_secondary_indexes]
@@ -92,7 +92,7 @@ class TableDescription(object):
     @property
     def item_count(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__item_count):  # pragma no branch (Defensive code)
             return long(self.__item_count)
@@ -100,7 +100,7 @@ class TableDescription(object):
     @property
     def key_schema(self):
         """
-        :type: None or list of :class:`.KeySchemaElement`
+        :type: ``None`` or list of :class:`.KeySchemaElement`
         """
         if _is_list_of_dict(self.__key_schema):  # pragma no branch (Defensive code)
             return [KeySchemaElement(**e) for e in self.__key_schema]
@@ -108,7 +108,7 @@ class TableDescription(object):
     @property
     def local_secondary_indexes(self):
         """
-        :type: None or list of :class:`.LocalSecondaryIndexDescription`
+        :type: ``None`` or list of :class:`.LocalSecondaryIndexDescription`
         """
         if _is_list_of_dict(self.__local_secondary_indexes):  # pragma no branch (Defensive code)
             return [LocalSecondaryIndexDescription(**d) for d in self.__local_secondary_indexes]
@@ -116,7 +116,7 @@ class TableDescription(object):
     @property
     def provisioned_throughput(self):
         """
-        :type: None or :class:`.ProvisionedThroughputDescription`
+        :type: ``None`` or :class:`.ProvisionedThroughputDescription`
         """
         if _is_dict(self.__provisioned_throughput):  # pragma no branch (Defensive code)
             return ProvisionedThroughputDescription(**self.__provisioned_throughput)
@@ -124,7 +124,7 @@ class TableDescription(object):
     @property
     def table_name(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__table_name):  # pragma no branch (Defensive code)
             return self.__table_name
@@ -132,7 +132,7 @@ class TableDescription(object):
     @property
     def table_size_bytes(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__table_size_bytes):  # pragma no branch (Defensive code)
             return long(self.__table_size_bytes)
@@ -140,7 +140,7 @@ class TableDescription(object):
     @property
     def table_status(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__table_status):  # pragma no branch (Defensive code)
             return self.__table_status
@@ -163,7 +163,7 @@ class AttributeDefinition(object):
     @property
     def attribute_name(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__attribute_name):  # pragma no branch (Defensive code)
             return self.__attribute_name
@@ -171,7 +171,7 @@ class AttributeDefinition(object):
     @property
     def attribute_type(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__attribute_type):  # pragma no branch (Defensive code)
             return self.__attribute_type
@@ -204,7 +204,7 @@ class GlobalSecondaryIndexDescription(object):
     @property
     def index_name(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__index_name):  # pragma no branch (Defensive code)
             return self.__index_name
@@ -212,7 +212,7 @@ class GlobalSecondaryIndexDescription(object):
     @property
     def index_size_bytes(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__index_size_bytes):  # pragma no branch (Defensive code)
             return long(self.__index_size_bytes)
@@ -220,7 +220,7 @@ class GlobalSecondaryIndexDescription(object):
     @property
     def index_status(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__index_status):  # pragma no branch (Defensive code)
             return self.__index_status
@@ -228,7 +228,7 @@ class GlobalSecondaryIndexDescription(object):
     @property
     def item_count(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__item_count):  # pragma no branch (Defensive code)
             return long(self.__item_count)
@@ -236,7 +236,7 @@ class GlobalSecondaryIndexDescription(object):
     @property
     def key_schema(self):
         """
-        :type: None or list of :class:`.KeySchemaElement`
+        :type: ``None`` or list of :class:`.KeySchemaElement`
         """
         if _is_list_of_dict(self.__key_schema):  # pragma no branch (Defensive code)
             return [KeySchemaElement(**e) for e in self.__key_schema]
@@ -244,7 +244,7 @@ class GlobalSecondaryIndexDescription(object):
     @property
     def projection(self):
         """
-        :type: None or :class:`.Projection`
+        :type: ``None`` or :class:`.Projection`
         """
         if _is_dict(self.__projection):  # pragma no branch (Defensive code)
             return Projection(**self.__projection)
@@ -252,7 +252,7 @@ class GlobalSecondaryIndexDescription(object):
     @property
     def provisioned_throughput(self):
         """
-        :type: None or :class:`.ProvisionedThroughputDescription`
+        :type: ``None`` or :class:`.ProvisionedThroughputDescription`
         """
         if _is_dict(self.__provisioned_throughput):  # pragma no branch (Defensive code)
             return ProvisionedThroughputDescription(**self.__provisioned_throughput)
@@ -275,7 +275,7 @@ class Projection(object):
     @property
     def non_key_attributes(self):
         """
-        :type: None or list of string
+        :type: ``None`` or list of string
         """
         if _is_list_of_str(self.__non_key_attributes):  # pragma no branch (Defensive code)
             return self.__non_key_attributes
@@ -283,7 +283,7 @@ class Projection(object):
     @property
     def projection_type(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__projection_type):  # pragma no branch (Defensive code)
             return self.__projection_type
@@ -312,7 +312,7 @@ class ProvisionedThroughputDescription(object):
     @property
     def last_decrease_date_time(self):
         """
-        :type: None or :class:`~datetime.datetime`
+        :type: ``None`` or :class:`~datetime.datetime`
         """
         if _is_float(self.__last_decrease_date_time):  # pragma no branch (Defensive code)
             return datetime.datetime.utcfromtimestamp(self.__last_decrease_date_time)
@@ -320,7 +320,7 @@ class ProvisionedThroughputDescription(object):
     @property
     def last_increase_date_time(self):
         """
-        :type: None or :class:`~datetime.datetime`
+        :type: ``None`` or :class:`~datetime.datetime`
         """
         if _is_float(self.__last_increase_date_time):  # pragma no branch (Defensive code)
             return datetime.datetime.utcfromtimestamp(self.__last_increase_date_time)
@@ -328,7 +328,7 @@ class ProvisionedThroughputDescription(object):
     @property
     def number_of_decreases_today(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__number_of_decreases_today):  # pragma no branch (Defensive code)
             return long(self.__number_of_decreases_today)
@@ -336,7 +336,7 @@ class ProvisionedThroughputDescription(object):
     @property
     def read_capacity_units(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__read_capacity_units):  # pragma no branch (Defensive code)
             return long(self.__read_capacity_units)
@@ -344,7 +344,7 @@ class ProvisionedThroughputDescription(object):
     @property
     def write_capacity_units(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__write_capacity_units):  # pragma no branch (Defensive code)
             return long(self.__write_capacity_units)
@@ -367,7 +367,7 @@ class KeySchemaElement(object):
     @property
     def attribute_name(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__attribute_name):  # pragma no branch (Defensive code)
             return self.__attribute_name
@@ -375,7 +375,7 @@ class KeySchemaElement(object):
     @property
     def key_type(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__key_type):  # pragma no branch (Defensive code)
             return self.__key_type
@@ -404,7 +404,7 @@ class LocalSecondaryIndexDescription(object):
     @property
     def index_name(self):
         """
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__index_name):  # pragma no branch (Defensive code)
             return self.__index_name
@@ -412,7 +412,7 @@ class LocalSecondaryIndexDescription(object):
     @property
     def index_size_bytes(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__index_size_bytes):  # pragma no branch (Defensive code)
             return long(self.__index_size_bytes)
@@ -420,7 +420,7 @@ class LocalSecondaryIndexDescription(object):
     @property
     def item_count(self):
         """
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__item_count):  # pragma no branch (Defensive code)
             return long(self.__item_count)
@@ -428,7 +428,7 @@ class LocalSecondaryIndexDescription(object):
     @property
     def key_schema(self):
         """
-        :type: None or list of :class:`.KeySchemaElement`
+        :type: ``None`` or list of :class:`.KeySchemaElement`
         """
         if _is_list_of_dict(self.__key_schema):  # pragma no branch (Defensive code)
             return [KeySchemaElement(**e) for e in self.__key_schema]
@@ -436,7 +436,7 @@ class LocalSecondaryIndexDescription(object):
     @property
     def projection(self):
         """
-        :type: None or :class:`.Projection`
+        :type: ``None`` or :class:`.Projection`
         """
         if _is_dict(self.__projection):  # pragma no branch (Defensive code)
             return Projection(**self.__projection)
@@ -467,7 +467,7 @@ class ConsumedCapacity(object):
         """
         The total capacity units consumed by the request.
 
-        :type: None or float
+        :type: ``None`` or float
         """
         if _is_float(self.__capacity_units):  # pragma no branch (Defensive code)
             return float(self.__capacity_units)
@@ -477,7 +477,7 @@ class ConsumedCapacity(object):
         """
         The capacity consumed on GSIs.
 
-        :type: None or dict of string (index name) to :class:`.Capacity`
+        :type: ``None`` or dict of string (index name) to :class:`.Capacity`
         """
         if _is_dict(self.__global_secondary_indexes):  # pragma no branch (Defensive code)
             return {n: Capacity(**v) for n, v in self.__global_secondary_indexes.iteritems()}
@@ -487,7 +487,7 @@ class ConsumedCapacity(object):
         """
         The capacity consumed on LSIs.
 
-        :type: None or dict of string (index name) to :class:`.Capacity`
+        :type: ``None`` or dict of string (index name) to :class:`.Capacity`
         """
         if _is_dict(self.__local_secondary_indexes):  # pragma no branch (Defensive code)
             return {n: Capacity(**v) for n, v in self.__local_secondary_indexes.iteritems()}
@@ -497,7 +497,7 @@ class ConsumedCapacity(object):
         """
         The capacity consumed on the table itself.
 
-        :type: None or :class:`.Capacity`
+        :type: ``None`` or :class:`.Capacity`
         """
         if _is_dict(self.__table):  # pragma no branch (Defensive code)
             return Capacity(**self.__table)
@@ -507,7 +507,7 @@ class ConsumedCapacity(object):
         """
         The name of the table.
 
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__table_name):  # pragma no branch (Defensive code)
             return self.__table_name
@@ -530,7 +530,7 @@ class Capacity(object):
         """
         Actual units of consumed capacity.
 
-        :type: None or float
+        :type: ``None`` or float
         """
         if _is_float(self.__capacity_units):  # pragma no branch (Defensive code)
             return float(self.__capacity_units)
@@ -555,7 +555,7 @@ class ItemCollectionMetrics(object):
         """
         Hash key of the collection whose size is estimated.
 
-        :type: None or dict
+        :type: ``None`` or dict
         """
         if _is_dict(self.__item_collection_key):  # pragma no branch (Defensive code)
             return _convert_db_to_dict(self.__item_collection_key)
@@ -565,7 +565,7 @@ class ItemCollectionMetrics(object):
         """
         Range of sizes of the collection in GB.
 
-        :type: None or list of two float
+        :type: ``None`` or list of two float
         """
         if _is_list_of_float(self.__size_estimate_range_gb):  # pragma no branch (Defensive code)
             return [float(e) for e in self.__size_estimate_range_gb]

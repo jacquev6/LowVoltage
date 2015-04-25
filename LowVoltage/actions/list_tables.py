@@ -38,7 +38,7 @@ class ListTablesResponse(object):
         The name of the last table that was considered during the request.
         If not None, you should give it to :meth:`~ListTables.exclusive_start_table_name` in a subsequent :class:`ListTables`.
 
-        :type: None or string
+        :type: ``None`` or string
         """
         if _is_str(self.__last_evaluated_table_name):  # pragma no branch (Defensive code)
             return self.__last_evaluated_table_name
@@ -48,7 +48,7 @@ class ListTablesResponse(object):
         """
         The names of the tables.
 
-        :type: None or list of string
+        :type: ``None`` or list of string
         """
         if _is_list_of_str(self.__table_names):  # pragma no branch (Defensive code)
             return self.__table_names

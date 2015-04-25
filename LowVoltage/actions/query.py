@@ -51,7 +51,7 @@ class QueryResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~Query.return_consumed_capacity_total` or :meth:`~Query.return_consumed_capacity_indexes`.
 
-        :type: None or :class:`.ConsumedCapacity`
+        :type: ``None`` or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
             return ConsumedCapacity(**self.__consumed_capacity)
@@ -61,7 +61,7 @@ class QueryResponse(object):
         """
         The number of items matching the query.
 
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__count):  # pragma no branch (Defensive code)
             return long(self.__count)
@@ -71,7 +71,7 @@ class QueryResponse(object):
         """
         The items matching the query. Unless you used :meth:`~Query.select_count`.
 
-        :type: None or list of dict
+        :type: ``None`` or list of dict
         """
         if _is_list_of_dict(self.__items):  # pragma no branch (Defensive code)
             return [_convert_db_to_dict(i) for i in self.__items]
@@ -81,7 +81,7 @@ class QueryResponse(object):
         """
         The key of the last item evaluated by the query. If not None, it should be given to :meth:`~Query.exclusive_start_key` is a subsequent :class:`Query`.
 
-        :type: None or dict
+        :type: ``None`` or dict
         """
         if _is_dict(self.__last_evaluated_key):  # pragma no branch (Defensive code)
             return _convert_db_to_dict(self.__last_evaluated_key)
@@ -91,7 +91,7 @@ class QueryResponse(object):
         """
         The number of item scanned during the query. This can be different from :attr:`count` when using :meth:`~Query.filter_expression`.
 
-        :type: None or long
+        :type: ``None`` or long
         """
         if _is_int(self.__scanned_count):  # pragma no branch (Defensive code)
             return long(self.__scanned_count)

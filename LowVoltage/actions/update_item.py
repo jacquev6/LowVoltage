@@ -46,7 +46,7 @@ class UpdateItemResponse(object):
         """
         The (previous or new) attributes of the item you just updated. If you used :meth:`~UpdateItem.return_values_all_old`, :meth:`~UpdateItem.return_values_all_new`, :meth:`~UpdateItem.return_values_updated_old` or :meth:`~UpdateItem.return_values_updated_new`.
 
-        :type: None or dict
+        :type: ``None`` or dict
         """
         if _is_dict(self.__attributes):  # pragma no branch (Defensive code)
             return _convert_db_to_dict(self.__attributes)
@@ -58,7 +58,7 @@ class UpdateItemResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~UpdateItem.return_consumed_capacity_total` or :meth:`~UpdateItem.return_consumed_capacity_indexes`.
 
-        :type: None or :class:`.ConsumedCapacity`
+        :type: ``None`` or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
             return ConsumedCapacity(**self.__consumed_capacity)
@@ -68,7 +68,7 @@ class UpdateItemResponse(object):
         """
         Metrics about the collection of the item you just updated. If a LSI was touched and you used :meth:`~UpdateItem.return_item_collection_metrics_size`.
 
-        :type: None or :class:`.ItemCollectionMetrics`
+        :type: ``None`` or :class:`.ItemCollectionMetrics`
         """
         if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
             return ItemCollectionMetrics(**self.__item_collection_metrics)

@@ -52,7 +52,7 @@ class GetItemResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~GetItem.return_consumed_capacity_total`.
 
-        :type: None or :class:`.ConsumedCapacity`
+        :type: ``None`` or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
             return ConsumedCapacity(**self.__consumed_capacity)
@@ -62,7 +62,7 @@ class GetItemResponse(object):
         """
         The item you just got. None if the item is not in the table.
 
-        :type: None or dict
+        :type: ``None`` or dict
         """
         if _is_dict(self.__item):  # pragma no branch (Defensive code)
             return _convert_db_to_dict(self.__item)

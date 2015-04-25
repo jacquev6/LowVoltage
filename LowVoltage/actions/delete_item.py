@@ -59,7 +59,7 @@ class DeleteItemResponse(object):
         """
         The previous attributes of the item you just deleted. If you used :meth:`~DeleteItem.return_values_all_old`.
 
-        :type: None or dict
+        :type: ``None`` or dict
         """
         if _is_dict(self.__attributes):  # pragma no branch (Defensive code)
             return _convert_db_to_dict(self.__attributes)
@@ -69,7 +69,7 @@ class DeleteItemResponse(object):
         """
         The capacity consumed by the request. If you used :meth:`~DeleteItem.return_consumed_capacity_total` or :meth:`~DeleteItem.return_consumed_capacity_indexes`.
 
-        :type: None or :class:`.ConsumedCapacity`
+        :type: ``None`` or :class:`.ConsumedCapacity`
         """
         if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
             return ConsumedCapacity(**self.__consumed_capacity)
@@ -79,7 +79,7 @@ class DeleteItemResponse(object):
         """
         Metrics about the collection of the item you just deleted. If a LSI was touched and you used :meth:`~DeleteItem.return_item_collection_metrics_size`.
 
-        :type: None or :class:`.ItemCollectionMetrics`
+        :type: ``None`` or :class:`.ItemCollectionMetrics`
         """
         if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
             return ItemCollectionMetrics(**self.__item_collection_metrics)
