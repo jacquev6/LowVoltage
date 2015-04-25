@@ -206,14 +206,25 @@ class DeleteItem(Action):
     @proxy
     def return_item_collection_metrics_size(self):
         """
-        @todo doctest (We need a table with a LSI)
+        >>> m = connection(
+        ...   DeleteItem(table2, {"h": 0, "r1": 0})
+        ...     .return_item_collection_metrics_size()
+        ... ).item_collection_metrics
+        >>> m.item_collection_key
+        {u'h': 0}
+        >>> m.size_estimate_range_gb
+        [0.0, 1.0]
         """
         return self.__return_item_collection_metrics.size()
 
     @proxy
     def return_item_collection_metrics_none(self):
         """
-        @todo doctest (We need a table with a LSI)
+        >>> print connection(
+        ...   DeleteItem(table2, {"h": 1, "r1": 0})
+        ...     .return_item_collection_metrics_none()
+        ... ).item_collection_metrics
+        None
         """
         return self.__return_item_collection_metrics.none()
 
