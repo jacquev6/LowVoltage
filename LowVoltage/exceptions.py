@@ -9,42 +9,54 @@
 
 class Error(Exception):
     """
-    @todo Document
+    The base class of all exceptions raised by the package.
     """
     retryable = False
 
 
 class UnknownError(Error):
     """
-    @todo Document
+    Exception raised for errors that can't be attributed to the client, the network or the server.
+
+    You should ``except Error`` instead of this one.
     """
-    pass
 
 
 class ServerError(Error):
     """
-    @todo Document
+    Exception raised when the problem can be blamed on the server.
+    Typically DynamoDB returned a 5XX status code or a response that couldn't be decoded.
     """
     retryable = True
 
 
 class NetworkError(Error):
     """
-    @todo Document
+    Exception raised when the problem can be blamed on the network.
+    Connection refused, timeout, etc.
     """
     retryable = True
 
 
 class ClientError(Error):
     """
-    @todo Document
+    Exception raised when the problem can be blamed on the client.
+
+    See bellow for specialized exceptions for some client errors.
     """
     pass
 
 
 class UnknownClientError(ClientError):
     """
-    @todo Document
+    Exception raised for errors that can be attributed to the client but are not known by the package.
+    Typically DynamoDB returned a 4XX status code but we couldn't match the returned type to any known client error.
+
+    You should ``except ClientError`` instead of this one.
+
+    Feel free to `open an issue <https://github.com/jacquev6/LowVoltage/issues/new?title=UnknownClientError>`__
+    if your ``except ClientError`` clause catches an :exc:`UnknownClientError`.
+    Put the exception details and we'll add it to the package.
     """
     pass
 
@@ -55,147 +67,151 @@ class UnknownClientError(ClientError):
 
 class ConditionalCheckFailedException(ClientError):
     """
-    @todo Document
+    Raised by conditional updates when the condition is not met.
+    See :meth:`.PutItem.condition_expression`, :meth:`.UpdateItem.condition_expression` and :meth:`.DeleteItem.condition_expression`.
     """
     pass
 
 
 class IncompleteSignature(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class InvalidAction(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class InvalidClientTokenId(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class InvalidParameterCombination(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class InvalidParameterValue(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class InvalidQueryParameter(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class ItemCollectionSizeLimitExceededException(ClientError):
     """
-    @todo Document
+    Exception raised when the item collection of a hash key is too large (in a table with a LSI).
     """
     pass
 
 
 class LimitExceededException(ClientError):
     """
-    @todo Document
+    Exception raised when too many tables are beeing modified at the same time.
+    Or when there are too many tables.
+
+    See `the reference of the CreateTable action <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_Errors>`__.
     """
     pass
 
 
 class MalformedQueryString(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class MissingAction(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class MissingAuthenticationToken(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class MissingParameter(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class OptInRequired(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class ProvisionedThroughputExceededException(ClientError):
     """
-    @todo Document
+    Exception raised when the provisioned throughput is reached.
     """
     retryable = True
 
 
 class RequestExpired(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     retryable = True
 
 
 class ResourceInUseException(ClientError):
     """
-    @todo Document
+    Exception raise when trying to modify a table that's not in the "ACTIVE" state.
     """
     retryable = True
 
 
 class ResourceNotFoundException(ClientError):
     """
-    @todo Document
+    Exception raised when trying to use a non-existent table.
     """
     pass
 
 
 class Throttling(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     retryable = True
 
 
 class ValidationError(ClientError):
     """
-    @todo Document
+    See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
     pass
 
 
 class ValidationException(ClientError):
     """
-    @todo Document
+    Exception raised when the request is invalid.
     """
     pass
 

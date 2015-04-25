@@ -16,7 +16,8 @@ extensions = []
 
 nitpicky = True
 nitpick_ignore = [
-    ("py:class", "datetime.datetime")
+    ("py:class", "datetime.datetime"),
+    ("py:class", "exceptions.Exception"),
 ]
 
 # http://stackoverflow.com/a/28778969/905845
