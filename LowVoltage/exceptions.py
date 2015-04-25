@@ -219,6 +219,14 @@ class InvalidSignatureException(ClientError):
     pass
 
 
+class SerializationException(ClientError):
+    """
+    Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
+    Seems to be raised when a number argument (passed as a string) cannot be converted to an actual number.
+    """
+    pass
+
+
 class UnrecognizedClientException(ClientError):
     """
     Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
@@ -254,6 +262,7 @@ client_errors = sorted(
 
         ("AccessDeniedException", AccessDeniedException),
         ("InvalidSignatureException", InvalidSignatureException),
+        ("SerializationException", SerializationException),
         ("UnrecognizedClientException", UnrecognizedClientException),
     ],
     key=lambda (prefix, cls): -len(prefix)

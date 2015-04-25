@@ -53,8 +53,8 @@ class ListTables(Action):
 
     def build(self):
         data = {}
-        if self.__limit:
-            data["Limit"] = str(self.__limit)
+        if self.__limit is not None:
+            data["Limit"] = self.__limit
         if self.__exclusive_start_table_name:
             data["ExclusiveStartTableName"] = self.__exclusive_start_table_name
         return data
@@ -86,7 +86,7 @@ class ListTablesUnitTests(_tst.UnitTests):
         self.assertEqual(ListTables().build(), {})
 
     def test_limit(self):
-        self.assertEqual(ListTables().limit(42).build(), {"Limit": "42"})
+        self.assertEqual(ListTables().limit(42).build(), {"Limit": 42})
 
     def test_exclusive_start_table_name(self):
         self.assertEqual(ListTables().exclusive_start_table_name("Bar").build(), {"ExclusiveStartTableName": "Bar"})
