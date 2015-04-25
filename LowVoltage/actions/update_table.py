@@ -131,7 +131,10 @@ class UpdateTable(Action):
     def hash_key(self, name, typ=None):
         """
         @todo Document
+
+        :raise: :exc:`.BuilderError` if called when no index is active.
         """
+        self.__check_active_index()
         self.__active_index._hash_key = name
         if typ is not None:
             self.attribute_definition(name, typ)
@@ -140,7 +143,10 @@ class UpdateTable(Action):
     def range_key(self, name, typ=None):
         """
         @todo Document
+
+        :raise: :exc:`.BuilderError` if called when no index is active.
         """
+        self.__check_active_index()
         self.__active_index._range_key = name
         if typ is not None:
             self.attribute_definition(name, typ)
@@ -200,21 +206,30 @@ class UpdateTable(Action):
     def project_all(self):
         """
         @todo Document
+
+        :raise: :exc:`.BuilderError` if called when no index is active.
         """
+        self.__check_active_index()
         self.__active_index._projection = "ALL"
         return self
 
     def project_keys_only(self):
         """
         @todo Document
+
+        :raise: :exc:`.BuilderError` if called when no index is active.
         """
+        self.__check_active_index()
         self.__active_index._projection = "KEYS_ONLY"
         return self
 
     def project(self, *attrs):
         """
         @todo Document
+
+        :raise: :exc:`.BuilderError` if called when no index is active.
         """
+        self.__check_active_index()
         if not isinstance(self.__active_index._projection, list):
             self.__active_index._projection = []
         for attr in attrs:
@@ -222,6 +237,10 @@ class UpdateTable(Action):
                 attr = [attr]
             self.__active_index._projection.extend(attr)
         return self
+
+    def __check_active_index(self):
+        if self.__active_index is self:
+            raise _lv.BuilderError("No active index.")
 
 
 class UpdateTableUnitTests(_tst.UnitTests):
@@ -421,6 +440,31 @@ class UpdateTableUnitTests(_tst.UnitTests):
                 "ProvisionedThroughput": {"ReadCapacityUnits": 12, "WriteCapacityUnits": 13},
             }
         )
+
+    def test_hash_key_without_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").hash_key("h")
+        self.assertEqual(catcher.exception.args, ("No active index.",))
+
+    def test_range_key_without_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").range_key("r")
+        self.assertEqual(catcher.exception.args, ("No active index.",))
+
+    def test_project_all_without_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").project_all()
+        self.assertEqual(catcher.exception.args, ("No active index.",))
+
+    def test_project_without_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").project("a")
+        self.assertEqual(catcher.exception.args, ("No active index.",))
+
+    def test_project_keys_only_without_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").project_keys_only()
+        self.assertEqual(catcher.exception.args, ("No active index.",))
 
 
 class UpdateTableLocalIntegTests(_tst.LocalIntegTests):

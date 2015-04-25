@@ -120,6 +120,8 @@ class BatchWriteItem(Action):
         Add items to put in the active table.
         This method accepts a variable number of items or iterables.
 
+        :raise: :exc:`.BuilderError` if called when no table is active.
+
         >>> connection(
         ...   BatchWriteItem().table(table)
         ...     .put({"h": 11})
@@ -129,6 +131,7 @@ class BatchWriteItem(Action):
         ... )
         <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
         """
+        self.__check_active_table()
         for item in items:
             if isinstance(item, dict):
                 item = [item]
@@ -140,6 +143,8 @@ class BatchWriteItem(Action):
         Add keys to delete from the active table.
         This method accepts a variable number of keys or iterables.
 
+        :raise: :exc:`.BuilderError` if called when no table is active.
+
         >>> connection(
         ...   BatchWriteItem().table(table)
         ...     .delete({"h": 11})
@@ -149,6 +154,7 @@ class BatchWriteItem(Action):
         ... )
         <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
         """
+        self.__check_active_table()
         for key in keys:
             if isinstance(key, dict):
                 key = [key]
@@ -220,6 +226,10 @@ class BatchWriteItem(Action):
         None
         """
         return self.__return_item_collection_metrics.none()
+
+    def __check_active_table(self):
+        if self.__active_table is None:
+            raise _lv.BuilderError("No active table.")
 
 
 class BatchWriteItemUnitTests(_tst.UnitTests):
@@ -330,6 +340,16 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
                 },
             }
         )
+
+    def test_put_without_active_table(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            BatchWriteItem().put({"h": 0})
+        self.assertEqual(catcher.exception.args, ("No active table.",))
+
+    def test_delete_without_active_table(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            BatchWriteItem().delete({"h": 0})
+        self.assertEqual(catcher.exception.args, ("No active table.",))
 
 
 class BatchWriteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):

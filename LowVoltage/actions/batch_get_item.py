@@ -133,6 +133,8 @@ class BatchGetItem(Action):
         Add keys to get from the active table.
         This method accepts a variable number of keys or iterables.
 
+        :raise: :exc:`.BuilderError` if called when no table is active.
+
         >>> connection(
         ...   BatchGetItem()
         ...     .table(table)
@@ -143,6 +145,7 @@ class BatchGetItem(Action):
         ... )
         <LowVoltage.actions.batch_get_item.BatchGetItemResponse ...>
         """
+        self.__check_active_table()
         for key in keys:
             if isinstance(key, dict):
                 key = [key]
@@ -152,7 +155,7 @@ class BatchGetItem(Action):
     @proxy
     def consistent_read_true(self):
         """
-        (for the active table)
+        :raise: :exc:`.BuilderError` if called when no table is active.
 
         >>> c = connection(
         ...   BatchGetItem()
@@ -165,12 +168,13 @@ class BatchGetItem(Action):
         >>> c[0].capacity_units
         1.0
         """
+        self.__check_active_table()
         return self.__active_table.consistent_read.true()
 
     @proxy
     def consistent_read_false(self):
         """
-        (for the active table)
+        :raise: :exc:`.BuilderError` if called when no table is active.
 
         >>> c = connection(
         ...   BatchGetItem()
@@ -183,12 +187,13 @@ class BatchGetItem(Action):
         >>> c[0].capacity_units
         0.5
         """
+        self.__check_active_table()
         return self.__active_table.consistent_read.false()
 
     @proxy
     def project(self, *names):
         """
-        (for the active table)
+        :raise: :exc:`.BuilderError` if called when no table is active.
 
         >>> connection(
         ...   BatchGetItem()
@@ -198,13 +203,14 @@ class BatchGetItem(Action):
         ... ).responses[table]
         [{u'h': 0, u'gr': 0}]
         """
+        self.__check_active_table()
         self.__active_table.projection_expression.add(*names)
         return self
 
     @proxy
     def expression_attribute_name(self, name, path):
         """
-        (for the active table)
+        :raise: :exc:`.BuilderError` if called when no table is active.
 
         >>> connection(
         ...   BatchGetItem()
@@ -215,6 +221,7 @@ class BatchGetItem(Action):
         ... ).responses[table]
         [{u'h': 0}]
         """
+        self.__check_active_table()
         self.__active_table.expression_attribute_names.add(name, path)
         return self
 
@@ -250,6 +257,10 @@ class BatchGetItem(Action):
         None
         """
         return self.__return_consumed_capacity.none()
+
+    def __check_active_table(self):
+        if self.__active_table is None:
+            raise _lv.BuilderError("No active table.")
 
 
 class BatchGetItemUnitTests(_tst.UnitTests):
@@ -338,6 +349,31 @@ class BatchGetItemUnitTests(_tst.UnitTests):
                 }
             }
         )
+
+    def test_keys_without_active_table(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            BatchGetItem().keys({"h": 0})
+        self.assertEqual(catcher.exception.args, ("No active table.",))
+
+    def test_consistent_read_true_without_active_table(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            BatchGetItem().consistent_read_true()
+        self.assertEqual(catcher.exception.args, ("No active table.",))
+
+    def test_consistent_read_false_without_active_table(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            BatchGetItem().consistent_read_false()
+        self.assertEqual(catcher.exception.args, ("No active table.",))
+
+    def test_project_without_active_table(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            BatchGetItem().project("a")
+        self.assertEqual(catcher.exception.args, ("No active table.",))
+
+    def test_expression_attribute_name_without_active_table(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            BatchGetItem().expression_attribute_name("a", "b")
+        self.assertEqual(catcher.exception.args, ("No active table.",))
 
 
 class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):

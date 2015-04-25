@@ -44,7 +44,6 @@ class ClientError(Error):
 
     See bellow for specialized exceptions for some client errors.
     """
-    pass
 
 
 class UnknownClientError(ClientError):
@@ -58,7 +57,15 @@ class UnknownClientError(ClientError):
     if your ``except ClientError`` clause catches an :exc:`UnknownClientError`.
     Put the exception details and we'll add it to the package.
     """
-    pass
+
+
+class BuilderError(ClientError):
+    """
+    Exception raised when you make a mistake while using a builder.
+
+    For example if you call :meth:`.CreateTable.project` when you don't have an active index.
+    Or :meth:`.BatchGetItem.keys` when you don't have an active table.
+    """
 
 
 # All 4XXs from http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html
@@ -70,56 +77,48 @@ class ConditionalCheckFailedException(ClientError):
     Raised by conditional updates when the condition is not met.
     See :meth:`.PutItem.condition_expression`, :meth:`.UpdateItem.condition_expression` and :meth:`.DeleteItem.condition_expression`.
     """
-    pass
 
 
 class IncompleteSignature(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class InvalidAction(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class InvalidClientTokenId(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class InvalidParameterCombination(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class InvalidParameterValue(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class InvalidQueryParameter(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class ItemCollectionSizeLimitExceededException(ClientError):
     """
     Exception raised when the item collection of a hash key is too large (in a table with a LSI).
     """
-    pass
 
 
 class LimitExceededException(ClientError):
@@ -129,42 +128,36 @@ class LimitExceededException(ClientError):
 
     See `the reference of the CreateTable action <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_Errors>`__.
     """
-    pass
 
 
 class MalformedQueryString(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class MissingAction(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class MissingAuthenticationToken(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class MissingParameter(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class OptInRequired(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class ProvisionedThroughputExceededException(ClientError):
@@ -192,7 +185,6 @@ class ResourceNotFoundException(ClientError):
     """
     Exception raised when trying to use a non-existent table.
     """
-    pass
 
 
 class Throttling(ClientError):
@@ -206,14 +198,12 @@ class ValidationError(ClientError):
     """
     See `common errors <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     """
-    pass
 
 
 class ValidationException(ClientError):
     """
     Exception raised when the request is invalid.
     """
-    pass
 
 
 # Error discovered by chance, not documented
@@ -224,7 +214,6 @@ class AccessDeniedException(ClientError):
     Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     Seems to be raised when credentials are valid, but the operation is not allowed by IAM policies.
     """
-    pass
 
 
 class InvalidSignatureException(ClientError):
@@ -232,7 +221,6 @@ class InvalidSignatureException(ClientError):
     Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     Seems to be raised when credentials are not valid.
     """
-    pass
 
 
 class SerializationException(ClientError):
@@ -240,7 +228,6 @@ class SerializationException(ClientError):
     Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     Seems to be raised when a number argument (passed as a string) cannot be converted to an actual number.
     """
-    pass
 
 
 class UnrecognizedClientException(ClientError):
@@ -248,7 +235,6 @@ class UnrecognizedClientException(ClientError):
     Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
     Seems to be raised when using (valid) temporary credentials but an invalid token.
     """
-    pass
 
 
 # Sorted by decreasing suffix length to ensure BasicConnection._raise finds the right class using str.endswith.
