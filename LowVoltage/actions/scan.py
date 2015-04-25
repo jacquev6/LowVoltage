@@ -326,7 +326,6 @@ class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             _lv.Scan("Aaa")
         )
 
-
         self.assertEqual(r.count, 4)
         items = sorted((r.items[i] for i in range(4)), key=lambda i: i["h"])
         self.assertEqual(items, [{"h": u"0", "v": 0}, {"h": u"1", "v": 1}, {"h": u"2", "v": 2}, {"h": u"3", "v": 3}])
@@ -372,7 +371,6 @@ class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         r = self.connection(
             _lv.Scan("Aaa").filter_expression("v>:v").expression_attribute_value("v", 1).project("h")
         )
-
 
         self.assertEqual(r.count, 2)
         self.assertEqual(r.items[0], {"h": u"3"})

@@ -38,7 +38,6 @@ from .next_gen_mixins import (
 from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict
 
 
-
 class DeleteItemResponse(object):
     """
     The `DeleteItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_ResponseElements>`__
@@ -51,9 +50,9 @@ class DeleteItemResponse(object):
         ItemCollectionMetrics=None,
         **dummy
     ):
-        self.__attributes =  Attributes
-        self.__consumed_capacity =  ConsumedCapacity
-        self.__item_collection_metrics =  ItemCollectionMetrics
+        self.__attributes = Attributes
+        self.__consumed_capacity = ConsumedCapacity
+        self.__item_collection_metrics = ItemCollectionMetrics
 
     @property
     def attributes(self):
