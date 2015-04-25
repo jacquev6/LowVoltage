@@ -159,7 +159,8 @@ class Scan(Action):
     @proxy
     def limit(self, limit):
         """
-        @todo doctest
+        >>> connection(Scan(table).limit(5)).count
+        5L
         """
         return self.__limit.set(limit)
 

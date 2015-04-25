@@ -412,7 +412,7 @@ class LocalSecondaryIndexDescription(object):
     @property
     def index_size_bytes(self):
         """
-        :type: None or 
+        :type: None or long
         """
         if _is_int(self.__index_size_bytes):  # pragma no branch (Defensive code)
             return long(self.__index_size_bytes)
@@ -436,7 +436,7 @@ class LocalSecondaryIndexDescription(object):
     @property
     def projection(self):
         """
-        :type: None or 
+        :type: None or :class:`.Projection`
         """
         if _is_dict(self.__projection):  # pragma no branch (Defensive code)
             return Projection(**self.__projection)
