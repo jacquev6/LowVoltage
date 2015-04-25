@@ -93,3 +93,5 @@ Compounds
     reference/compounds/list_tables_iterator
     reference/compounds/scan_iterator
     reference/compounds/query_iterator
+    reference/compounds/wait_for_table_activation
+    reference/compounds/wait_for_table_deletion
