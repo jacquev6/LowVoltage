@@ -9,6 +9,8 @@ When given a :class:`CreateTable`, the connection will return a :class:`CreateTa
 
     table = "LowVoltage.Tests.Doc.CreateTable.1"
     table2 = "LowVoltage.Tests.Doc.CreateTable.2"
+    table3 = "LowVoltage.Tests.Doc.CreateTable.3"
+    table4 = "LowVoltage.Tests.Doc.CreateTable.4"
 
 >>> r = connection(
 ...   CreateTable(table)
@@ -22,37 +24,20 @@ u'CREATING'
 
 Note that you can use :func:`.WaitForTableActivation` to poll the table status until it's usable.
 
-With a hash+range key, a LSI and a GSI:
-
->>> connection(
-...   CreateTable(table2)
-...     .hash_key("h", STRING)
-...     .range_key("r", NUMBER)
-...     .provisioned_throughput(1, 1)
-...     .global_secondary_index("gsi")
-...       .hash_key("a", BINARY)
-...       .range_key("b")
-...       .provisioned_throughput(1, 1)
-...       .project_all()
-...     .local_secondary_index("lsi")
-...       .hash_key("h")
-...       .range_key("a")
-...       .provisioned_throughput(1, 1)
-...       .project("a", "b")
-...     .attribute_definition("b", NUMBER)
-... )
-<LowVoltage.actions.create_table.CreateTableResponse object at ...>
-
-Note that we also specified the types of "gsi_r" and "lsi_r" outside of the :meth:`~.CreateTable.range_key` call, using :meth:`~.CreateTable.attribute_definition`.
-
 .. testcleanup::
 
     WaitForTableActivation(connection, table)
     WaitForTableActivation(connection, table2)
+    WaitForTableActivation(connection, table3)
+    WaitForTableActivation(connection, table4)
     connection(DeleteTable(table))
     connection(DeleteTable(table2))
+    connection(DeleteTable(table3))
+    connection(DeleteTable(table4))
     WaitForTableDeletion(connection, table)
     WaitForTableDeletion(connection, table2)
+    WaitForTableDeletion(connection, table3)
+    WaitForTableDeletion(connection, table4)
 """
 
 import datetime
@@ -179,7 +164,7 @@ class CreateTable(Action):
         Set the hash key in KeySchema for the table or the active index.
         If you provide a second argument, :meth:`~.CreateTable.attribute_definition` will be called as well.
 
-        See :mod:`.create_table` for examples.
+        See :meth:`~.CreateTable.range_key` for examples.
         """
         self.__active_index._hash_key = name
         if typ is not None:
@@ -191,7 +176,14 @@ class CreateTable(Action):
         Set the range key in KeySchema for the table or the active index.
         If you provide a second argument, :meth:`~.CreateTable.attribute_definition` will be called as well.
 
-        See :mod:`.create_table` for examples.
+        >>> connection(
+        ...   CreateTable(table2)
+        ...     .hash_key("h", STRING)
+        ...     .range_key("r")
+        ...     .provisioned_throughput(1, 1)
+        ...     .attribute_definition("r", NUMBER)
+        ... )
+        <LowVoltage.actions.create_table.CreateTableResponse ...>
         """
         self.__active_index._range_key = name
         if typ is not None:
@@ -201,9 +193,9 @@ class CreateTable(Action):
     def attribute_definition(self, name, typ):
         """
         Set the type of an attribute in AttributeDefinitions.
-        Key attribute must be typed. See :mod:`.attribute_types` for constant to be passed to this method.
+        Key attribute must be typed. See :mod:`.attribute_types` for constants to be passed to this method.
 
-        See :mod:`.create_table` for examples.
+        See :meth:`~.CreateTable.range_key` for an example.
         """
         self.__attribute_definitions[name] = typ
         return self
@@ -212,7 +204,7 @@ class CreateTable(Action):
         """
         Set the read and write provisioned throughput for the table or the active index.
 
-        See :mod:`.create_table` for examples.
+        See :meth:`~.CreateTable.range_key`, :meth:`~.CreateTable.global_secondary_index` or :meth:`~.CreateTable.local_secondary_index` for examples.
         """
         self.__active_index._read_capacity_units = read_capacity_units
         self.__active_index._write_capacity_units = write_capacity_units
@@ -222,7 +214,17 @@ class CreateTable(Action):
         """
         Add a GSI. This method sets the active index: methods like :meth:`~.CreateTable.hash_key` will apply to the index.
 
-        See :mod:`.create_table` for examples.
+        >>> connection(
+        ...   CreateTable(table3)
+        ...     .hash_key("h", STRING)
+        ...     .provisioned_throughput(1, 1)
+        ...     .global_secondary_index("gsi")
+        ...       .hash_key("a", BINARY)
+        ...       .range_key("b", NUMBER)
+        ...       .provisioned_throughput(1, 1)
+        ...       .project_all()
+        ... )
+        <LowVoltage.actions.create_table.CreateTableResponse ...>
         """
         if name not in self.__gsis:
             self.__gsis[name] = self._IndexWithThroughput(name)
@@ -233,7 +235,18 @@ class CreateTable(Action):
         """
         Add a LSI. This method sets the active index: methods like :meth:`~.CreateTable.hash_key` will apply to the index.
 
-        See :mod:`.create_table` for examples.
+        >>> connection(
+        ...   CreateTable(table4)
+        ...     .hash_key("h", STRING)
+        ...     .range_key("r", NUMBER)
+        ...     .provisioned_throughput(1, 1)
+        ...     .local_secondary_index("lsi")
+        ...       .hash_key("h")
+        ...       .range_key("a", NUMBER)
+        ...       .provisioned_throughput(1, 1)
+        ...       .project("x", "y")
+        ... )
+        <LowVoltage.actions.create_table.CreateTableResponse ...>
         """
         if name not in self.__lsis:
             self.__lsis[name] = self._Index(name)
@@ -254,7 +267,7 @@ class CreateTable(Action):
 
         :raise: :exc:`.BuilderError` if called when no index is active.
 
-        See :mod:`.create_table` for examples.
+        See :meth:`~CreateTable.global_secondary_index` for an example.
         """
         self.__check_active_index()
         self.__active_index._projection = "ALL"
@@ -276,7 +289,7 @@ class CreateTable(Action):
 
         :raise: :exc:`.BuilderError` if called when no index is active.
 
-        See :mod:`.create_table` for examples.
+        See :meth:`~CreateTable.local_secondary_index` for an example.
         """
         self.__check_active_index()
         if not isinstance(self.__active_index._projection, list):

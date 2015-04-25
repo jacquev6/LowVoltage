@@ -8,8 +8,23 @@ When given a :class:`UpdateTable`, the connection will return a :class:`UpdateTa
 .. testsetup::
 
     table = "LowVoltage.Tests.Doc.UpdateTable.1"
+    table2 = "LowVoltage.Tests.Doc.UpdateTable.2"
+    table3 = "LowVoltage.Tests.Doc.UpdateTable.3"
+    table4 = "LowVoltage.Tests.Doc.UpdateTable.4"
     connection(CreateTable(table).hash_key("h", STRING).provisioned_throughput(1, 1))
+    connection(
+        CreateTable(table2).hash_key("h", STRING).provisioned_throughput(1, 1)
+            .global_secondary_index("gsi").hash_key("hh", STRING).range_key("rr", NUMBER).provisioned_throughput(1, 1).project_all()
+    )
+    connection(
+        CreateTable(table3).hash_key("h", STRING).provisioned_throughput(1, 1)
+            .global_secondary_index("gsi").hash_key("hh", STRING).range_key("rr", NUMBER).provisioned_throughput(1, 1).project_all()
+    )
+    connection(CreateTable(table4).hash_key("h", STRING).provisioned_throughput(1, 1))
     WaitForTableActivation(connection, table)
+    WaitForTableActivation(connection, table2)
+    WaitForTableActivation(connection, table3)
+    WaitForTableActivation(connection, table4)
 
 >>> r = connection(
 ...   UpdateTable(table)
@@ -25,8 +40,17 @@ Note that you can use :func:`.WaitForTableActivation` to poll the table status u
 .. testcleanup::
 
     WaitForTableActivation(connection, table)
+    WaitForTableActivation(connection, table2)
+    WaitForTableActivation(connection, table3)
+    WaitForTableActivation(connection, table4)
     connection(DeleteTable(table))
+    connection(DeleteTable(table2))
+    connection(DeleteTable(table3))
+    connection(DeleteTable(table4))
     WaitForTableDeletion(connection, table)
+    WaitForTableDeletion(connection, table2)
+    WaitForTableDeletion(connection, table3)
+    WaitForTableDeletion(connection, table4)
 """
 
 import datetime
@@ -97,7 +121,7 @@ class UpdateTable(Action):
 
     class _Index(object):
         def __init__(self, verb, name):
-            self.__verb = verb
+            self._verb = verb
             self.__name = name
             self._hash_key = None
             self._range_key = None
@@ -126,13 +150,16 @@ class UpdateTable(Action):
                 throughput["WriteCapacityUnits"] = self._write_capacity_units
             if throughput:
                 data["ProvisionedThroughput"] = throughput
-            return {self.__verb: data}
+            return {self._verb: data}
 
     def hash_key(self, name, typ=None):
         """
-        @todo Document
+        Set the hash key in KeySchema for the active index.
+        If you provide a second argument, :meth:`~.CreateTable.attribute_definition` will be called as well.
 
-        :raise: :exc:`.BuilderError` if called when no index is active.
+        :raise: :exc:`.BuilderError` if called when no index is active or if the active index is not being created.
+
+        See :meth:`~.UpdateTable.create_global_secondary_index` for an example.
         """
         self.__check_active_index()
         self.__active_index._hash_key = name
@@ -142,9 +169,12 @@ class UpdateTable(Action):
 
     def range_key(self, name, typ=None):
         """
-        @todo Document
+        Set the range key in KeySchema for the active index.
+        If you provide a second argument, :meth:`~.CreateTable.attribute_definition` will be called as well.
 
-        :raise: :exc:`.BuilderError` if called when no index is active.
+        :raise: :exc:`.BuilderError` if called when no index is active or if the active index is not being created.
+
+        See :meth:`~.UpdateTable.create_global_secondary_index` for an example.
         """
         self.__check_active_index()
         self.__active_index._range_key = name
@@ -154,14 +184,17 @@ class UpdateTable(Action):
 
     def attribute_definition(self, name, typ):
         """
-        @todo Document
+        Set the type of an attribute in AttributeDefinitions.
+        Key attribute must be typed. See :mod:`.attribute_types` for constants to be passed to this method.
         """
         self.__attribute_definitions[name] = typ
         return self
 
     def provisioned_throughput(self, read_capacity_units, write_capacity_units):
         """
-        @todo Document
+        Set the new provisioned throughput for the table or the active index.
+
+        See :meth:`~.UpdateTable.create_global_secondary_index` for an example.
         """
         self.__active_index._read_capacity_units = read_capacity_units
         self.__active_index._write_capacity_units = write_capacity_units
@@ -169,7 +202,18 @@ class UpdateTable(Action):
 
     def create_global_secondary_index(self, name):
         """
-        @todo Document
+        Create a new GSI.
+        This method sets the active index: methods like :meth:`~.UpdateTable.provisioned_throughput` will apply to the index.
+
+        >>> connection(
+        ...   UpdateTable(table4)
+        ...     .create_global_secondary_index("gsi")
+        ...       .hash_key("hh", STRING)
+        ...       .range_key("rr", NUMBER)
+        ...       .project_all()
+        ...       .provisioned_throughput(2, 2)
+        ... )
+        <LowVoltage.actions.update_table.UpdateTableResponse ...>
         """
         if name not in self.__gsis:
             self.__gsis[name] = self._Index("Create", name)
@@ -178,7 +222,15 @@ class UpdateTable(Action):
 
     def update_global_secondary_index(self, name):
         """
-        @todo Document
+        Update an existing GSI.
+        This method sets the active index: methods like :meth:`~.UpdateTable.provisioned_throughput` will apply to the index.
+
+        >>> connection(
+        ...   UpdateTable(table2)
+        ...     .update_global_secondary_index("gsi")
+        ...       .provisioned_throughput(2, 2)
+        ... )
+        <LowVoltage.actions.update_table.UpdateTableResponse ...>
         """
         if name not in self.__gsis:
             self.__gsis[name] = self._Index("Update", name)
@@ -191,23 +243,29 @@ class UpdateTable(Action):
 
         This method does not set the active index, because there is nothing to modify.
 
-        @todo doctest
+        >>> connection(
+        ...   UpdateTable(table3)
+        ...     .delete_global_secondary_index("gsi")
+        ... )
+        <LowVoltage.actions.update_table.UpdateTableResponse ...>
         """
         self.__gsis[name] = self._Index("Delete", name)
         return self
 
     def table(self):
         """
-        @todo Document
+        Reset the active index: methods like :meth:`~.UpdateTable.provisioned_throughput` will apply to the table.
         """
         self.__active_index = self
         return self
 
     def project_all(self):
         """
-        @todo Document
+        Set ProjectionType to ALL for the active index.
 
-        :raise: :exc:`.BuilderError` if called when no index is active.
+        :raise: :exc:`.BuilderError` if called when no index is active or if the active index is not being created.
+
+        See :meth:`~.UpdateTable.create_global_secondary_index` for an example.
         """
         self.__check_active_index()
         self.__active_index._projection = "ALL"
@@ -215,9 +273,9 @@ class UpdateTable(Action):
 
     def project_keys_only(self):
         """
-        @todo Document
+        Set ProjectionType to KEYS_ONLY for the active index.
 
-        :raise: :exc:`.BuilderError` if called when no index is active.
+        :raise: :exc:`.BuilderError` if called when no index is active or if the active index is not being created.
         """
         self.__check_active_index()
         self.__active_index._projection = "KEYS_ONLY"
@@ -225,9 +283,9 @@ class UpdateTable(Action):
 
     def project(self, *attrs):
         """
-        @todo Document
+        Set ProjectionType to INCLUDE for the active index and add names to NonKeyAttributes.
 
-        :raise: :exc:`.BuilderError` if called when no index is active.
+        :raise: :exc:`.BuilderError` if called when no index is active or if the active index is not being created.
         """
         self.__check_active_index()
         if not isinstance(self.__active_index._projection, list):
@@ -239,8 +297,8 @@ class UpdateTable(Action):
         return self
 
     def __check_active_index(self):
-        if self.__active_index is self:
-            raise _lv.BuilderError("No active index.")
+        if self.__active_index is self or self.__active_index._verb != "Create":
+            raise _lv.BuilderError("No active index or active index not being created.")
 
 
 class UpdateTableUnitTests(_tst.UnitTests):
@@ -444,27 +502,52 @@ class UpdateTableUnitTests(_tst.UnitTests):
     def test_hash_key_without_active_index(self):
         with self.assertRaises(_lv.BuilderError) as catcher:
             UpdateTable("Foo").hash_key("h")
-        self.assertEqual(catcher.exception.args, ("No active index.",))
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
 
     def test_range_key_without_active_index(self):
         with self.assertRaises(_lv.BuilderError) as catcher:
             UpdateTable("Foo").range_key("r")
-        self.assertEqual(catcher.exception.args, ("No active index.",))
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
 
     def test_project_all_without_active_index(self):
         with self.assertRaises(_lv.BuilderError) as catcher:
             UpdateTable("Foo").project_all()
-        self.assertEqual(catcher.exception.args, ("No active index.",))
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
 
     def test_project_without_active_index(self):
         with self.assertRaises(_lv.BuilderError) as catcher:
             UpdateTable("Foo").project("a")
-        self.assertEqual(catcher.exception.args, ("No active index.",))
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
 
     def test_project_keys_only_without_active_index(self):
         with self.assertRaises(_lv.BuilderError) as catcher:
             UpdateTable("Foo").project_keys_only()
-        self.assertEqual(catcher.exception.args, ("No active index.",))
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
+
+    def test_hash_key_with_updating_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").update_global_secondary_index("gsi").hash_key("h")
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
+
+    def test_range_key_with_updating_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").update_global_secondary_index("gsi").range_key("r")
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
+
+    def test_project_all_with_updating_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").update_global_secondary_index("gsi").project_all()
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
+
+    def test_project_with_updating_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").update_global_secondary_index("gsi").project("a")
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
+
+    def test_project_keys_only_with_updating_active_index(self):
+        with self.assertRaises(_lv.BuilderError) as catcher:
+            UpdateTable("Foo").update_global_secondary_index("gsi").project_keys_only()
+        self.assertEqual(catcher.exception.args, ("No active index or active index not being created.",))
 
 
 class UpdateTableLocalIntegTests(_tst.LocalIntegTests):
