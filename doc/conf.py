@@ -3,7 +3,6 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 import docutils.utils
-import textwrap
 
 import sphinx.environment
 
@@ -70,44 +69,6 @@ add_class_names = False
 # http://sphinx-doc.org/ext/doctest.html
 extensions.append("sphinx.ext.doctest")
 # doctest_path
-doctest_global_setup = textwrap.dedent("""
-    from LowVoltage import *
-    connection = Connection("eu-west-1", EnvironmentCredentials())
-
-    table = "LowVoltage.DocTests.1"
-    table2 = "LowVoltage.DocTests.2"
-
-    try:
-        connection(DescribeTable(table))
-    except ResourceNotFoundException:
-        connection(
-            CreateTable(table)
-                .hash_key("h", NUMBER).provisioned_throughput(1, 1)
-                .global_secondary_index("gsi").hash_key("gh", NUMBER).range_key("gr", NUMBER).provisioned_throughput(1, 1).project_all()
-        )
-
-    try:
-        connection(DescribeTable(table2))
-    except ResourceNotFoundException:
-        connection(
-            CreateTable(table2)
-                .hash_key("h", NUMBER).range_key("r1", NUMBER).provisioned_throughput(1, 1)
-                .local_secondary_index("lsi").hash_key("h", NUMBER).range_key("r2", NUMBER).project_all()
-        )
-
-    WaitForTableActivation(connection, table)
-    BatchPutItem(
-        connection,
-        table,
-        [{"h": h, "gh": 0, "gr": 0} for h in range(10)],
-    )
-
-    WaitForTableActivation(connection, table2)
-    BatchPutItem(
-        connection,
-        table2,
-        [{"h": h, "r1": 0, "r2": 0} for h in range(10)],
-    )
-    """)
+doctest_global_setup = "import LowVoltage.testing.doc_tests; from LowVoltage import *; (connection, table, table2) = LowVoltage.testing.doc_tests.global_setup()"
 # doctest_global_cleanup
-# doctest_test_doctest_blocks
+doctest_test_doctest_blocks=True

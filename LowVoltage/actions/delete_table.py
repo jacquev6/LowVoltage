@@ -7,7 +7,7 @@ When given a :class:`DeleteTable`, the connection will return a :class:`DeleteTa
 
 .. testsetup::
 
-    table = "LowVoltage.DocTests.DeleteTable.1"
+    table = "LowVoltage.Tests.Doc.DeleteTable.1"
     connection(CreateTable(table).hash_key("h", STRING).provisioned_throughput(1, 1))
     WaitForTableActivation(connection, table)
 

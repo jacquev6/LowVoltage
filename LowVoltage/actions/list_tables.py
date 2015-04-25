@@ -9,7 +9,7 @@ When given a :class:`ListTables`, the connection will return a :class:`ListTable
 >>> r
 <LowVoltage.actions.list_tables.ListTablesResponse ...>
 >>> r.table_names
-[u'LowVoltage.DocTests.1', u'LowVoltage.DocTests.2']
+[u'LowVoltage.Tests.Doc.1', u'LowVoltage.Tests.Doc.2']
 """
 
 import LowVoltage as _lv
@@ -79,9 +79,9 @@ class ListTables(Action):
 
         >>> r = connection(ListTables().limit(1))
         >>> r.table_names
-        [u'LowVoltage.DocTests.1']
+        [u'LowVoltage.Tests.Doc.1']
         >>> r.last_evaluated_table_name
-        u'LowVoltage.DocTests.1'
+        u'LowVoltage.Tests.Doc.1'
         """
         self.__limit = limit
         return self
@@ -93,9 +93,9 @@ class ListTables(Action):
 
         >>> connection(
         ...   ListTables()
-        ...     .exclusive_start_table_name("LowVoltage.DocTests.1")
+        ...     .exclusive_start_table_name("LowVoltage.Tests.Doc.1")
         ... ).table_names
-        [u'LowVoltage.DocTests.2']
+        [u'LowVoltage.Tests.Doc.2']
         """
         self.__exclusive_start_table_name = table_name
         return self

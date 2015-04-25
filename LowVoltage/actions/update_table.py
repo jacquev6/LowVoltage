@@ -7,7 +7,7 @@ When given a :class:`UpdateTable`, the connection will return a :class:`UpdateTa
 
 .. testsetup::
 
-    table = "LowVoltage.DocTests.UpdateTable.1"
+    table = "LowVoltage.Tests.Doc.UpdateTable.1"
     connection(CreateTable(table).hash_key("h", STRING).provisioned_throughput(1, 1))
     WaitForTableActivation(connection, table)
 

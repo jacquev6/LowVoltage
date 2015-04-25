@@ -7,7 +7,7 @@ When given a :class:`CreateTable`, the connection will return a :class:`CreateTa
 
 .. testsetup::
 
-    table = "LowVoltage.DocTests.CreateTable.1"
+    table = "LowVoltage.Tests.Doc.CreateTable.1"
 
 >>> r = connection(
 ...   CreateTable(table)

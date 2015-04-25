@@ -16,14 +16,52 @@ except ImportError:  # pragma no cover (Test code)
 import LowVoltage as _lv
 
 
-_execution_date = datetime.datetime.now()
+table_name_prefix = datetime.datetime.now().strftime("LowVoltage.Tests.Integ.%Y-%m-%d.%H-%M-%S.%f")
+
+
+def make_connection():
+    return _lv.Connection("eu-west-1", _lv.EnvironmentCredentials())
+
+
+class ConnectedIntegTests(ResourcedTestCase):
+    # Create an IAM user, populate the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
+    # Use the following IAM policy to limit access to specific tables:
+    # {
+    #     "Version": "2012-10-17",
+    #     "Statement": [
+    #         {
+    #             "Action": [
+    #                 "dynamodb:*"
+    #             ],
+    #             "Effect": "Allow",
+    #             "Resource": "arn:aws:dynamodb:*:*:table/LowVoltage.Tests.*"
+    #         },
+    #         {
+    #             "Action": [
+    #                 "dynamodb:ListTables"
+    #             ],
+    #             "Effect": "Allow",
+    #             "Resource": "*"
+    #         }
+    #     ]
+    # }
+    # @todo Could we refine the policy to ensure the total provisioned throughput is capped?
+
+    def setUp(self):
+        super(ConnectedIntegTests, self).setUp()
+        self.connection = make_connection()
+
+    @classmethod
+    def make_table_name(cls):
+        assert cls.__name__.endswith("ConnectedIntegTests")
+        return "{}.{}".format(table_name_prefix, cls.__name__[:19])
 
 
 class DynamoDbResourceManager(TestResourceManager):
     def make(self, dependencies):
-        connection = _lv.Connection("eu-west-1", _lv.EnvironmentCredentials())
+        connection = make_connection()
 
-        table = _execution_date.strftime("LowVoltage.IntegTests.%Y-%m-%d.%H-%M-%S.%f")
+        table = table_name_prefix
 
         connection(
             _lv.CreateTable(table).hash_key("tab_h", _lv.STRING).range_key("tab_r", _lv.NUMBER).provisioned_throughput(1, 1)
@@ -35,33 +73,9 @@ class DynamoDbResourceManager(TestResourceManager):
         return table
 
     def clean(self, table):
-        connection = _lv.Connection("eu-west-1", _lv.EnvironmentCredentials())
+        connection = make_connection()
         connection(_lv.DeleteTable(table))
-
-
-class ConnectedIntegTests(ResourcedTestCase):
-    # Create an IAM user, populate the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
-    # Use the following IAM policy to limit access to specific tables:
-    # {
-    #     "Version": "2012-10-17",
-    #     "Statement": [
-    #         {
-    #             "Action": ["dynamodb:*"],
-    #             "Effect": "Allow",
-    #             "Resource": "arn:aws:dynamodb:eu-west-1:284086980038:table/LowVoltage.IntegTests.*"
-    #         }
-    #     ]
-    # }
-    # @todo Could we refine the policy to ensure the total provisioned throughput is capped?
-
-    def setUp(self):
-        super(ConnectedIntegTests, self).setUp()
-        self.connection = _lv.Connection("eu-west-1", _lv.EnvironmentCredentials())
-
-    @classmethod
-    def make_table_name(cls):
-        assert cls.__name__.endswith("ConnectedIntegTests")
-        return _execution_date.strftime("LowVoltage.IntegTests.%Y-%m-%d.%H-%M-%S.%f.{}".format(cls.__name__[:19]))
+        _lv.WaitForTableDeletion(connection, table)
 
 
 class ConnectedIntegTestsWithTable(ConnectedIntegTests):
