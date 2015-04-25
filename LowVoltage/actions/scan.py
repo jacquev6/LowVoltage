@@ -10,10 +10,10 @@ When given a :class:`Scan`, the connection will return a :class:`ScanResponse`:
 
 Items are accessed like this:
 
->>> sorted(connection(Scan(table)).items)
-[{u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}]
+>>> connection(Scan(table)).items
+[{u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}]
 
-Note that items are returned in an undefined order. Here we sort them to make the doctest stable.
+Note that items are returned in an undefined order.
 """
 
 import LowVoltage as _lv
@@ -142,9 +142,25 @@ class Scan(Action):
 
     def segment(self, segment, total_segments):
         """
-        Set Segment and TotalSegments for a parallel scan. @todo See also ScanIterator.parallelize
+        Set Segment and TotalSegments for a `parallel scan <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#QueryAndScanParallelScan>`__.
 
-        @todo doctest
+        Items will be partitioned in ``total_segments`` segments of approximately the same size,
+        ans only the items of the ``segment``-th segment will be returned in this request.
+
+        See also :meth:`.ScanIterator.parallelize`.
+
+        >>> connection(
+        ...   Scan(table)
+        ...     .project("h")
+        ...     .segment(0, 2)
+        ... ).items
+        [{u'h': 7}, {u'h': 8}, {u'h': 3}, {u'h': 2}, {u'h': 9}, {u'h': 4}]
+        >>> connection(
+        ...   Scan(table)
+        ...     .project("h")
+        ...     .segment(1, 2)
+        ... ).items
+        [{u'h': 6}, {u'h': 1}, {u'h': 0}, {u'h': 5}]
         """
         self.__segment.set(segment)
         return self.__total_segments.set(total_segments)
@@ -152,15 +168,28 @@ class Scan(Action):
     @proxy("Scan")
     def exclusive_start_key(self, key):
         """
-        @todo doctest
+        >>> r = connection(
+        ...   Scan(table)
+        ...     .project("h")
+        ...     .limit(5)
+        ... )
+        >>> r.items
+        [{u'h': 7}, {u'h': 8}, {u'h': 3}, {u'h': 2}, {u'h': 9}]
+        >>> r.last_evaluated_key
+        {u'h': 9}
+        >>> connection(
+        ...   Scan(table)
+        ...     .project("h")
+        ...     .exclusive_start_key({"h": 9})
+        ... ).items
+        [{u'h': 4}, {u'h': 6}, {u'h': 1}, {u'h': 0}, {u'h': 5}]
         """
         return self.__exclusive_start_key.set(key)
 
     @proxy
     def limit(self, limit):
         """
-        >>> connection(Scan(table).limit(5)).count
-        5L
+        See :meth:`~.Scan.exclusive_start_key` for an example.
         """
         return self.__limit.set(limit)
 
@@ -178,35 +207,43 @@ class Scan(Action):
     @proxy
     def select_all_attributes(self):
         """
-        @todo doctest
+        >>> connection(Scan(table).select_all_attributes()).items
+        [{u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}]
         """
         return self.__select.all_attributes()
 
     @proxy
     def project(self, *names):
         """
-        @todo doctest
+        >>> connection(Scan(table).project("h")).items
+        [{u'h': 7}, {u'h': 8}, {u'h': 3}, {u'h': 2}, {u'h': 9}, {u'h': 4}, {u'h': 6}, {u'h': 1}, {u'h': 0}, {u'h': 5}]
         """
         return self.__projection_expression.add(*names)
 
     @proxy
     def filter_expression(self, expression):
         """
-        @todo doctest
+        >>> connection(
+        ...   Scan(table)
+        ...     .filter_expression("#syn=:val")
+        ...     .expression_attribute_name("syn", "a")
+        ...     .expression_attribute_value("val", 42)
+        ... ).items
+        []
         """
         return self.__filter_expression.set(expression)
 
     @proxy
     def expression_attribute_name(self, synonym, name):
         """
-        @todo doctest
+        See :meth:`~.Scan.filter_expression` for an example.
         """
         return self.__expression_attribute_names.add(synonym, name)
 
     @proxy
     def expression_attribute_value(self, name, value):
         """
-        @todo doctest
+        See :meth:`~.Scan.filter_expression` for an example.
         """
         return self.__expression_attribute_values.add(name, value)
 
@@ -215,7 +252,6 @@ class Scan(Action):
         """
         >>> connection(
         ...   Scan(table)
-        ...     .limit(4)
         ...     .return_consumed_capacity_total()
         ... ).consumed_capacity.capacity_units
         0.5
@@ -227,7 +263,6 @@ class Scan(Action):
         """
         >>> print connection(
         ...   Scan(table)
-        ...     .limit(4)
         ...     .return_consumed_capacity_none()
         ... ).consumed_capacity
         None
