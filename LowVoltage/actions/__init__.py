@@ -2,16 +2,16 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-from .batch_get_item import BatchGetItem
-from .batch_write_item import BatchWriteItem
-from .create_table import CreateTable
-from .delete_item import DeleteItem
-from .delete_table import DeleteTable
-from .describe_table import DescribeTable
-from .get_item import GetItem
-from .list_tables import ListTables
-from .put_item import PutItem
-from .query import Query
-from .scan import Scan
-from .update_item import UpdateItem
-from .update_table import UpdateTable
+from .batch_get_item import BatchGetItem, BatchGetItemResponse
+from .batch_write_item import BatchWriteItem, BatchWriteItemResponse
+from .create_table import CreateTable, CreateTableResponse
+from .delete_item import DeleteItem, DeleteItemResponse
+from .delete_table import DeleteTable, DeleteTableResponse
+from .describe_table import DescribeTable, DescribeTableResponse
+from .get_item import GetItem, GetItemResponse
+from .list_tables import ListTables, ListTablesResponse
+from .put_item import PutItem, PutItemResponse
+from .query import Query, QueryResponse
+from .scan import Scan, ScanResponse
+from .update_item import UpdateItem, UpdateItemResponse
+from .update_table import UpdateTable, UpdateTableResponse

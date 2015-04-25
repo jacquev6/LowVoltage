@@ -80,7 +80,7 @@ class UpdateItem(Action):
     """
 
     def __init__(self, table_name, key):
-        super(UpdateItem, self).__init__("UpdateItem")
+        super(UpdateItem, self).__init__("UpdateItem", UpdateItemResponse)
         self.__table_name = table_name
         self.__key = key
         self.__set = {}
@@ -94,7 +94,8 @@ class UpdateItem(Action):
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__return_values = ReturnValues(self)
 
-    def build(self):
+    @property
+    def payload(self):
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
@@ -110,17 +111,13 @@ class UpdateItem(Action):
             update.append("DELETE {}".format(", ".join("{} :{}".format(n, v) for n, v in self.__delete.iteritems())))
         if update:
             data["UpdateExpression"] = " ".join(update)
-        data.update(self.__condition_expression.build())
-        data.update(self.__expression_attribute_names.build())
-        data.update(self.__expression_attribute_values.build())
-        data.update(self.__return_consumed_capacity.build())
-        data.update(self.__return_item_collection_metrics.build())
-        data.update(self.__return_values.build())
+        data.update(self.__condition_expression.payload)
+        data.update(self.__expression_attribute_names.payload)
+        data.update(self.__expression_attribute_values.payload)
+        data.update(self.__return_consumed_capacity.payload)
+        data.update(self.__return_item_collection_metrics.payload)
+        data.update(self.__return_values.payload)
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return UpdateItemResponse(**kwds)
 
     # @todo should we provide bundle methods for set, add, delete that do an implicit expression_attribute_value with a generated value_name?
     # @todo should we provide add_to_int (accepting an int), add_to_set and delete_from_set (accepting several ints, strs or binaries)?
@@ -377,7 +374,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_key(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).build(),
+            UpdateItem("Table", {"hash": 42}).payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -386,7 +383,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_set(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).set("a", ":v").build(),
+            UpdateItem("Table", {"hash": 42}).set("a", ":v").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -396,7 +393,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_several_sets(self):
         self.assertIn(
-            UpdateItem("Table", {"hash": 42}).set("a", ":v").set("b", ":w").build(),
+            UpdateItem("Table", {"hash": 42}).set("a", ":v").set("b", ":w").payload,
             [
                 {
                     "TableName": "Table",
@@ -413,7 +410,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_remove(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).remove("a").remove("b").build(),
+            UpdateItem("Table", {"hash": 42}).remove("a").remove("b").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -423,7 +420,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_add(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).add("a", "v").build(),
+            UpdateItem("Table", {"hash": 42}).add("a", "v").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -433,7 +430,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_several_adds(self):
         self.assertIn(
-            UpdateItem("Table", {"hash": 42}).add("a", "v").add("b", "w").build(),
+            UpdateItem("Table", {"hash": 42}).add("a", "v").add("b", "w").payload,
             [
                 {
                     "TableName": "Table",
@@ -450,7 +447,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_delete(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).delete("a", "v").build(),
+            UpdateItem("Table", {"hash": 42}).delete("a", "v").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -460,7 +457,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_several_deletes(self):
         self.assertIn(
-            UpdateItem("Table", {"hash": 42}).delete("a", "v").delete("b", "w").build(),
+            UpdateItem("Table", {"hash": 42}).delete("a", "v").delete("b", "w").payload,
             [
                 {
                     "TableName": "Table",
@@ -477,7 +474,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_expression_attribute_value(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
+            UpdateItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -487,7 +484,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_expression_attribute_name(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
+            UpdateItem("Table", {"hash": 42}).expression_attribute_name("n", "path").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -497,7 +494,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_condition_expression(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": 42}).condition_expression("a=b").build(),
+            UpdateItem("Table", {"hash": 42}).condition_expression("a=b").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -507,7 +504,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_values_all_new(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_values_all_new().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_values_all_new().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -517,7 +514,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_values_all_old(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_values_all_old().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_values_all_old().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -527,7 +524,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_values_updated_new(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_values_updated_new().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_values_updated_new().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -537,7 +534,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_values_updated_old(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_values_updated_old().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_values_updated_old().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -547,7 +544,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_values_none(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_values_none().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_values_none().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -557,7 +554,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_total(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_total().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_total().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -567,7 +564,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_indexes(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -577,7 +574,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_none(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_consumed_capacity_none().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -587,7 +584,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_item_collection_metrics_size(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -597,7 +594,7 @@ class UpdateItemUnitTests(_tst.UnitTests):
 
     def test_return_item_collection_metrics_none(self):
         self.assertEqual(
-            UpdateItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
+            UpdateItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},

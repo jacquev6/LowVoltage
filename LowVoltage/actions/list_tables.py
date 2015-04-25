@@ -60,21 +60,18 @@ class ListTables(Action):
     """
 
     def __init__(self):
-        super(ListTables, self).__init__("ListTables")
+        super(ListTables, self).__init__("ListTables", ListTablesResponse)
         self.__limit = None
         self.__exclusive_start_table_name = None
 
-    def build(self):
+    @property
+    def payload(self):
         data = {}
         if self.__limit is not None:
             data["Limit"] = self.__limit
         if self.__exclusive_start_table_name:
             data["ExclusiveStartTableName"] = self.__exclusive_start_table_name
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return ListTablesResponse(**kwds)
 
     def limit(self, limit):
         """
@@ -109,13 +106,13 @@ class ListTablesUnitTests(_tst.UnitTests):
         self.assertEqual(ListTables().name, "ListTables")
 
     def test_no_arguments(self):
-        self.assertEqual(ListTables().build(), {})
+        self.assertEqual(ListTables().payload, {})
 
     def test_limit(self):
-        self.assertEqual(ListTables().limit(42).build(), {"Limit": 42})
+        self.assertEqual(ListTables().limit(42).payload, {"Limit": 42})
 
     def test_exclusive_start_table_name(self):
-        self.assertEqual(ListTables().exclusive_start_table_name("Bar").build(), {"ExclusiveStartTableName": "Bar"})
+        self.assertEqual(ListTables().exclusive_start_table_name("Bar").payload, {"ExclusiveStartTableName": "Bar"})
 
 
 class ListTablesLocalIntegTests(_tst.LocalIntegTests):

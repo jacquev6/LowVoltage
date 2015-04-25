@@ -2,17 +2,11 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-# @todo Accept the response class as a ctor parameter and change Result to response_class
-# @todo change build() to @property payload
-
 
 class Action(object):
-    def __init__(self, action):
-        self.__action = action
-
-    @property
-    def name(self):
-        return self.__action
+    def __init__(self, name, response_class):
+        self.name = name
+        self.response_class = response_class
 
 
 class ActionProxy(object):

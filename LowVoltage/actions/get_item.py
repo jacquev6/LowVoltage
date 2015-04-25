@@ -74,7 +74,7 @@ class GetItem(Action):
     """
 
     def __init__(self, table_name, key):
-        super(GetItem, self).__init__("GetItem")
+        super(GetItem, self).__init__("GetItem", GetItemResponse)
         self.__table_name = table_name
         self.__key = key
         self.__consistent_read = ConsistentRead(self)
@@ -82,20 +82,17 @@ class GetItem(Action):
         self.__projection_expression = ProjectionExpression(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
 
-    def build(self):
+    @property
+    def payload(self):
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        data.update(self.__consistent_read.build())
-        data.update(self.__expression_attribute_names.build())
-        data.update(self.__projection_expression.build())
-        data.update(self.__return_consumed_capacity.build())
+        data.update(self.__consistent_read.payload)
+        data.update(self.__expression_attribute_names.payload)
+        data.update(self.__projection_expression.payload)
+        data.update(self.__return_consumed_capacity.payload)
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return GetItemResponse(**kwds)
 
     @proxy
     def consistent_read_true(self):
@@ -173,7 +170,7 @@ class GetItemUnitTests(_tst.UnitTests):
 
     def test_key(self):
         self.assertEqual(
-            GetItem("Table", {"hash": 42}).build(),
+            GetItem("Table", {"hash": 42}).payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -182,7 +179,7 @@ class GetItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_none(self):
         self.assertEqual(
-            GetItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
+            GetItem("Table", {"hash": u"h"}).return_consumed_capacity_none().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -192,7 +189,7 @@ class GetItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_total(self):
         self.assertEqual(
-            GetItem("Table", {"hash": u"h"}).return_consumed_capacity_total().build(),
+            GetItem("Table", {"hash": u"h"}).return_consumed_capacity_total().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -202,7 +199,7 @@ class GetItemUnitTests(_tst.UnitTests):
 
     def test_consistent_read_true(self):
         self.assertEqual(
-            GetItem("Table", {"hash": u"h"}).consistent_read_true().build(),
+            GetItem("Table", {"hash": u"h"}).consistent_read_true().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -212,7 +209,7 @@ class GetItemUnitTests(_tst.UnitTests):
 
     def test_consistent_read_false(self):
         self.assertEqual(
-            GetItem("Table", {"hash": u"h"}).consistent_read_false().build(),
+            GetItem("Table", {"hash": u"h"}).consistent_read_false().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -222,7 +219,7 @@ class GetItemUnitTests(_tst.UnitTests):
 
     def test_project(self):
         self.assertEqual(
-            GetItem("Table", {"hash": u"h"}).project("abc").build(),
+            GetItem("Table", {"hash": u"h"}).project("abc").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -232,7 +229,7 @@ class GetItemUnitTests(_tst.UnitTests):
 
     def test_expression_attribute_name(self):
         self.assertEqual(
-            GetItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
+            GetItem("Table", {"hash": 42}).expression_attribute_name("n", "path").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},

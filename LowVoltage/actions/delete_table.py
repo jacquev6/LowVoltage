@@ -61,15 +61,12 @@ class DeleteTable(Action):
     """
 
     def __init__(self, table_name):
-        super(DeleteTable, self).__init__("DeleteTable")
+        super(DeleteTable, self).__init__("DeleteTable", DeleteTableResponse)
         self.__table_name = table_name
 
-    def build(self):
+    @property
+    def payload(self):
         return {"TableName": self.__table_name}
-
-    @staticmethod
-    def Result(**kwds):
-        return DeleteTableResponse(**kwds)
 
 
 class DeleteTableUnitTests(_tst.UnitTests):
@@ -77,7 +74,7 @@ class DeleteTableUnitTests(_tst.UnitTests):
         self.assertEqual(DeleteTable("Foo").name, "DeleteTable")
 
     def test_build(self):
-        self.assertEqual(DeleteTable("Foo").build(), {"TableName": "Foo"})
+        self.assertEqual(DeleteTable("Foo").payload, {"TableName": "Foo"})
 
 
 class DeleteTableLocalIntegTests(_tst.LocalIntegTests):

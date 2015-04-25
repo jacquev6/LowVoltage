@@ -53,15 +53,12 @@ class DescribeTable(Action):
     """
 
     def __init__(self, table_name):
-        super(DescribeTable, self).__init__("DescribeTable")
+        super(DescribeTable, self).__init__("DescribeTable", DescribeTableResponse)
         self.__table_name = table_name
 
-    def build(self):
+    @property
+    def payload(self):
         return {"TableName": self.__table_name}
-
-    @staticmethod
-    def Result(**kwds):
-        return DescribeTableResponse(**kwds)
 
 
 class DescribeTableUnitTests(_tst.UnitTests):
@@ -69,7 +66,7 @@ class DescribeTableUnitTests(_tst.UnitTests):
         self.assertEqual(DescribeTable("Foo").name, "DescribeTable")
 
     def test_build(self):
-        self.assertEqual(DescribeTable("Foo").build(), {"TableName": "Foo"})
+        self.assertEqual(DescribeTable("Foo").payload, {"TableName": "Foo"})
 
 
 class DescribeTableLocalIntegTests(_tst.LocalIntegTests):

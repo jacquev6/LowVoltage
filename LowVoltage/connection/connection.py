@@ -55,6 +55,8 @@ class Connection(object):
     def __call__(self, action):
         """
         Send requests and return responses.
+
+        @todo Document the Action interface?
         """
         errors = []
         while True:
@@ -73,7 +75,7 @@ class Connection(object):
 
     def __request_once(self, action):
         key, secret, token = self.__credentials.get()
-        payload = json.dumps(action.build())
+        payload = json.dumps(action.payload)
         headers = self.__signer(key, secret, self.__now(), action.name, payload)
         if token is not None:
             headers["X-Amz-Security-Token"] = token
@@ -84,7 +86,7 @@ class Connection(object):
         except Exception as e:
             raise _exn.UnknownError(e)
 
-        return self.__responder(action.Result, r)
+        return self.__responder(action.response_class, r)
 
 
 class ConnectionUnitTests(_tst.UnitTestsWithMocks):
@@ -107,7 +109,7 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
 
     def __expect_post(self):
         self.credentials.expect.get().andReturn(("a", "b", None))
-        self.action.expect.build().andReturn({"d": "e"})
+        self.action.expect.payload.andReturn({"d": "e"})
         self.now.expect().andReturn("f")
         self.action.expect.name.andReturn("c")
         self.signer.expect("a", "b", "f", "c", '{"d": "e"}').andReturn({"g": "h"})
@@ -115,45 +117,45 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
 
     def test_success_on_first_try(self):
         self.__expect_post().andReturn("i")
-        self.action.expect.Result.andReturn("j")
+        self.action.expect.response_class.andReturn("j")
         self.responder.expect("j", "i").andReturn("k")
 
         self.assertEqual(self.connection(self.action.object), "k")
 
     def test_success_on_fourth_try(self):
         self.__expect_post().andReturn("i")
-        self.action.expect.Result.andReturn("j")
+        self.action.expect.response_class.andReturn("j")
         exception1 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("j", "i").andRaise(exception1)
         self.retry_policy.expect.retry(self.action.object, [exception1]).andReturn(0)
 
         self.__expect_post().andReturn("k")
-        self.action.expect.Result.andReturn("l")
+        self.action.expect.response_class.andReturn("l")
         exception2 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("l", "k").andRaise(exception2)
         self.retry_policy.expect.retry(self.action.object, [exception1, exception2]).andReturn(0)
 
         self.__expect_post().andReturn("m")
-        self.action.expect.Result.andReturn("n")
+        self.action.expect.response_class.andReturn("n")
         exception3 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("n", "m").andRaise(exception3)
         self.retry_policy.expect.retry(self.action.object, [exception1, exception2, exception3]).andReturn(0)
 
         self.__expect_post().andReturn("o")
-        self.action.expect.Result.andReturn("p")
+        self.action.expect.response_class.andReturn("p")
         self.responder.expect("p", "o").andReturn("q")
 
         self.assertEqual(self.connection(self.action.object), "q")
 
     def test_failure_on_second_try(self):
         self.__expect_post().andReturn("i")
-        self.action.expect.Result.andReturn("j")
+        self.action.expect.response_class.andReturn("j")
         exception1 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("j", "i").andRaise(exception1)
         self.retry_policy.expect.retry(self.action.object, [exception1]).andReturn(0)
 
         self.__expect_post().andReturn("k")
-        self.action.expect.Result.andReturn("l")
+        self.action.expect.response_class.andReturn("l")
         exception2 = _exn.UnknownClientError()
         self.responder.expect("l", "k").andRaise(exception2)
 
@@ -163,19 +165,19 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
 
     def test_give_up_after_third_try(self):
         self.__expect_post().andReturn("i")
-        self.action.expect.Result.andReturn("j")
+        self.action.expect.response_class.andReturn("j")
         exception1 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("j", "i").andRaise(exception1)
         self.retry_policy.expect.retry(self.action.object, [exception1]).andReturn(0)
 
         self.__expect_post().andReturn("k")
-        self.action.expect.Result.andReturn("l")
+        self.action.expect.response_class.andReturn("l")
         exception2 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("l", "k").andRaise(exception2)
         self.retry_policy.expect.retry(self.action.object, [exception1, exception2]).andReturn(0)
 
         self.__expect_post().andReturn("m")
-        self.action.expect.Result.andReturn("n")
+        self.action.expect.response_class.andReturn("n")
         exception3 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("n", "m").andRaise(exception3)
         self.retry_policy.expect.retry(self.action.object, [exception1, exception2, exception3]).andReturn(None)
@@ -190,7 +192,7 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
         self.retry_policy.expect.retry.withArguments(lambda args, kwds: args[0] is self.action.object and isinstance(args[1][0], _exn.NetworkError)).andReturn(0)
 
         self.__expect_post().andReturn("k")
-        self.action.expect.Result.andReturn("l")
+        self.action.expect.response_class.andReturn("l")
         exception2 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("l", "k").andReturn("m")
 
@@ -210,7 +212,7 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
         self.retry_policy.expect.retry(self.action.object, [exception]).andReturn(0)
 
         self.__expect_post().andReturn("k")
-        self.action.expect.Result.andReturn("l")
+        self.action.expect.response_class.andReturn("l")
         exception2 = _exn.ProvisionedThroughputExceededException()
         self.responder.expect("l", "k").andReturn("m")
 
@@ -219,16 +221,13 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
 
 class ConnectionLocalIntegTests(_tst.LocalIntegTests):
     class TestAction:
-        class Result(object):
+        class response_class(object):
             def __init__(self, **kwds):
                 self.kwds = kwds
 
         def __init__(self, name, payload):
             self.name = name
-            self.__payload = payload
-
-        def build(self):
-            return self.__payload
+            self.payload = payload
 
     def test_network_error(self):
         connection = _lv.Connection("us-west-2", _lv.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/", _lv.ExponentialBackoffRetryPolicy(0, 1, 3))
@@ -237,7 +236,7 @@ class ConnectionLocalIntegTests(_tst.LocalIntegTests):
 
     def test_request(self):
         r = self.connection(self.TestAction("ListTables", {}))
-        self.assertIsInstance(r, self.TestAction.Result)
+        self.assertIsInstance(r, self.TestAction.response_class)
         self.assertEqual(r.kwds, {"TableNames": []})
 
     def test_client_error(self):

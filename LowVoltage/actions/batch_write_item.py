@@ -74,33 +74,31 @@ class BatchWriteItem(Action):
     """
 
     def __init__(self, previous_unprocessed_items=None):
-        super(BatchWriteItem, self).__init__("BatchWriteItem")
+        super(BatchWriteItem, self).__init__("BatchWriteItem", BatchWriteItemResponse)
         self.__previous_unprocessed_items = previous_unprocessed_items
         self.__tables = {}
         self.__active_table = None
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
 
-    def build(self):
+    @property
+    def payload(self):
         data = {}
         if self.__previous_unprocessed_items:
             data["RequestItems"] = self.__previous_unprocessed_items
         if self.__tables:
-            data["RequestItems"] = {n: t.build() for n, t in self.__tables.iteritems()}
-        data.update(self.__return_consumed_capacity.build())
-        data.update(self.__return_item_collection_metrics.build())
+            data["RequestItems"] = {n: t.payload for n, t in self.__tables.iteritems()}
+        data.update(self.__return_consumed_capacity.payload)
+        data.update(self.__return_item_collection_metrics.payload)
         return data
 
-    @staticmethod
-    def Result(**kwds):
-        return BatchWriteItemResponse(**kwds)
-
     class _Table:
-        def __init__(self, action, name):
+        def __init__(self, action):
             self.delete = []
             self.put = []
 
-        def build(self):
+        @property
+        def payload(self):
             items = []
             if self.delete:
                 items.extend({"DeleteRequest": {"Key": _convert_dict_to_db(k)}} for k in self.delete)
@@ -113,7 +111,7 @@ class BatchWriteItem(Action):
         Set the active table. Calls to methods like :meth:`delete` or :meth:`put` will apply to this table.
         """
         if name not in self.__tables:
-            self.__tables[name] = self._Table(self, name)
+            self.__tables[name] = self._Table(self)
         self.__active_table = self.__tables[name]
         return self
 
@@ -219,13 +217,13 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
 
     def test_empty(self):
         self.assertEqual(
-            BatchWriteItem().build(),
+            BatchWriteItem().payload,
             {}
         )
 
     def test_return_consumed_capacity_none(self):
         self.assertEqual(
-            BatchWriteItem().return_consumed_capacity_none().build(),
+            BatchWriteItem().return_consumed_capacity_none().payload,
             {
                 "ReturnConsumedCapacity": "NONE",
             }
@@ -233,7 +231,7 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_indexes(self):
         self.assertEqual(
-            BatchWriteItem().return_consumed_capacity_indexes().build(),
+            BatchWriteItem().return_consumed_capacity_indexes().payload,
             {
                 "ReturnConsumedCapacity": "INDEXES",
             }
@@ -241,7 +239,7 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_total(self):
         self.assertEqual(
-            BatchWriteItem().return_consumed_capacity_total().build(),
+            BatchWriteItem().return_consumed_capacity_total().payload,
             {
                 "ReturnConsumedCapacity": "TOTAL",
             }
@@ -249,7 +247,7 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
 
     def test_return_item_collection_metrics_none(self):
         self.assertEqual(
-            BatchWriteItem().return_item_collection_metrics_none().build(),
+            BatchWriteItem().return_item_collection_metrics_none().payload,
             {
                 "ReturnItemCollectionMetrics": "NONE",
             }
@@ -257,7 +255,7 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
 
     def test_return_item_collection_metrics_size(self):
         self.assertEqual(
-            BatchWriteItem().return_item_collection_metrics_size().build(),
+            BatchWriteItem().return_item_collection_metrics_size().payload,
             {
                 "ReturnItemCollectionMetrics": "SIZE",
             }
@@ -265,7 +263,7 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
 
     def test_table(self):
         self.assertEqual(
-            BatchWriteItem().table("Table").build(),
+            BatchWriteItem().table("Table").payload,
             {
                 "RequestItems": {
                     "Table": [
@@ -276,7 +274,7 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
 
     def test_delete(self):
         self.assertEqual(
-            BatchWriteItem().table("Table").delete({"hash": u"h1"}).table("Table").delete([{"hash": u"h2"}]).build(),
+            BatchWriteItem().table("Table").delete({"hash": u"h1"}).table("Table").delete([{"hash": u"h2"}]).payload,
             {
                 "RequestItems": {
                     "Table": [
@@ -289,7 +287,7 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
 
     def test_put(self):
         self.assertEqual(
-            BatchWriteItem().table("Table").put({"hash": u"h1"}, [{"hash": u"h2"}]).build(),
+            BatchWriteItem().table("Table").put({"hash": u"h1"}, [{"hash": u"h2"}]).payload,
             {
                 "RequestItems": {
                     "Table": [
@@ -307,7 +305,7 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
                 .table("Table2").put([{"hash": u"h2"}])
                 .table("Table1").put({"hash": u"h11"})
                 .table("Table2").delete({"hash": u"h22"})
-                .build(),
+                .payload,
             {
                 "RequestItems": {
                     "Table1": [

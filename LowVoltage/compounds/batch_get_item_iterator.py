@@ -56,7 +56,7 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "a"}}, {"h": {"S": "b"}}]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "c"}}, {"h": {"S": "d"}}]})
+            _lv.BatchGetItemResponse(Responses={"Aaa": [{"h": {"S": "c"}}, {"h": {"S": "d"}}]})
         )
 
         self.assertEqual(
@@ -68,12 +68,12 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "a"}}, {"h": {"S": "b"}}]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "c"}}]}, UnprocessedKeys={"Aaa": {"Keys": [{"h": {"S": "d"}}]}})
+            _lv.BatchGetItemResponse(Responses={"Aaa": [{"h": {"S": "c"}}]}, UnprocessedKeys={"Aaa": {"Keys": [{"h": {"S": "d"}}]}})
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"S": "d"}}]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"S": "e"}}]})
+            _lv.BatchGetItemResponse(Responses={"Aaa": [{"h": {"S": "e"}}]})
         )
 
         self.assertEqual(
@@ -85,17 +85,17 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(0, 100)]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1000, 1100)]})
+            _lv.BatchGetItemResponse(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1000, 1100)]})
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(100, 200)]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1100, 1200)]})
+            _lv.BatchGetItemResponse(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1100, 1200)]})
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(200, 250)]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1200, 1250)]})
+            _lv.BatchGetItemResponse(Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1200, 1250)]})
         )
 
         self.assertEqual(
@@ -107,7 +107,7 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(0, 100)]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(
+            _lv.BatchGetItemResponse(
                 Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1000, 1100)]},
                 UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2000, 2075)]}}
             )
@@ -115,7 +115,7 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(100, 150)]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(
+            _lv.BatchGetItemResponse(
                 Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1100, 1150)]},
                 UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2075, 2150)]}}
             )
@@ -123,7 +123,7 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2000, 2100)]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(
+            _lv.BatchGetItemResponse(
                 Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1150, 1200)]},
                 UnprocessedKeys={"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2150, 2175)]}}
             )
@@ -131,7 +131,7 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchGetItem", {"RequestItems": {"Aaa": {"Keys": [{"h": {"N": str(i)}} for i in range(2100, 2175)]}}})
         ).andReturn(
-            _lv.BatchGetItem.Result(
+            _lv.BatchGetItemResponse(
                 Responses={"Aaa": [{"h": {"N": str(i)}} for i in range(1200, 1250)]},
             )
         )

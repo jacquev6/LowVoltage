@@ -68,7 +68,7 @@ class CreateTable(Action):
     # @todo Remove the proxy. Document methods on CreateTable level.
 
     def __init__(self, table_name):
-        super(CreateTable, self).__init__("CreateTable")
+        super(CreateTable, self).__init__("CreateTable", CreateTableResponse)
         self.__table_name = table_name
         self.__hash_key = None
         self.__range_key = None
@@ -78,7 +78,8 @@ class CreateTable(Action):
         self.__gsis = {}
         self.__lsis = {}
 
-    def build(self):
+    @property
+    def payload(self):
         data = {"TableName": self.__table_name}
         schema = []
         if self.__hash_key:
@@ -104,10 +105,6 @@ class CreateTable(Action):
         if self.__lsis:
             data["LocalSecondaryIndexes"] = [i._build() for i in self.__lsis.itervalues()]
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return CreateTableResponse(**kwds)
 
     class _Index(ActionProxy):
         def __init__(self, action, name):
@@ -241,11 +238,11 @@ class CreateTableUnitTests(_tst.UnitTests):
         self.assertEqual(CreateTable("Foo").name, "CreateTable")
 
     def test_no_arguments(self):
-        self.assertEqual(CreateTable("Foo").build(), {"TableName": "Foo"})
+        self.assertEqual(CreateTable("Foo").payload, {"TableName": "Foo"})
 
     def test_hash_key(self):
         self.assertEqual(
-            CreateTable("Foo").hash_key("h").build(),
+            CreateTable("Foo").hash_key("h").payload,
             {
                 "TableName": "Foo",
                 "KeySchema": [{"AttributeName": "h", "KeyType": "HASH"}],
@@ -254,7 +251,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_hash_key_with_type(self):
         self.assertEqual(
-            CreateTable("Foo").hash_key("h", _lv.STRING).build(),
+            CreateTable("Foo").hash_key("h", _lv.STRING).payload,
             {
                 "TableName": "Foo",
                 "AttributeDefinitions": [{"AttributeName": "h", "AttributeType": "S"}],
@@ -264,7 +261,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_attribute_definition(self):
         self.assertEqual(
-            CreateTable("Foo").attribute_definition("h", _lv.STRING).build(),
+            CreateTable("Foo").attribute_definition("h", _lv.STRING).payload,
             {
                 "TableName": "Foo",
                 "AttributeDefinitions": [{"AttributeName": "h", "AttributeType": "S"}],
@@ -273,7 +270,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_range_key(self):
         self.assertEqual(
-            CreateTable("Foo").range_key("r").build(),
+            CreateTable("Foo").range_key("r").payload,
             {
                 "TableName": "Foo",
                 "KeySchema": [{"AttributeName": "r", "KeyType": "RANGE"}],
@@ -282,7 +279,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_range_key_with_type(self):
         self.assertEqual(
-            CreateTable("Foo").range_key("r", _lv.STRING).build(),
+            CreateTable("Foo").range_key("r", _lv.STRING).payload,
             {
                 "TableName": "Foo",
                 "AttributeDefinitions": [{"AttributeName": "r", "AttributeType": "S"}],
@@ -292,7 +289,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_throughput(self):
         self.assertEqual(
-            CreateTable("Foo").provisioned_throughput(42, 43).build(),
+            CreateTable("Foo").provisioned_throughput(42, 43).payload,
             {
                 "TableName": "Foo",
                 "ProvisionedThroughput": {"ReadCapacityUnits": 42, "WriteCapacityUnits": 43},
@@ -301,7 +298,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").build(),
+            CreateTable("Foo").global_secondary_index("foo").payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [{"IndexName": "foo"}],
@@ -310,7 +307,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_local_secondary_index(self):
         self.assertEqual(
-            CreateTable("Foo").local_secondary_index("foo").build(),
+            CreateTable("Foo").local_secondary_index("foo").payload,
             {
                 "TableName": "Foo",
                 "LocalSecondaryIndexes": [{"IndexName": "foo"}],
@@ -319,7 +316,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index_hash_key(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").hash_key("hh").build(),
+            CreateTable("Foo").global_secondary_index("foo").hash_key("hh").payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -330,7 +327,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index_range_key(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").range_key("rr").build(),
+            CreateTable("Foo").global_secondary_index("foo").range_key("rr").payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -341,7 +338,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index_hash_key_with_type(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").hash_key("hh", _lv.STRING).build(),
+            CreateTable("Foo").global_secondary_index("foo").hash_key("hh", _lv.STRING).payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -353,7 +350,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index_range_key_with_type(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").range_key("rr", _lv.STRING).build(),
+            CreateTable("Foo").global_secondary_index("foo").range_key("rr", _lv.STRING).payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -365,7 +362,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index_throughput(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").provisioned_throughput(42, 43).build(),
+            CreateTable("Foo").global_secondary_index("foo").provisioned_throughput(42, 43).payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -376,7 +373,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index_project_all(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").project_all().build(),
+            CreateTable("Foo").global_secondary_index("foo").project_all().payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -387,7 +384,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index_project_keys_only(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").project_keys_only().build(),
+            CreateTable("Foo").global_secondary_index("foo").project_keys_only().payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -398,7 +395,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_global_secondary_index_project_include(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").project("toto", "titi").project(["tutu"]).build(),
+            CreateTable("Foo").global_secondary_index("foo").project("toto", "titi").project(["tutu"]).payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -409,7 +406,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_back_to_table_after_gsi(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").table().provisioned_throughput(42, 43).build(),
+            CreateTable("Foo").global_secondary_index("foo").table().provisioned_throughput(42, 43).payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [{"IndexName": "foo"}],
@@ -419,7 +416,7 @@ class CreateTableUnitTests(_tst.UnitTests):
 
     def test_implicit_back_toTable_after_gsi(self):
         self.assertEqual(
-            CreateTable("Foo").global_secondary_index("foo").attribute_definition("bar", _lv.NUMBER).build(),
+            CreateTable("Foo").global_secondary_index("foo").attribute_definition("bar", _lv.NUMBER).payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [{"IndexName": "foo"}],
@@ -433,7 +430,7 @@ class CreateTableUnitTests(_tst.UnitTests):
                 .global_secondary_index("foo")
                 .table().provisioned_throughput(42, 43)
                 .global_secondary_index("foo").provisioned_throughput(12, 13)
-                .build(),
+                .payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexes": [
@@ -449,7 +446,7 @@ class CreateTableUnitTests(_tst.UnitTests):
                 .local_secondary_index("foo")
                 .table().provisioned_throughput(42, 43)
                 .local_secondary_index("foo").project_all()
-                .build(),
+                .payload,
             {
                 "TableName": "Foo",
                 "LocalSecondaryIndexes": [

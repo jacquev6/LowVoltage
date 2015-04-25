@@ -92,7 +92,7 @@ class DeleteItem(Action):
     """
 
     def __init__(self, table_name, key):
-        super(DeleteItem, self).__init__("DeleteItem")
+        super(DeleteItem, self).__init__("DeleteItem", DeleteItemResponse)
         self.__table_name = table_name
         self.__key = key
         self.__condition_expression = ConditionExpression(self)
@@ -102,22 +102,19 @@ class DeleteItem(Action):
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__return_values = ReturnValues(self)
 
-    def build(self):
+    @property
+    def payload(self):
         data = {
             "TableName": self.__table_name,
             "Key": _convert_dict_to_db(self.__key),
         }
-        data.update(self.__condition_expression.build())
-        data.update(self.__expression_attribute_names.build())
-        data.update(self.__expression_attribute_values.build())
-        data.update(self.__return_consumed_capacity.build())
-        data.update(self.__return_item_collection_metrics.build())
-        data.update(self.__return_values.build())
+        data.update(self.__condition_expression.payload)
+        data.update(self.__expression_attribute_names.payload)
+        data.update(self.__expression_attribute_values.payload)
+        data.update(self.__return_consumed_capacity.payload)
+        data.update(self.__return_item_collection_metrics.payload)
+        data.update(self.__return_values.payload)
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return DeleteItemResponse(**kwds)
 
     @proxy
     def condition_expression(self, expression):
@@ -227,7 +224,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_key(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": 42}).build(),
+            DeleteItem("Table", {"hash": 42}).payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -236,7 +233,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_return_values_none(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": u"h"}).return_values_none().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_values_none().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -246,7 +243,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_return_values_all_old(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": u"h"}).return_values_all_old().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_values_all_old().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -256,7 +253,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_total(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_total().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_total().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -266,7 +263,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_indexes(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -276,7 +273,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_none(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_consumed_capacity_none().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -286,7 +283,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_return_item_collection_metrics_size(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -296,7 +293,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_return_item_collection_metrics_none(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
+            DeleteItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"S": "h"}},
@@ -306,7 +303,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_expression_attribute_value(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
+            DeleteItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -316,7 +313,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_expression_attribute_name(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
+            DeleteItem("Table", {"hash": 42}).expression_attribute_name("n", "path").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},
@@ -326,7 +323,7 @@ class DeleteItemUnitTests(_tst.UnitTests):
 
     def test_condition_expression(self):
         self.assertEqual(
-            DeleteItem("Table", {"hash": 42}).condition_expression("a=b").build(),
+            DeleteItem("Table", {"hash": 42}).condition_expression("a=b").payload,
             {
                 "TableName": "Table",
                 "Key": {"hash": {"N": "42"}},

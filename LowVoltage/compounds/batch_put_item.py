@@ -44,7 +44,7 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"S": "a"}}}}, {"PutRequest": {"Item": {"h": {"S": "b"}}}}]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result()
+            _lv.BatchWriteItemResponse()
         )
 
         BatchPutItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
@@ -53,17 +53,17 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(0, 25)]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result()
+            _lv.BatchWriteItemResponse()
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(25, 50)]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result()
+            _lv.BatchWriteItemResponse()
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(50, 60)]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result()
+            _lv.BatchWriteItemResponse()
         )
 
         BatchPutItem(self.connection.object, "Aaa", ({"h": i} for i in range(60)))
@@ -72,12 +72,12 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"S": "a"}}}}, {"PutRequest": {"Item": {"h": {"S": "b"}}}}]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result(UnprocessedItems={"Aaa": [{"PutRequest": {"Item": {"h": {"S": "c"}}}}]})
+            _lv.BatchWriteItemResponse(UnprocessedItems={"Aaa": [{"PutRequest": {"Item": {"h": {"S": "c"}}}}]})
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"S": "c"}}}}]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result()
+            _lv.BatchWriteItemResponse()
         )
 
         BatchPutItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
@@ -86,22 +86,22 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(0, 25)]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result(UnprocessedItems={"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(100, 110)]})
+            _lv.BatchWriteItemResponse(UnprocessedItems={"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(100, 110)]})
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(25, 35)]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result(UnprocessedItems={"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(110, 120)]})
+            _lv.BatchWriteItemResponse(UnprocessedItems={"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(110, 120)]})
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(100, 120)]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result(UnprocessedItems={"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(120, 130)]})
+            _lv.BatchWriteItemResponse(UnprocessedItems={"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(120, 130)]})
         )
         self.connection.expect._call_.withArguments(
             self.ActionChecker("BatchWriteItem", {"RequestItems": {"Aaa": [{"PutRequest": {"Item": {"h": {"N": str(i)}}}} for i in range(120, 130)]}})
         ).andReturn(
-            _lv.BatchWriteItem.Result()
+            _lv.BatchWriteItemResponse()
         )
 
         BatchPutItem(self.connection.object, "Aaa", [{"h": i} for i in range(35)])

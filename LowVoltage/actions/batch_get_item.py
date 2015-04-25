@@ -84,24 +84,21 @@ class BatchGetItem(Action):
     """
 
     def __init__(self, previous_unprocessed_keys=None):
-        super(BatchGetItem, self).__init__("BatchGetItem")
+        super(BatchGetItem, self).__init__("BatchGetItem", BatchGetItemResponse)
         self.__previous_unprocessed_keys = previous_unprocessed_keys
         self.__tables = {}
         self.__active_table = None
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
 
-    def build(self):
+    @property
+    def payload(self):
         data = {}
         if self.__previous_unprocessed_keys:
             data["RequestItems"] = self.__previous_unprocessed_keys
         if self.__tables:
-            data["RequestItems"] = {n: t.build() for n, t in self.__tables.iteritems()}
-        data.update(self.__return_consumed_capacity.build())
+            data["RequestItems"] = {n: t.payload for n, t in self.__tables.iteritems()}
+        data.update(self.__return_consumed_capacity.payload)
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return BatchGetItemResponse(**kwds)
 
     class _Table:
         def __init__(self, action):
@@ -110,13 +107,14 @@ class BatchGetItem(Action):
             self.expression_attribute_names = ExpressionAttributeNames(action)
             self.projection_expression = ProjectionExpression(action)
 
-        def build(self):
+        @property
+        def payload(self):
             data = {}
             if self.keys:
                 data["Keys"] = [_convert_dict_to_db(k) for k in self.keys]
-            data.update(self.consistent_read.build())
-            data.update(self.expression_attribute_names.build())
-            data.update(self.projection_expression.build())
+            data.update(self.consistent_read.payload)
+            data.update(self.expression_attribute_names.payload)
+            data.update(self.projection_expression.payload)
             return data
 
     def table(self, name):
@@ -260,13 +258,13 @@ class BatchGetItemUnitTests(_tst.UnitTests):
 
     def test_empty(self):
         self.assertEqual(
-            BatchGetItem().build(),
+            BatchGetItem().payload,
             {}
         )
 
     def test_return_consumed_capacity_none(self):
         self.assertEqual(
-            BatchGetItem().return_consumed_capacity_none().build(),
+            BatchGetItem().return_consumed_capacity_none().payload,
             {
                 "ReturnConsumedCapacity": "NONE",
             }
@@ -274,7 +272,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_total(self):
         self.assertEqual(
-            BatchGetItem().return_consumed_capacity_total().build(),
+            BatchGetItem().return_consumed_capacity_total().payload,
             {
                 "ReturnConsumedCapacity": "TOTAL",
             }
@@ -282,7 +280,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
 
     def test_keys(self):
         self.assertEqual(
-            BatchGetItem().table("Table2").keys({"hash": u"h21"}).table("Table1").keys({"hash": u"h11"}, {"hash": u"h12"}).table("Table2").keys([{"hash": u"h22"}, {"hash": u"h23"}]).build(),
+            BatchGetItem().table("Table2").keys({"hash": u"h21"}).table("Table1").keys({"hash": u"h11"}, {"hash": u"h12"}).table("Table2").keys([{"hash": u"h22"}, {"hash": u"h23"}]).payload,
             {
                 "RequestItems": {
                     "Table1": {
@@ -304,7 +302,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
 
     def test_consistent_read(self):
         self.assertEqual(
-            BatchGetItem().table("Table1").consistent_read_true().table("Table2").consistent_read_false().build(),
+            BatchGetItem().table("Table1").consistent_read_true().table("Table2").consistent_read_false().payload,
             {
                 "RequestItems": {
                     "Table1": {
@@ -319,7 +317,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
 
     def test_project(self):
         self.assertEqual(
-            BatchGetItem().table("Table1").project("a").build(),
+            BatchGetItem().table("Table1").project("a").payload,
             {
                 "RequestItems": {
                     "Table1": {
@@ -331,7 +329,7 @@ class BatchGetItemUnitTests(_tst.UnitTests):
 
     def test_expression_attribute_name(self):
         self.assertEqual(
-            BatchGetItem().table("Table1").expression_attribute_name("a", "p").build(),
+            BatchGetItem().table("Table1").expression_attribute_name("a", "p").payload,
             {
                 "RequestItems": {
                     "Table1": {

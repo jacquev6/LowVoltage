@@ -112,7 +112,7 @@ class Scan(Action):
     """
 
     def __init__(self, table_name):
-        super(Scan, self).__init__("Scan")
+        super(Scan, self).__init__("Scan", ScanResponse)
         self.__table_name = table_name
         self.__exclusive_start_key = ExclusiveStartKey(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
@@ -125,23 +125,20 @@ class Scan(Action):
         self.__select = Select(self)
         self.__total_segments = ScalarValue("TotalSegments")(self)
 
-    def build(self):
+    @property
+    def payload(self):
         data = {"TableName": self.__table_name}
-        data.update(self.__exclusive_start_key.build())
-        data.update(self.__expression_attribute_names.build())
-        data.update(self.__expression_attribute_values.build())
-        data.update(self.__filter_expression.build())
-        data.update(self.__limit.build())
-        data.update(self.__projection_expression.build())
-        data.update(self.__return_consumed_capacity.build())
-        data.update(self.__segment.build())
-        data.update(self.__select.build())
-        data.update(self.__total_segments.build())
+        data.update(self.__exclusive_start_key.payload)
+        data.update(self.__expression_attribute_names.payload)
+        data.update(self.__expression_attribute_values.payload)
+        data.update(self.__filter_expression.payload)
+        data.update(self.__limit.payload)
+        data.update(self.__projection_expression.payload)
+        data.update(self.__return_consumed_capacity.payload)
+        data.update(self.__segment.payload)
+        data.update(self.__select.payload)
+        data.update(self.__total_segments.payload)
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return ScanResponse(**kwds)
 
     def segment(self, segment, total_segments):
         """
@@ -242,40 +239,40 @@ class ScanUnitTests(_tst.UnitTests):
         self.assertEqual(Scan("Aaa").name, "Scan")
 
     def test_table_name(self):
-        self.assertEqual(Scan("Aaa").build(), {"TableName": "Aaa"})
+        self.assertEqual(Scan("Aaa").payload, {"TableName": "Aaa"})
 
     def test_segment(self):
-        self.assertEqual(Scan("Aaa").segment(0, 2).build(), {"TableName": "Aaa", "Segment": 0, "TotalSegments": 2})
+        self.assertEqual(Scan("Aaa").segment(0, 2).payload, {"TableName": "Aaa", "Segment": 0, "TotalSegments": 2})
 
     def test_exclusive_start_key(self):
-        self.assertEqual(Scan("Aaa").exclusive_start_key({"h": u"v"}).build(), {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
+        self.assertEqual(Scan("Aaa").exclusive_start_key({"h": u"v"}).payload, {"TableName": "Aaa", "ExclusiveStartKey": {"h": {"S": "v"}}})
 
     def test_limit(self):
-        self.assertEqual(Scan("Aaa").limit(4).build(), {"TableName": "Aaa", "Limit": 4})
+        self.assertEqual(Scan("Aaa").limit(4).payload, {"TableName": "Aaa", "Limit": 4})
 
     def test_select_all_attributes(self):
-        self.assertEqual(Scan("Aaa").select_all_attributes().build(), {"TableName": "Aaa", "Select": "ALL_ATTRIBUTES"})
+        self.assertEqual(Scan("Aaa").select_all_attributes().payload, {"TableName": "Aaa", "Select": "ALL_ATTRIBUTES"})
 
     def test_select_count(self):
-        self.assertEqual(Scan("Aaa").select_count().build(), {"TableName": "Aaa", "Select": "COUNT"})
+        self.assertEqual(Scan("Aaa").select_count().payload, {"TableName": "Aaa", "Select": "COUNT"})
 
     def test_expression_attribute_name(self):
-        self.assertEqual(Scan("Aaa").expression_attribute_name("n", "p").build(), {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
+        self.assertEqual(Scan("Aaa").expression_attribute_name("n", "p").payload, {"TableName": "Aaa", "ExpressionAttributeNames": {"#n": "p"}})
 
     def test_expression_attribute_value(self):
-        self.assertEqual(Scan("Aaa").expression_attribute_value("n", u"p").build(), {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
+        self.assertEqual(Scan("Aaa").expression_attribute_value("n", u"p").payload, {"TableName": "Aaa", "ExpressionAttributeValues": {":n": {"S": "p"}}})
 
     def test_project(self):
-        self.assertEqual(Scan("Aaa").project("a").build(), {"TableName": "Aaa", "ProjectionExpression": "a"})
+        self.assertEqual(Scan("Aaa").project("a").payload, {"TableName": "Aaa", "ProjectionExpression": "a"})
 
     def test_return_consumed_capacity_total(self):
-        self.assertEqual(Scan("Aaa").return_consumed_capacity_total().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "TOTAL"})
+        self.assertEqual(Scan("Aaa").return_consumed_capacity_total().payload, {"TableName": "Aaa", "ReturnConsumedCapacity": "TOTAL"})
 
     def test_return_consumed_capacity_none(self):
-        self.assertEqual(Scan("Aaa").return_consumed_capacity_none().build(), {"TableName": "Aaa", "ReturnConsumedCapacity": "NONE"})
+        self.assertEqual(Scan("Aaa").return_consumed_capacity_none().payload, {"TableName": "Aaa", "ReturnConsumedCapacity": "NONE"})
 
     def test_filter_expression(self):
-        self.assertEqual(Scan("Aaa").filter_expression("a=b").build(), {"TableName": "Aaa", "FilterExpression": "a=b"})
+        self.assertEqual(Scan("Aaa").filter_expression("a=b").payload, {"TableName": "Aaa", "FilterExpression": "a=b"})
 
 
 class ScanLocalIntegTests(_tst.LocalIntegTestsWithTableH):

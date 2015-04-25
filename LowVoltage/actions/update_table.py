@@ -69,13 +69,14 @@ class UpdateTable(Action):
     # @todo Remove the proxy. Document methods on UpdateTable level.
 
     def __init__(self, table_name):
-        super(UpdateTable, self).__init__("UpdateTable")
+        super(UpdateTable, self).__init__("UpdateTable", UpdateTableResponse)
         self.__table_name = table_name
         self.__read_capacity_units = None
         self.__write_capacity_units = None
         self.__gsis = {}
 
-    def build(self):
+    @property
+    def payload(self):
         data = {"TableName": self.__table_name}
         throughput = {}
         if self.__read_capacity_units:
@@ -87,10 +88,6 @@ class UpdateTable(Action):
         if self.__gsis:
             data["GlobalSecondaryIndexUpdates"] = [{"Update": i._build()} for i in self.__gsis.itervalues()]
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return UpdateTableResponse(**kwds)
 
     class _IndexWithThroughput(ActionProxy):
         def __init__(self, action, name):
@@ -140,11 +137,11 @@ class UpdateTableUnitTests(_tst.UnitTests):
         self.assertEqual(UpdateTable("Foo").name, "UpdateTable")
 
     def test_no_arguments(self):
-        self.assertEqual(UpdateTable("Foo").build(), {"TableName": "Foo"})
+        self.assertEqual(UpdateTable("Foo").payload, {"TableName": "Foo"})
 
     def test_throughput(self):
         self.assertEqual(
-            UpdateTable("Foo").provisioned_throughput(42, 43).build(),
+            UpdateTable("Foo").provisioned_throughput(42, 43).payload,
             {
                 "TableName": "Foo",
                 "ProvisionedThroughput": {"ReadCapacityUnits": 42, "WriteCapacityUnits": 43},
@@ -153,7 +150,7 @@ class UpdateTableUnitTests(_tst.UnitTests):
 
     def test_gsi(self):
         self.assertEqual(
-            UpdateTable("Foo").global_secondary_index("the_gsi").build(),
+            UpdateTable("Foo").global_secondary_index("the_gsi").payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexUpdates": [
@@ -164,7 +161,7 @@ class UpdateTableUnitTests(_tst.UnitTests):
 
     def test_gsi_provisioned_throughput(self):
         self.assertEqual(
-            UpdateTable("Foo").global_secondary_index("the_gsi").provisioned_throughput(42, 43).build(),
+            UpdateTable("Foo").global_secondary_index("the_gsi").provisioned_throughput(42, 43).payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexUpdates": [
@@ -175,7 +172,7 @@ class UpdateTableUnitTests(_tst.UnitTests):
 
     def test_back_to_gsi_after_back_to_table(self):
         self.assertEqual(
-            UpdateTable("Foo").global_secondary_index("the_gsi").table().provisioned_throughput(12, 13).global_secondary_index("the_gsi").provisioned_throughput(42, 43).build(),
+            UpdateTable("Foo").global_secondary_index("the_gsi").table().provisioned_throughput(12, 13).global_secondary_index("the_gsi").provisioned_throughput(42, 43).payload,
             {
                 "TableName": "Foo",
                 "GlobalSecondaryIndexUpdates": [

@@ -26,7 +26,7 @@ if has_mock:
                 assert len(args) == 1
                 assert len(kwds) == 0
                 action, = args
-                return action.name == self.__expected_name and action.build() == self.__expected_payload
+                return action.name == self.__expected_name and action.payload == self.__expected_payload
 
         def setUp(self):
             super(UnitTestsWithMocks, self).setUp()

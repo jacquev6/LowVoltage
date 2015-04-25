@@ -27,7 +27,7 @@ class ListTablesIteratorUnitTests(_tst.UnitTestsWithMocks):
         self.connection = self.mocks.create("connection")
 
     def test_no_tables(self):
-        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTables.Result(TableNames=[]))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTablesResponse(TableNames=[]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -35,7 +35,7 @@ class ListTablesIteratorUnitTests(_tst.UnitTestsWithMocks):
         )
 
     def test_one_page(self):
-        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"]))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTablesResponse(TableNames=["A", "B", "C"]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -43,8 +43,8 @@ class ListTablesIteratorUnitTests(_tst.UnitTestsWithMocks):
         )
 
     def test_one_page_followed_by_empty_page(self):
-        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
-        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=[]))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTablesResponse(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTablesResponse(TableNames=[]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),
@@ -52,9 +52,9 @@ class ListTablesIteratorUnitTests(_tst.UnitTestsWithMocks):
         )
 
     def test_several_pages(self):
-        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTables.Result(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
-        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTables.Result(TableNames=["E", "F", "G"], LastEvaluatedTableName="H"))
-        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "H"})).andReturn(_lv.ListTables.Result(TableNames=["I", "J", "K"]))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {})).andReturn(_lv.ListTablesResponse(TableNames=["A", "B", "C"], LastEvaluatedTableName="D"))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "D"})).andReturn(_lv.ListTablesResponse(TableNames=["E", "F", "G"], LastEvaluatedTableName="H"))
+        self.connection.expect._call_.withArguments(self.ActionChecker("ListTables", {"ExclusiveStartTableName": "H"})).andReturn(_lv.ListTablesResponse(TableNames=["I", "J", "K"]))
 
         self.assertEqual(
             list(ListTablesIterator(self.connection.object)),

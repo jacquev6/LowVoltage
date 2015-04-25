@@ -77,7 +77,7 @@ class PutItem(Action):
     """
 
     def __init__(self, table_name, item):
-        super(PutItem, self).__init__("PutItem")
+        super(PutItem, self).__init__("PutItem", PutItemResponse)
         self.__table_name = table_name
         self.__item = item
         self.__condition_expression = ConditionExpression(self)
@@ -87,22 +87,19 @@ class PutItem(Action):
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__return_values = ReturnValues(self)
 
-    def build(self):
+    @property
+    def payload(self):
         data = {
             "TableName": self.__table_name,
             "Item": _convert_dict_to_db(self.__item),
         }
-        data.update(self.__condition_expression.build())
-        data.update(self.__expression_attribute_names.build())
-        data.update(self.__expression_attribute_values.build())
-        data.update(self.__return_consumed_capacity.build())
-        data.update(self.__return_item_collection_metrics.build())
-        data.update(self.__return_values.build())
+        data.update(self.__condition_expression.payload)
+        data.update(self.__expression_attribute_names.payload)
+        data.update(self.__expression_attribute_values.payload)
+        data.update(self.__return_consumed_capacity.payload)
+        data.update(self.__return_item_collection_metrics.payload)
+        data.update(self.__return_values.payload)
         return data
-
-    @staticmethod
-    def Result(**kwds):
-        return PutItemResponse(**kwds)
 
     @proxy
     def condition_expression(self, expression):
@@ -212,7 +209,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_item(self):
         self.assertEqual(
-            PutItem("Table", {"hash": u"value"}).build(),
+            PutItem("Table", {"hash": u"value"}).payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "value"}},
@@ -221,7 +218,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_return_values_none(self):
         self.assertEqual(
-            PutItem("Table", {"hash": u"h"}).return_values_none().build(),
+            PutItem("Table", {"hash": u"h"}).return_values_none().payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -231,7 +228,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_return_values_all_old(self):
         self.assertEqual(
-            PutItem("Table", {"hash": u"h"}).return_values_all_old().build(),
+            PutItem("Table", {"hash": u"h"}).return_values_all_old().payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -241,7 +238,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_total(self):
         self.assertEqual(
-            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_total().build(),
+            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_total().payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -251,7 +248,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_indexes(self):
         self.assertEqual(
-            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().build(),
+            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_indexes().payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -261,7 +258,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_return_consumed_capacity_none(self):
         self.assertEqual(
-            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_none().build(),
+            PutItem("Table", {"hash": u"h"}).return_consumed_capacity_none().payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -271,7 +268,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_return_item_collection_metrics_size(self):
         self.assertEqual(
-            PutItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().build(),
+            PutItem("Table", {"hash": u"h"}).return_item_collection_metrics_size().payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -281,7 +278,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_return_item_collection_metrics_none(self):
         self.assertEqual(
-            PutItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().build(),
+            PutItem("Table", {"hash": u"h"}).return_item_collection_metrics_none().payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"S": "h"}},
@@ -291,7 +288,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_expression_attribute_value(self):
         self.assertEqual(
-            PutItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").build(),
+            PutItem("Table", {"hash": 42}).expression_attribute_value("v", u"value").payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"N": "42"}},
@@ -301,7 +298,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_expression_attribute_name(self):
         self.assertEqual(
-            PutItem("Table", {"hash": 42}).expression_attribute_name("n", "path").build(),
+            PutItem("Table", {"hash": 42}).expression_attribute_name("n", "path").payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"N": "42"}},
@@ -311,7 +308,7 @@ class PutItemUnitTests(_tst.UnitTests):
 
     def test_condition_expression(self):
         self.assertEqual(
-            PutItem("Table", {"hash": 42}).condition_expression("a=b").build(),
+            PutItem("Table", {"hash": 42}).condition_expression("a=b").payload,
             {
                 "TableName": "Table",
                 "Item": {"hash": {"N": "42"}},

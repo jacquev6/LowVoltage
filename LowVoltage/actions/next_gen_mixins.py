@@ -16,7 +16,8 @@ def ScalarValue(name):
             self.__value = value
             return self.__parent
 
-        def build(self):
+        @property
+        def payload(self):
             data = {}
             if self.__value is not None:
                 data[name] = self.__value
@@ -35,7 +36,8 @@ def DictValue(name):
             self.__data[name] = value
             return self.__parent
 
-        def build(self):
+        @property
+        def payload(self):
             data = {}
             if len(self.__data) != 0:
                 data[name] = self.__data
@@ -57,7 +59,8 @@ def CommaSeparatedStringsValue(name):
                 self.__values.extend(value)
             return self.__parent
 
-        def build(self):
+        @property
+        def payload(self):
             data = {}
             if len(self.__values) != 0:
                 data[name] = ", ".join(self.__values)
