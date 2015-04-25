@@ -33,7 +33,7 @@ import datetime
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
-from .action import Action, ActionProxy
+from .action import Action
 from .return_types import TableDescription, _is_dict
 
 
@@ -66,51 +66,42 @@ class UpdateTable(Action):
     """
 
     # @todo Create and delete secondary indexes!
-    # @todo Remove the proxy. Document methods on UpdateTable level.
 
     def __init__(self, table_name):
         super(UpdateTable, self).__init__("UpdateTable", UpdateTableResponse)
         self.__table_name = table_name
-        self.__read_capacity_units = None
-        self.__write_capacity_units = None
+        self._read_capacity_units = None
+        self._write_capacity_units = None
         self.__gsis = {}
+        self.__active_index = self
 
     @property
     def payload(self):
         data = {"TableName": self.__table_name}
         throughput = {}
-        if self.__read_capacity_units:
-            throughput["ReadCapacityUnits"] = self.__read_capacity_units
-        if self.__write_capacity_units:
-            throughput["WriteCapacityUnits"] = self.__write_capacity_units
+        if self._read_capacity_units:
+            throughput["ReadCapacityUnits"] = self._read_capacity_units
+        if self._write_capacity_units:
+            throughput["WriteCapacityUnits"] = self._write_capacity_units
         if throughput:
             data["ProvisionedThroughput"] = throughput
         if self.__gsis:
             data["GlobalSecondaryIndexUpdates"] = [{"Update": i._build()} for i in self.__gsis.itervalues()]
         return data
 
-    class _IndexWithThroughput(ActionProxy):
-        def __init__(self, action, name):
-            super(UpdateTable._IndexWithThroughput, self).__init__(action)
+    class _IndexWithThroughput(object):
+        def __init__(self, name):
             self.__name = name
-            self.__read_capacity_units = None
-            self.__write_capacity_units = None
-
-        def table(self):
-            return self._action
-
-        def provisioned_throughput(self, read_capacity_units, write_capacity_units):
-            self.__read_capacity_units = read_capacity_units
-            self.__write_capacity_units = write_capacity_units
-            return self
+            self._read_capacity_units = None
+            self._write_capacity_units = None
 
         def _build(self):
             data = {"IndexName": self.__name}
             throughput = {}
-            if self.__read_capacity_units:
-                throughput["ReadCapacityUnits"] = self.__read_capacity_units
-            if self.__write_capacity_units:
-                throughput["WriteCapacityUnits"] = self.__write_capacity_units
+            if self._read_capacity_units:
+                throughput["ReadCapacityUnits"] = self._read_capacity_units
+            if self._write_capacity_units:
+                throughput["WriteCapacityUnits"] = self._write_capacity_units
             if throughput:
                 data["ProvisionedThroughput"] = throughput
             return data
@@ -119,8 +110,8 @@ class UpdateTable(Action):
         """
         @todo Document
         """
-        self.__read_capacity_units = read_capacity_units
-        self.__write_capacity_units = write_capacity_units
+        self.__active_index._read_capacity_units = read_capacity_units
+        self.__active_index._write_capacity_units = write_capacity_units
         return self
 
     def global_secondary_index(self, name):
@@ -128,8 +119,16 @@ class UpdateTable(Action):
         @todo Document
         """
         if name not in self.__gsis:
-            self.__gsis[name] = self._IndexWithThroughput(self, name)
-        return self.__gsis[name]
+            self.__gsis[name] = self._IndexWithThroughput(name)
+        self.__active_index = self.__gsis[name]
+        return self
+
+    def table(self):
+        """
+        @todo Document
+        """
+        self.__active_index = self
+        return self
 
 
 class UpdateTableUnitTests(_tst.UnitTests):

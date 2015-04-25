@@ -32,7 +32,7 @@ import datetime
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
-from .action import Action, ActionProxy
+from .action import Action
 from .return_types import TableDescription, _is_dict
 
 
@@ -65,16 +65,16 @@ class CreateTable(Action):
     """
 
     # @todo Should we add ctor parameters and allow use to choose between ctor and builder syntaxes? Same for .global_secondary_index. Same everywhere.
-    # @todo Remove the proxy. Document methods on CreateTable level.
 
     def __init__(self, table_name):
         super(CreateTable, self).__init__("CreateTable", CreateTableResponse)
         self.__table_name = table_name
-        self.__hash_key = None
-        self.__range_key = None
+        self._hash_key = None
+        self._range_key = None
         self.__attribute_definitions = {}
-        self.__read_capacity_units = None
-        self.__write_capacity_units = None
+        self._read_capacity_units = None
+        self._write_capacity_units = None
+        self.__active_index = self
         self.__gsis = {}
         self.__lsis = {}
 
@@ -82,10 +82,10 @@ class CreateTable(Action):
     def payload(self):
         data = {"TableName": self.__table_name}
         schema = []
-        if self.__hash_key:
-            schema.append({"AttributeName": self.__hash_key, "KeyType": "HASH"})
-        if self.__range_key:
-            schema.append({"AttributeName": self.__range_key, "KeyType": "RANGE"})
+        if self._hash_key:
+            schema.append({"AttributeName": self._hash_key, "KeyType": "HASH"})
+        if self._range_key:
+            schema.append({"AttributeName": self._range_key, "KeyType": "RANGE"})
         if schema:
             data["KeySchema"] = schema
         if self.__attribute_definitions:
@@ -94,91 +94,55 @@ class CreateTable(Action):
                 for name, typ in self.__attribute_definitions.iteritems()
             ]
         throughput = {}
-        if self.__read_capacity_units:
-            throughput["ReadCapacityUnits"] = self.__read_capacity_units
-        if self.__write_capacity_units:
-            throughput["WriteCapacityUnits"] = self.__write_capacity_units
+        if self._read_capacity_units:
+            throughput["ReadCapacityUnits"] = self._read_capacity_units
+        if self._write_capacity_units:
+            throughput["WriteCapacityUnits"] = self._write_capacity_units
         if throughput:
             data["ProvisionedThroughput"] = throughput
         if self.__gsis:
-            data["GlobalSecondaryIndexes"] = [i._build() for i in self.__gsis.itervalues()]
+            data["GlobalSecondaryIndexes"] = [i.payload for i in self.__gsis.itervalues()]
         if self.__lsis:
-            data["LocalSecondaryIndexes"] = [i._build() for i in self.__lsis.itervalues()]
+            data["LocalSecondaryIndexes"] = [i.payload for i in self.__lsis.itervalues()]
         return data
 
-    class _Index(ActionProxy):
-        def __init__(self, action, name):
-            super(CreateTable._Index, self).__init__(action)
+    class _Index(object):
+        def __init__(self, name):
             self.__name = name
-            self.__hash_key = None
-            self.__range_key = None
-            self.__projection = None
+            self._hash_key = None
+            self._range_key = None
+            self._projection = None
 
-        def table(self):
-            return self._action
-
-        def hash_key(self, name, typ=None):
-            self.__hash_key = name
-            if typ is not None:
-                self._action.attribute_definition(name, typ)
-            return self
-
-        def range_key(self, name, typ=None):
-            self.__range_key = name
-            if typ is not None:
-                self._action.attribute_definition(name, typ)
-            return self
-
-        def project_all(self):
-            self.__projection = "ALL"
-            return self
-
-        def project_keys_only(self):
-            self.__projection = "KEYS_ONLY"
-            return self
-
-        def project(self, *attrs):
-            if not isinstance(self.__projection, list):
-                self.__projection = []
-            for attr in attrs:
-                if isinstance(attr, basestring):
-                    attr = [attr]
-                self.__projection.extend(attr)
-            return self
-
-        def _build(self):
+        @property
+        def payload(self):
             data = {"IndexName": self.__name}
             schema = []
-            if self.__hash_key:
-                schema.append({"AttributeName": self.__hash_key, "KeyType": "HASH"})
-            if self.__range_key:
-                schema.append({"AttributeName": self.__range_key, "KeyType": "RANGE"})
+            if self._hash_key:
+                schema.append({"AttributeName": self._hash_key, "KeyType": "HASH"})
+            if self._range_key:
+                schema.append({"AttributeName": self._range_key, "KeyType": "RANGE"})
             if schema:
                 data["KeySchema"] = schema
-            if isinstance(self.__projection, basestring):
-                data["Projection"] = {"ProjectionType": self.__projection}
-            elif self.__projection:
-                data["Projection"] = {"ProjectionType": "INCLUDE", "NonKeyAttributes": self.__projection}
+            if isinstance(self._projection, basestring):
+                data["Projection"] = {"ProjectionType": self._projection}
+            elif self._projection:
+                data["Projection"] = {"ProjectionType": "INCLUDE", "NonKeyAttributes": self._projection}
             return data
 
     class _IndexWithThroughput(_Index):
-        def __init__(self, table, name):
-            super(CreateTable._IndexWithThroughput, self).__init__(table, name)
-            self.__read_capacity_units = None
-            self.__write_capacity_units = None
+        def __init__(self, name):
+            super(CreateTable._IndexWithThroughput, self).__init__(name)
+            self._read_capacity_units = None
+            self._write_capacity_units = None
 
-        def provisioned_throughput(self, read_capacity_units, write_capacity_units):
-            self.__read_capacity_units = read_capacity_units
-            self.__write_capacity_units = write_capacity_units
-            return self
-
-        def _build(self):
-            data = super(CreateTable._IndexWithThroughput, self)._build()
+        @property
+        def payload(self):
+            data = super(CreateTable._IndexWithThroughput, self).payload
             throughput = {}
-            if self.__read_capacity_units:
-                throughput["ReadCapacityUnits"] = self.__read_capacity_units
-            if self.__write_capacity_units:
-                throughput["WriteCapacityUnits"] = self.__write_capacity_units
+            if self._read_capacity_units:
+                throughput["ReadCapacityUnits"] = self._read_capacity_units
+            if self._write_capacity_units:
+                throughput["WriteCapacityUnits"] = self._write_capacity_units
             if throughput:
                 data["ProvisionedThroughput"] = throughput
             return data
@@ -187,7 +151,7 @@ class CreateTable(Action):
         """
         @todo Document
         """
-        self.__hash_key = name
+        self.__active_index._hash_key = name
         if typ is not None:
             self.attribute_definition(name, typ)
         return self
@@ -196,7 +160,7 @@ class CreateTable(Action):
         """
         @todo Document
         """
-        self.__range_key = name
+        self.__active_index._range_key = name
         if typ is not None:
             self.attribute_definition(name, typ)
         return self
@@ -212,8 +176,8 @@ class CreateTable(Action):
         """
         @todo Document
         """
-        self.__read_capacity_units = read_capacity_units
-        self.__write_capacity_units = write_capacity_units
+        self.__active_index._read_capacity_units = read_capacity_units
+        self.__active_index._write_capacity_units = write_capacity_units
         return self
 
     def global_secondary_index(self, name):
@@ -221,16 +185,51 @@ class CreateTable(Action):
         @todo Document
         """
         if name not in self.__gsis:
-            self.__gsis[name] = self._IndexWithThroughput(self, name)
-        return self.__gsis[name]
+            self.__gsis[name] = self._IndexWithThroughput(name)
+        self.__active_index = self.__gsis[name]
+        return self
 
     def local_secondary_index(self, name):
         """
         @todo Document
         """
         if name not in self.__lsis:
-            self.__lsis[name] = self._Index(self, name)
-        return self.__lsis[name]
+            self.__lsis[name] = self._Index(name)
+        self.__active_index = self.__lsis[name]
+        return self
+
+    def table(self):
+        """
+        @todo Document
+        """
+        self.__active_index = self
+        return self
+
+    def project_all(self):
+        """
+        @todo Document
+        """
+        self.__active_index._projection = "ALL"
+        return self
+
+    def project_keys_only(self):
+        """
+        @todo Document
+        """
+        self.__active_index._projection = "KEYS_ONLY"
+        return self
+
+    def project(self, *attrs):
+        """
+        @todo Document
+        """
+        if not isinstance(self.__active_index._projection, list):
+            self.__active_index._projection = []
+        for attr in attrs:
+            if isinstance(attr, basestring):
+                attr = [attr]
+            self.__active_index._projection.extend(attr)
+        return self
 
 
 class CreateTableUnitTests(_tst.UnitTests):
