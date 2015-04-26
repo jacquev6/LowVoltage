@@ -31,9 +31,11 @@ from .next_gen_mixins import (
     ConditionExpression,
     ExpressionAttributeNames,
     ExpressionAttributeValues,
+    Key,
     ReturnConsumedCapacity,
     ReturnItemCollectionMetrics,
     ReturnValues,
+    TableName,
 )
 from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict
 
@@ -90,29 +92,28 @@ class DeleteItem(Action):
     The `DeleteItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_RequestParameters>`__
     """
 
-    def __init__(self, table_name, key):
+    def __init__(self, table_name=None, key=None):
         super(DeleteItem, self).__init__("DeleteItem", DeleteItemResponse)
-        self.__table_name = table_name
-        self.__key = key
         self.__condition_expression = ConditionExpression(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__expression_attribute_values = ExpressionAttributeValues(self)
+        self.__key = Key(self, key)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__return_values = ReturnValues(self)
+        self.__table_name = TableName(self, table_name)
 
     @property
     def payload(self):
-        data = {
-            "TableName": self.__table_name,
-            "Key": _convert_dict_to_db(self.__key),
-        }
+        data = {}
         data.update(self.__condition_expression.payload)
         data.update(self.__expression_attribute_names.payload)
         data.update(self.__expression_attribute_values.payload)
+        data.update(self.__key.payload)
         data.update(self.__return_consumed_capacity.payload)
         data.update(self.__return_item_collection_metrics.payload)
         data.update(self.__return_values.payload)
+        data.update(self.__table_name.payload)
         return data
 
     @proxy

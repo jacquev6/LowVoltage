@@ -27,10 +27,10 @@ from .next_gen_mixins import proxy
 from .next_gen_mixins import (
     ConsistentRead,
     ExpressionAttributeNames,
+    Key,
     ProjectionExpression,
     ReturnConsumedCapacity,
-    MandatoryItemParameter,
-    MandatoryStringParameter,
+    TableName,
 )
 from .return_types import ConsumedCapacity, _is_dict
 
@@ -79,10 +79,10 @@ class GetItem(Action):
         super(GetItem, self).__init__("GetItem", GetItemResponse)
         self.__consistent_read = ConsistentRead(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
-        self.__key = MandatoryItemParameter("Key", self, key)
+        self.__key = Key(self, key)
         self.__projection_expression = ProjectionExpression(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
-        self.__table_name = MandatoryStringParameter("TableName", self, table_name)
+        self.__table_name = TableName(self, table_name)
 
     @property
     def payload(self):
