@@ -10,7 +10,7 @@ When given a :class:`BatchWriteItem`, the connection will return a :class:`Batch
 ... )
 <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
 
-See also the :func:`.BatchPutItem` and :func:`.BatchDeleteItem` compounds. And :ref:`actions-vs-compounds` in the user guide.
+See also the :func:`.batch_put_item` and :func:`.batch_delete_item` compounds. And :ref:`actions-vs-compounds` in the user guide.
 """
 
 import LowVoltage as _lv
@@ -65,7 +65,7 @@ class BatchWriteItemResponse(object):
         """
         Items that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchWriteItem`.
 
-        The :func:`.BatchPutItem` and :func:`.BatchDeleteItem` compounds process those for you.
+        The :func:`.batch_put_item` and :func:`.batch_delete_item` compounds process those for you.
 
         :type: ``None`` or exactly as returned by DynamoDB
         """

@@ -29,27 +29,27 @@ def global_setup():
                 .local_secondary_index("lsi").hash_key("h", _lv.NUMBER).range_key("r2", _lv.NUMBER).project_all()
         )
 
-    _lv.WaitForTableActivation(connection, table1)
-    _lv.BatchPutItem(
+    _lv.wait_for_table_activation(connection, table1)
+    _lv.batch_put_item(
         connection,
         table1,
         [{"h": h, "gh": 0, "gr": 0} for h in range(10)],
     )
 
-    _lv.WaitForTableActivation(connection, table2)
-    _lv.BatchPutItem(
+    _lv.wait_for_table_activation(connection, table2)
+    _lv.batch_put_item(
         connection,
         table2,
         [{"h": h, "r1": 0, "r2": 0} for h in range(10)],
     )
 
-    _lv.BatchPutItem(
+    _lv.batch_put_item(
         connection,
         table2,
         [{"h": 42, "r1": r1, "r2": 10 - r1} for r1 in range(6)],
     )
 
-    _lv.BatchPutItem(
+    _lv.batch_put_item(
         connection,
         table2,
         [{"h": 42, "r1": r1} for r1 in range(6, 10)],

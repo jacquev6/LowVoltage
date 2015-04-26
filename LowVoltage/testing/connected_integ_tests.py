@@ -68,14 +68,14 @@ class DynamoDbResourceManager(TestResourceManager):
                 .global_secondary_index("gsi").hash_key("gsi_h", _lv.STRING).range_key("gsi_r", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
                 .local_secondary_index("lsi").hash_key("tab_h").range_key("lsi_r", _lv.NUMBER).project_all().provisioned_throughput(1, 1)
         )
-        _lv.WaitForTableActivation(connection, table)
+        _lv.wait_for_table_activation(connection, table)
 
         return table
 
     def clean(self, table):
         connection = make_connection()
         connection(_lv.DeleteTable(table))
-        _lv.WaitForTableDeletion(connection, table)
+        _lv.wait_for_table_deletion(connection, table)
 
 
 class ConnectedIntegTestsWithTable(ConnectedIntegTests):

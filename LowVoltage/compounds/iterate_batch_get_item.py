@@ -5,13 +5,11 @@
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from LowVoltage.actions.next_gen_mixins import variadic
-from .iterator import Iterator
 
 
-class BatchGetItemIterator(Iterator):
+@variadic(dict)
+def iterate_batch_get_item(connection, table, keys):
     """
-    Note that this function is variadic. See :ref:`variadic-functions`.
-
     Make as many :class:`.BatchGetItem` actions as needed to iterate over all specified items.
     Including processing :attr:`.BatchGetItemResponse.unprocessed_keys`.
 
@@ -19,51 +17,41 @@ class BatchGetItemIterator(Iterator):
 
     ::
 
-        >>> for item in BatchGetItemIterator(connection, table, {"h": 0}, {"h": 1}, {"h": 2}):
+        >>> for item in iterate_batch_get_item(connection, table, {"h": 0}, {"h": 1}, {"h": 2}):
         ...   print item
         {u'h': 1, u'gr': 0, u'gh': 0}
         {u'h': 2, u'gr': 0, u'gh': 0}
         {u'h': 0, u'gr': 0, u'gh': 0}
 
     Note that items are returned in an unspecified order.
-
-    A :class:`BatchGetItemIterator` instance is iterable once and must be discarded after that.
     """
+    unprocessed_keys = []
 
-    @variadic(dict)
-    def __init__(self, connection, table, keys):
-        """FOO! the @variadic decorator adds doc here but we want it in the class' doc"""
-        self.__table = table
-        self.__keys = keys
-        self.__unprocessed_keys = []
-        Iterator.__init__(self, connection, self.__next_action())
+    while len(keys) != 0:
+        r = connection(_lv.BatchGetItem().table(table).keys(keys[:100]))
+        keys = keys[100:]
+        if isinstance(r.unprocessed_keys, dict) and table in r.unprocessed_keys and "Keys" in r.unprocessed_keys[table]:
+            unprocessed_keys += r.unprocessed_keys[table]["Keys"]
+        for item in r.responses.get(table, []):
+            yield item
 
-    def __next_action(self):
-        if len(self.__keys) > 0:
-            action = _lv.BatchGetItem().table(self.__table).keys(self.__keys[:100])
-            self.__keys = self.__keys[100:]
-            return action
-        elif len(self.__unprocessed_keys) > 0:
-            action = _lv.BatchGetItem({self.__table: {"Keys": self.__unprocessed_keys[:100]}})
-            self.__unprocessed_keys = self.__unprocessed_keys[100:]
-            return action
-        else:
-            return None
-
-    def process(self, action, r):
-        if isinstance(r.unprocessed_keys, dict) and self.__table in r.unprocessed_keys and "Keys" in r.unprocessed_keys[self.__table]:
-            self.__unprocessed_keys += r.unprocessed_keys[self.__table]["Keys"]
-        return self.__next_action(), r.responses.get(self.__table, [])
+    while len(unprocessed_keys) != 0:
+        r = connection(_lv.BatchGetItem({table: {"Keys": unprocessed_keys[:100]}}))
+        unprocessed_keys = unprocessed_keys[100:]
+        if isinstance(r.unprocessed_keys, dict) and table in r.unprocessed_keys and "Keys" in r.unprocessed_keys[table]:
+            unprocessed_keys += r.unprocessed_keys[table]["Keys"]
+        for item in r.responses.get(table, []):
+            yield item
 
 
-class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
+class IterateBatchGetItemUnitTests(_tst.UnitTestsWithMocks):
     def setUp(self):
-        super(BatchGetItemIteratorUnitTests, self).setUp()
+        super(IterateBatchGetItemUnitTests, self).setUp()
         self.connection = self.mocks.create("connection")
 
     def test_no_keys(self):
         self.assertEqual(
-            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [])),
+            list(_lv.iterate_batch_get_item(self.connection.object, "Aaa", [])),
             []
         )
 
@@ -75,7 +63,7 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         )
 
         self.assertEqual(
-            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})),
+            list(_lv.iterate_batch_get_item(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})),
             [{"h": "c"}, {"h": "d"}]
         )
 
@@ -92,7 +80,7 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         )
 
         self.assertEqual(
-            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})),
+            list(_lv.iterate_batch_get_item(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})),
             [{"h": "c"}, {"h": "e"}]
         )
 
@@ -114,7 +102,7 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         )
 
         self.assertEqual(
-            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", ({"h": i} for i in range(0, 250)))),
+            list(_lv.iterate_batch_get_item(self.connection.object, "Aaa", ({"h": i} for i in range(0, 250)))),
             [{"h": i} for i in range(1000, 1250)]
         )
 
@@ -152,19 +140,19 @@ class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):
         )
 
         self.assertEqual(
-            list(_lv.BatchGetItemIterator(self.connection.object, "Aaa", [{"h": i} for i in range(0, 150)])),
+            list(_lv.iterate_batch_get_item(self.connection.object, "Aaa", [{"h": i} for i in range(0, 150)])),
             [{"h": i} for i in range(1000, 1250)]
         )
 
 
-class BatchGetItemIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
+class IterateBatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
     def key(self, i):
         return u"{:03}".format(i)
 
     def setUp(self):
-        super(BatchGetItemIteratorLocalIntegTests, self).setUp()
-        _lv.BatchPutItem(self.connection, "Aaa", [{"h": self.key(i), "xs": "x" * 300000} for i in range(250)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
+        super(IterateBatchGetItemLocalIntegTests, self).setUp()
+        _lv.batch_put_item(self.connection, "Aaa", [{"h": self.key(i), "xs": "x" * 300000} for i in range(250)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
 
     def test(self):
-        keys = [item["h"] for item in _lv.BatchGetItemIterator(self.connection, "Aaa", ({"h": self.key(i)} for i in range(250)))]
+        keys = [item["h"] for item in _lv.iterate_batch_get_item(self.connection, "Aaa", ({"h": self.key(i)} for i in range(250)))]
         self.assertEqual(sorted(keys), [self.key(i) for i in range(250)])

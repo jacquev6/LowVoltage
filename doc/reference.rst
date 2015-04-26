@@ -97,11 +97,11 @@ See also :ref:`actions-vs-compounds` in the user guide.
 
 .. toctree::
 
-    reference/compounds/batch_get_item_iterator
+    reference/compounds/iterate_batch_get_item
     reference/compounds/batch_put_item
     reference/compounds/batch_delete_item
-    reference/compounds/list_tables_iterator
-    reference/compounds/scan_iterator
-    reference/compounds/query_iterator
+    reference/compounds/iterate_list_tables
+    reference/compounds/iterate_scan
+    reference/compounds/iterate_query
     reference/compounds/wait_for_table_activation
     reference/compounds/wait_for_table_deletion

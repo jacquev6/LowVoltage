@@ -88,14 +88,14 @@ It does convert between :ref:`python-types` and DynamoDB notation though.
     >>> connection(GetItem(table, {"h": 0})).item
     {u'h': 0, u'gr': 0, u'gh': 0}
 
-The :ref:`compounds` layer provides helper that intend to complete actions in their simplest use cases.
-For example :class:`.BatchGetItem` is limited to get 100 keys at once and requires processing :attr:`.BatchGetItemResponse.unprocessed_keys`, so we provide :class:`.BatchGetItemIterator` to do that.
+The :ref:`compounds` layer provides helper functions that intend to complete actions in their simplest use cases.
+For example :class:`.BatchGetItem` is limited to get 100 keys at once and requires processing :attr:`.BatchGetItemResponse.unprocessed_keys`, so we provide :func:`.iterate_batch_get_item` to do that.
 The tradeoff is that you loose :attr:`.BatchGetItemResponse.consumed_capacity` and the ability to get items from several tables at once.
-Similarly :func:`.BatchPutItem` remove the limit of 25 items in :class:`.BatchWriteItem` but also removes the ability to put and delete from several tables in the same action.
+Similarly :func:`.batch_put_item` removes the limit of 25 items in :class:`.BatchWriteItem` but also removes the ability to put and delete from several tables in the same action.
 
-    >>> BatchPutItem(connection, table, {"h": 0, "a": 42}, {"h": 1, "b": 53})
+    >>> batch_put_item(connection, table, {"h": 0, "a": 42}, {"h": 1, "b": 53})
 
-You can easily distinguish between actions and compounds because actions are *passed to* the :class:`.Connection` but compounds *receive* the connection as an argument:
+Actions are instances that are *passed to* the :class:`.Connection` but compounds are functions that *receive* the connection as an argument:
 actions are atomic while compounds are able to perform several actions.
 
 Someday, maybe, we'll write a Table abstraction and implement an "active record" pattern? It would be even simpler than compounds, but less flexible.

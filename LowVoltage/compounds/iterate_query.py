@@ -4,35 +4,30 @@
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
-from .iterator import Iterator
 
 
-class QueryIterator(Iterator):
+def iterate_query(connection, query):
     """
     Make as many :class:`.Query` actions as needed to iterate over all matching items.
     That is until :attr:`.QueryResponse.last_evaluated_key` is ``None``.
 
-    >>> for item in QueryIterator(connection, Query(table2).key_eq("h", 42).key_between("r1", 4, 7)):
+    >>> for item in iterate_query(connection, Query(table2).key_eq("h", 42).key_between("r1", 4, 7)):
     ...   print item
     {u'h': 42, u'r1': 4, u'r2': 6}
     {u'h': 42, u'r1': 5, u'r2': 5}
     {u'h': 42, u'r1': 6}
     {u'h': 42, u'r1': 7}
 
-    A :class:`QueryIterator` instance is iterable once and must be discarded after that.
-
-    The :class:`.Query` instance passed in must also be discarded (it is modified during the iteration).
+    The :class:`.Query` instance passed in must be discarded (it is modified during the iteration).
     """
-
-    def __init__(self, connection, query):
-        Iterator.__init__(self, connection, query)
-
-    def process(self, action, r):
-        if r.last_evaluated_key is None:
-            action = None
-        else:
-            action.exclusive_start_key(r.last_evaluated_key)
-        return action, r.items
+    r = connection(query)
+    for item in r.items:
+        yield item
+    while r.last_evaluated_key is not None:
+        query.exclusive_start_key(r.last_evaluated_key)
+        r = connection(query)
+        for item in r.items:
+            yield item
 
 
 class QueryIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
@@ -49,6 +44,6 @@ class QueryIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableHR):
 
     def test_simple_query(self):
         self.assertEqual(
-            sorted(item["r"] for item in _lv.QueryIterator(self.connection, _lv.Query("Aaa").key_eq("h", u"0"))),
+            sorted(item["r"] for item in _lv.iterate_query(self.connection, _lv.Query("Aaa").key_eq("h", u"0"))),
             self.keys
         )

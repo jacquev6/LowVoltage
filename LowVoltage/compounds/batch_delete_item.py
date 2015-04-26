@@ -8,12 +8,12 @@ from LowVoltage.actions.next_gen_mixins import variadic
 
 
 @variadic(dict)
-def BatchDeleteItem(connection, table, keys):
+def batch_delete_item(connection, table, keys):
     """
     Make as many :class:`.BatchWriteItem` actions as needed to delete all specified keys.
     Including processing :attr:`.BatchWriteItemResponse.unprocessed_items`.
 
-    >>> BatchDeleteItem(
+    >>> batch_delete_item(
     ...   connection,
     ...   table,
     ...   {"h": 0},
@@ -30,7 +30,7 @@ def BatchDeleteItem(connection, table, keys):
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]
 
-    # @todo Maybe wait a bit before retrying unprocessed items? Same in BatchPutItem and BatchGetItemIterator.
+    # @todo Maybe wait a bit before retrying unprocessed items? Same in batch_put_item and iterate_batch_get_item.
     # @todo In the first loop, maybe wait a bit before next request if we get unprocessed items? Might not be a good idea.
 
     while len(unprocessed_items) != 0:
@@ -46,7 +46,7 @@ class BatchDeleteItemUnitTests(_tst.UnitTestsWithMocks):
         self.connection = self.mocks.create("connection")
 
     def test_no_keys(self):
-        BatchDeleteItem(self.connection.object, "Aaa", [])
+        batch_delete_item(self.connection.object, "Aaa", [])
 
     def test_one_page(self):
         self.connection.expect._call_.withArguments(
@@ -55,7 +55,7 @@ class BatchDeleteItemUnitTests(_tst.UnitTestsWithMocks):
             _lv.BatchWriteItemResponse()
         )
 
-        BatchDeleteItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
+        batch_delete_item(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages(self):
         self.connection.expect._call_.withArguments(
@@ -74,7 +74,7 @@ class BatchDeleteItemUnitTests(_tst.UnitTestsWithMocks):
             _lv.BatchWriteItemResponse()
         )
 
-        BatchDeleteItem(self.connection.object, "Aaa", ({"h": i} for i in range(60)))
+        batch_delete_item(self.connection.object, "Aaa", ({"h": i} for i in range(60)))
 
     def test_one_unprocessed_item(self):
         self.connection.expect._call_.withArguments(
@@ -88,7 +88,7 @@ class BatchDeleteItemUnitTests(_tst.UnitTestsWithMocks):
             _lv.BatchWriteItemResponse()
         )
 
-        BatchDeleteItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
+        batch_delete_item(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages_of_unprocessed_item(self):
         self.connection.expect._call_.withArguments(
@@ -112,7 +112,7 @@ class BatchDeleteItemUnitTests(_tst.UnitTestsWithMocks):
             _lv.BatchWriteItemResponse()
         )
 
-        BatchDeleteItem(self.connection.object, "Aaa", [{"h": i} for i in range(35)])
+        batch_delete_item(self.connection.object, "Aaa", [{"h": i} for i in range(35)])
 
 
 class BatchDeleteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
@@ -121,8 +121,8 @@ class BatchDeleteItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
     def setUp(self):
         super(BatchDeleteItemLocalIntegTests, self).setUp()
-        _lv.BatchPutItem(self.connection, "Aaa", [{"h": self.key(i)} for i in range(100)])
+        _lv.batch_put_item(self.connection, "Aaa", [{"h": self.key(i)} for i in range(100)])
 
     def test(self):
-        _lv.BatchDeleteItem(self.connection, "Aaa", [{"h": self.key(i)} for i in range(100)])
-        self.assertEqual([], list(_lv.ScanIterator(self.connection, _lv.Scan("Aaa"))))
+        _lv.batch_delete_item(self.connection, "Aaa", [{"h": self.key(i)} for i in range(100)])
+        self.assertEqual([], list(_lv.iterate_scan(self.connection, _lv.Scan("Aaa"))))

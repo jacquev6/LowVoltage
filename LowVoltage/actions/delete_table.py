@@ -9,7 +9,7 @@ When given a :class:`DeleteTable`, the connection will return a :class:`DeleteTa
 
     table = "LowVoltage.Tests.Doc.DeleteTable.1"
     connection(CreateTable(table).hash_key("h", STRING).provisioned_throughput(1, 1))
-    WaitForTableActivation(connection, table)
+    wait_for_table_activation(connection, table)
 
 >>> r = connection(DeleteTable(table))
 >>> r
@@ -17,11 +17,11 @@ When given a :class:`DeleteTable`, the connection will return a :class:`DeleteTa
 >>> r.table_description.table_status
 u'DELETING'
 
-Note that you can use the :func:`.WaitForTableDeletion` compound to poll the table status until it's deleted. See :ref:`actions-vs-compounds` in the user guide.
+Note that you can use the :func:`.wait_for_table_deletion` compound to poll the table status until it's deleted. See :ref:`actions-vs-compounds` in the user guide.
 
 .. testcleanup::
 
-    WaitForTableDeletion(connection, table)
+    wait_for_table_deletion(connection, table)
 """
 
 import datetime

@@ -17,7 +17,7 @@ Responses are accessed like this:
 
 Note that responses are in an undefined order.
 
-See also the :class:`.BatchGetItemIterator` compound. And :ref:`actions-vs-compounds` in the user guide.
+See also the :func:`.iterate_batch_get_item` compound. And :ref:`actions-vs-compounds` in the user guide.
 """
 
 import LowVoltage as _lv
@@ -75,7 +75,7 @@ class BatchGetItemResponse(object):
         """
         Keys that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchGetItem`.
 
-        The :class:`.BatchGetItemIterator` compound processes those for you.
+        The :func:`.iterate_batch_get_item` compound processes those for you.
 
         :type: ``None`` or exactly as returned by DynamoDB
         """
@@ -418,7 +418,7 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         self.assertEqual(r.unprocessed_keys, {})
 
     def test_get_without_unprocessed_keys(self):
-        _lv.BatchPutItem(self.connection, "Aaa", [{"h": unicode(i)} for i in range(100)])
+        _lv.batch_put_item(self.connection, "Aaa", [{"h": unicode(i)} for i in range(100)])
 
         r = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
 
@@ -426,7 +426,7 @@ class BatchGetItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         self.assertEqual(len(r.responses["Aaa"]), 100)
 
     def test_get_with_unprocessed_keys(self):
-        _lv.BatchPutItem(self.connection, "Aaa", [{"h": unicode(i), "xs": "x" * 300000} for i in range(100)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
+        _lv.batch_put_item(self.connection, "Aaa", [{"h": unicode(i), "xs": "x" * 300000} for i in range(100)])  # 300kB items ensure a single BatchGetItem will return at most 55 items
 
         r1 = self.connection(_lv.BatchGetItem().table("Aaa").keys({"h": unicode(i)} for i in range(100)))
 

@@ -21,10 +21,10 @@ When given a :class:`UpdateTable`, the connection will return a :class:`UpdateTa
             .global_secondary_index("gsi").hash_key("hh", STRING).range_key("rr", NUMBER).provisioned_throughput(1, 1).project_all()
     )
     connection(CreateTable(table4).hash_key("h", STRING).provisioned_throughput(1, 1))
-    WaitForTableActivation(connection, table)
-    WaitForTableActivation(connection, table2)
-    WaitForTableActivation(connection, table3)
-    WaitForTableActivation(connection, table4)
+    wait_for_table_activation(connection, table)
+    wait_for_table_activation(connection, table2)
+    wait_for_table_activation(connection, table3)
+    wait_for_table_activation(connection, table4)
 
 >>> r = connection(
 ...   UpdateTable(table)
@@ -35,22 +35,22 @@ When given a :class:`UpdateTable`, the connection will return a :class:`UpdateTa
 >>> r.table_description.table_status
 u'UPDATING'
 
-Note that you can use the :func:`.WaitForTableActivation` compound to poll the table status until it's updated. See :ref:`actions-vs-compounds` in the user guide.
+Note that you can use the :func:`.wait_for_table_activation` compound to poll the table status until it's updated. See :ref:`actions-vs-compounds` in the user guide.
 
 .. testcleanup::
 
-    WaitForTableActivation(connection, table)
-    WaitForTableActivation(connection, table2)
-    WaitForTableActivation(connection, table3)
-    WaitForTableActivation(connection, table4)
+    wait_for_table_activation(connection, table)
+    wait_for_table_activation(connection, table2)
+    wait_for_table_activation(connection, table3)
+    wait_for_table_activation(connection, table4)
     connection(DeleteTable(table))
     connection(DeleteTable(table2))
     connection(DeleteTable(table3))
     connection(DeleteTable(table4))
-    WaitForTableDeletion(connection, table)
-    WaitForTableDeletion(connection, table2)
-    WaitForTableDeletion(connection, table3)
-    WaitForTableDeletion(connection, table4)
+    wait_for_table_deletion(connection, table)
+    wait_for_table_deletion(connection, table2)
+    wait_for_table_deletion(connection, table3)
+    wait_for_table_deletion(connection, table4)
 """
 
 import datetime
@@ -582,7 +582,7 @@ class UpdateTableLocalIntegTests(_tst.LocalIntegTests):
         r = self.connection(_lv.UpdateTable("Aaa").delete_global_secondary_index("the_gsi"))
         self.assertEqual(r.table_description.global_secondary_indexes[0].index_status, "DELETING")
 
-        _lv.WaitForTableActivation(self.connection, "Aaa")
+        _lv.wait_for_table_activation(self.connection, "Aaa")
 
         r = self.connection(_lv.DescribeTable("Aaa"))
         self.assertEqual(r.table.global_secondary_indexes, None)

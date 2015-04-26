@@ -15,7 +15,7 @@ Items are accessed like this:
 
 Note that items are returned in an undefined order.
 
-See also the :class:`.ScanIterator` compound. And :ref:`actions-vs-compounds` in the user guide.
+See also the :func:`.iterate_scan` compound. And :ref:`actions-vs-compounds` in the user guide.
 """
 
 import LowVoltage as _lv
@@ -92,7 +92,7 @@ class ScanResponse(object):
         """
         The key of the last item evaluated by the scan. If not None, it should be given to :meth:`~Scan.exclusive_start_key` is a subsequent :class:`Scan`.
 
-        The :class:`.ScanIterator` compound does that for you.
+        The :func:`.iterate_scan` compound does that for you.
 
         :type: ``None`` or dict
         """
@@ -151,7 +151,7 @@ class Scan(Action):
         Items will be partitioned in ``total_segments`` segments of approximately the same size,
         ans only the items of the ``segment``-th segment will be returned in this request.
 
-        :meth:`.ScanIterator.parallelize` does that for you.
+        :func:`.parallelize_scan` does that for you.
 
         >>> connection(
         ...   Scan(table)
@@ -172,7 +172,7 @@ class Scan(Action):
     @proxy("Scan")
     def exclusive_start_key(self, key):
         """
-        The :class:`.ScanIterator` compound does that for you.
+        The :func:`.iterate_scan` compound does that for you.
 
         >>> r = connection(
         ...   Scan(table)

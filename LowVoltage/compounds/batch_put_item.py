@@ -8,12 +8,12 @@ from LowVoltage.actions.next_gen_mixins import variadic
 
 
 @variadic(dict)
-def BatchPutItem(connection, table, items):
+def batch_put_item(connection, table, items):
     """
     Make as many :class:`.BatchWriteItem` actions as needed to put all specified items.
     Including processing :attr:`.BatchWriteItemResponse.unprocessed_items`.
 
-    >>> BatchPutItem(
+    >>> batch_put_item(
     ...   connection,
     ...   table,
     ...   {"h": 0, "a": 42},
@@ -43,7 +43,7 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
         self.connection = self.mocks.create("connection")
 
     def test_no_keys(self):
-        BatchPutItem(self.connection.object, "Aaa", [])
+        batch_put_item(self.connection.object, "Aaa", [])
 
     def test_one_page(self):
         self.connection.expect._call_.withArguments(
@@ -52,7 +52,7 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
             _lv.BatchWriteItemResponse()
         )
 
-        BatchPutItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
+        batch_put_item(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages(self):
         self.connection.expect._call_.withArguments(
@@ -71,7 +71,7 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
             _lv.BatchWriteItemResponse()
         )
 
-        BatchPutItem(self.connection.object, "Aaa", ({"h": i} for i in range(60)))
+        batch_put_item(self.connection.object, "Aaa", ({"h": i} for i in range(60)))
 
     def test_one_unprocessed_item(self):
         self.connection.expect._call_.withArguments(
@@ -85,7 +85,7 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
             _lv.BatchWriteItemResponse()
         )
 
-        BatchPutItem(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
+        batch_put_item(self.connection.object, "Aaa", {"h": u"a"}, {"h": u"b"})
 
     def test_several_pages_of_unprocessed_item(self):
         self.connection.expect._call_.withArguments(
@@ -109,7 +109,7 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
             _lv.BatchWriteItemResponse()
         )
 
-        BatchPutItem(self.connection.object, "Aaa", [{"h": i} for i in range(35)])
+        batch_put_item(self.connection.object, "Aaa", [{"h": i} for i in range(35)])
 
 
 class BatchPutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
@@ -117,5 +117,5 @@ class BatchPutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         return u"{:03}".format(i)
 
     def test(self):
-        _lv.BatchPutItem(self.connection, "Aaa", [{"h": self.key(i)} for i in range(100)])
-        self.assertEqual(len(list(_lv.ScanIterator(self.connection, _lv.Scan("Aaa")))), 100)
+        _lv.batch_put_item(self.connection, "Aaa", [{"h": self.key(i)} for i in range(100)])
+        self.assertEqual(len(list(_lv.iterate_scan(self.connection, _lv.Scan("Aaa")))), 100)
