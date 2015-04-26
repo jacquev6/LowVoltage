@@ -40,6 +40,8 @@ Questions? Remarks? Bugs? Want to contribute? `Open an issue <https://github.com
 .. image:: https://img.shields.io/github/stars/jacquev6/LowVoltage.svg
     :target: https://github.com/jacquev6/LowVoltage/stargazers
 
+.. _quick-start:
+
 Quick start
 ===========
 

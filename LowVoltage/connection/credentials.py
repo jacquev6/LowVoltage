@@ -3,8 +3,6 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 """
-@todo Link to user guide (authentication).
-
 Authentication credentials are passed to the connection as a credentials provider.
 On each request, the connection retrieves a key/secret pair from the credentials provider, uses it to sign the request, and then discards it.
 This allows credentials rotation in the same long-lived connection: the credential provider just has to return the new credentials.
@@ -62,7 +60,8 @@ class Ec2RoleCredentials(object):
     from the `IAM role of the instance <http://docs.aws.amazon.com/IAM/latest/UserGuide/roles-usingrole-ec2instance.html>`__.
     Usable *only* on an EC2 instance with an IAM role assigned.
 
-    :param requests_session: a ``Session`` object from the `python-requests <http://python-requests.org>`__ library. Typically not used. Leave it to ``None`` and one will be created for you.
+    :param requests_session: a ``Session`` object from the `python-requests <http://python-requests.org>`__ library.
+        Typically not used. Leave it to ``None`` and one will be created for you.
     """
 
     def __init__(self, requests_session=None):
