@@ -12,6 +12,7 @@ Contents
 
     user_guide
     reference
+    changelog
 
 Indices and tables
 ==================

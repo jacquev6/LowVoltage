@@ -6,7 +6,7 @@
 import os
 import setuptools
 
-version = "0.5.0"
+version = "0.6.0"
 
 
 setuptools.setup(
@@ -19,7 +19,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     license="MIT",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
+        "Environment :: Web Environment",
+        "Intended Audience :: Developers",
         "License :: OSI Approved",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -28,7 +30,7 @@ setuptools.setup(
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
-        "Environment :: Web Environment",
+        "Topic :: Database",
     ],
     install_requires=["requests>=2.2"],
     test_suite="LowVoltage.tests" if "AWS_ACCESS_KEY_ID" in os.environ else "LowVoltage.tests.local",
