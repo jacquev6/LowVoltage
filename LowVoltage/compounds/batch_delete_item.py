@@ -7,7 +7,29 @@ import LowVoltage.testing as _tst
 
 
 def BatchDeleteItem(connection, table, *keys):
-    """Make as many "BatchWriteItem" actions as needed to delete all specified keys. Including UnprocessedItems."""
+    """
+    Make as many :class:`.BatchWriteItem` actions as needed to delete all specified keys.
+    Including processing :attr:`.BatchWriteItemResponse.unprocessed_items`.
+
+    Keys can be passed individually:
+
+    >>> BatchDeleteItem(
+    ...   connection,
+    ...   table,
+    ...   {"h": 0},
+    ...   {"h": 1},
+    ...   {"h": 2},
+    ... )
+
+    Or as iterables:
+
+    >>> BatchDeleteItem(
+    ...   connection,
+    ...   table,
+    ...   [{"h": h} for h in range(3, 7)],
+    ...   ({"h": h} for h in range(7, 10)),
+    ... )
+    """
 
     delete = []
     for key in keys:

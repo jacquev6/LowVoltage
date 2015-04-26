@@ -9,6 +9,8 @@ When given a :class:`BatchWriteItem`, the connection will return a :class:`Batch
 ...   BatchWriteItem().table(table).delete({"h": 0}, {"h": 1})
 ... )
 <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
+
+See also the :func:`.BatchPutItem` and :func:`.BatchDeleteItem` compounds. And :ref:`actions-vs-compounds` in the user guide.
 """
 
 import LowVoltage as _lv
@@ -62,6 +64,8 @@ class BatchWriteItemResponse(object):
     def unprocessed_items(self):
         """
         Items that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchWriteItem`.
+
+        The :func:`.BatchPutItem` and :func:`.BatchDeleteItem` compounds process those for you.
 
         :type: ``None`` or exactly as returned by DynamoDB
         """
@@ -165,7 +169,8 @@ class BatchWriteItem(Action):
     def return_consumed_capacity_total(self):
         """
         >>> c = connection(
-        ...   BatchWriteItem().table(table).delete({"h": 3})
+        ...   BatchWriteItem().table(table)
+        ...     .delete({"h": 3})
         ...     .return_consumed_capacity_total()
         ... ).consumed_capacity
         >>> c[0].table_name
@@ -179,7 +184,8 @@ class BatchWriteItem(Action):
     def return_consumed_capacity_indexes(self):
         """
         >>> c = connection(
-        ...   BatchWriteItem().table(table).delete({"h": 4})
+        ...   BatchWriteItem().table(table)
+        ...     .delete({"h": 4})
         ...     .return_consumed_capacity_indexes()
         ... ).consumed_capacity
         >>> c[0].capacity_units
@@ -206,7 +212,8 @@ class BatchWriteItem(Action):
     def return_item_collection_metrics_size(self):
         """
         >>> m = connection(
-        ...   BatchWriteItem().table(table2).put({"h": 0, "r1": 0, "r2": 0})
+        ...   BatchWriteItem().table(table2)
+        ...     .put({"h": 0, "r1": 0, "r2": 0})
         ...     .return_item_collection_metrics_size()
         ... ).item_collection_metrics
         >>> m[table2][0].item_collection_key
@@ -220,7 +227,8 @@ class BatchWriteItem(Action):
     def return_item_collection_metrics_none(self):
         """
         >>> print connection(
-        ...   BatchWriteItem().table(table2).put({"h": 1, "r1": 0, "r2": 0})
+        ...   BatchWriteItem().table(table2)
+        ...     .put({"h": 1, "r1": 0, "r2": 0})
         ...     .return_item_collection_metrics_none()
         ... ).item_collection_metrics
         None

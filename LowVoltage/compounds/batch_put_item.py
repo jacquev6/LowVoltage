@@ -7,7 +7,29 @@ import LowVoltage.testing as _tst
 
 
 def BatchPutItem(connection, table, *items):
-    """Make as many "BatchWriteItem" actions as needed to put all specified items. Including UnprocessedItems."""
+    """
+    Make as many :class:`.BatchWriteItem` actions as needed to put all specified items.
+    Including processing :attr:`.BatchWriteItemResponse.unprocessed_items`.
+
+    Items can be passed individually:
+
+    >>> BatchPutItem(
+    ...   connection,
+    ...   table,
+    ...   {"h": 0, "a": 42},
+    ...   {"h": 1, "a": 57},
+    ...   {"h": 2, "a": 33, "b": 22},
+    ... )
+
+    Or as iterables:
+
+    >>> BatchPutItem(
+    ...   connection,
+    ...   table,
+    ...   [{"h": h, "a": h * 2} for h in range(3, 7)],
+    ...   ({"h": h, "b": h ** 3} for h in range(7, 10)),
+    ... )
+    """
 
     # @todo assert len(items) != 0
 
