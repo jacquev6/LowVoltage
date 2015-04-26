@@ -55,8 +55,6 @@ class Connection(object):
     def __call__(self, action):
         """
         Send requests and return responses.
-
-        @todoc Document the Action interface?
         """
         errors = []
         while True:

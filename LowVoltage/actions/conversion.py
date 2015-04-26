@@ -2,6 +2,93 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+"""
+Attributes in DynamoDB can have `some types <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html>`__.
+LowVoltage translates some Python types to be stored in DynamoDB:
+
+- number ``10`` is stored as ``"N"`` (number)
+
+>>> connection(PutItem(table, {"h": 0, "number": 10}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'number': 10}
+
+- unicode ``u"foobar"`` is stored as ``"S"`` (string, properly utf8-encoded)
+
+>>> connection(PutItem(table, {"h": 0, "unicode": u"foobar"}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'unicode': u'foobar'}
+
+- bytes ``b"barbaz"`` is stored as ``"B"`` (binary, properly base64-encoded)
+
+>>> connection(PutItem(table, {"h": 0, "bytes": b"barbaz"}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'bytes': 'barbaz'}
+
+Note that strings are bytes in Python 2 and unicode in Python 3. You may want to avoid them.
+
+- booleans ``True`` and ``False`` are stored as ``"BOOL"``
+
+>>> connection(PutItem(table, {"h": 0, "boolean": True}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'boolean': True}
+
+- ``None`` is stored as ``"NULL"``
+
+>>> connection(PutItem(table, {"h": 0, "none": None}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'none': None}
+
+- an homogeneous set of numbers ``{24, 57}`` is stored as ``"NS"`` (number set)
+
+>>> connection(PutItem(table, {"h": 0, "set_of_number": {24, 57}}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'set_of_number': set([24, 57])}
+
+- an homogeneous set of unicodes ``{u"foo", u"bar"}`` is stored as ``"SS"`` (string set)
+
+>>> connection(PutItem(table, {"h": 0, "set_of_unicode": {u"foo", u"bar"}}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'set_of_unicode': set([u'foo', u'bar'])}
+
+- an homogeneous set of bytes ``{b"bar", b"baz"}`` is stored as ``"BS"`` (binary set)
+
+>>> connection(PutItem(table, {"h": 0, "set_of_bytes": {b"bar", b"baz"}}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'set_of_bytes': set(['baz', 'bar']), u'h': 0}
+
+- a list ``["a", {"b": "c"}, 42]`` is stored as ``"L"`` (list)
+
+>>> connection(PutItem(table, {"h": 0, "list": ["a", {"b": "c"}, 42]}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'list': ['a', {u'b': 'c'}, 42]}
+
+Note that lists are stored as ``"L"`` even if they are homogeneous, so you have to use sets if you plan to use :meth:`.UpdateItem.add` and :meth:`.UpdateItem.delete`.
+
+- a dict ``{"a": "b", "c": 42}`` is stored as ``"M"`` (map)
+
+>>> connection(PutItem(table, {"h": 0, "dict": {"a": "b", "c": 42}}))
+<LowVoltage.actions.put_item.PutItemResponse object at ...>
+>>> connection(GetItem(table, {"h": 0})).item
+{u'h': 0, u'dict': {u'a': 'b', u'c': 42}}
+
+- everything else will raise a :exc:`TypeError`:
+
+>>> connection(PutItem(table, {"h": 0, "something_else": {"a", 42}}))
+Traceback (most recent call last):
+  ...
+TypeError: ...
+
+"""
+
 import base64
 import numbers
 import sys

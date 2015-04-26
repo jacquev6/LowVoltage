@@ -29,6 +29,13 @@ Attribute types
 
 .. automodule:: LowVoltage.attribute_types
 
+.. _python-types:
+
+Python types
+============
+
+.. automodule:: LowVoltage.actions.conversion
+
 Exceptions
 ==========
 

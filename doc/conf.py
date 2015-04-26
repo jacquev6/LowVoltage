@@ -18,6 +18,7 @@ nitpicky = True
 nitpick_ignore = [
     ("py:class", "datetime.datetime"),
     ("py:class", "exceptions.Exception"),
+    ("py:exc", "TypeError"),
 ]
 
 # http://stackoverflow.com/a/28778969/905845

@@ -2,8 +2,6 @@
 User guide
 ==========
 
-@todoc Add examples to the user guide.
-
 Introduction
 ============
 
@@ -13,7 +11,7 @@ I do my best to respect standards, so alternative installation methods like ``ea
 You may want to use `virtualenv <https://virtualenv.pypa.io/en/latest/>`__.
 
 Regarding imports, I suggest you ``import LowVoltage as lv`` in your production code.
-All this documentation assumes that everything was imported in teh global namespace: ``from LowVoltage import *``.
+All this documentation assumes that everything was imported in the global namespace: ``from LowVoltage import *``.
 Note that everything is available in the top-level module, so you don't have to import nested modules.
 
 Beware that LowVoltage is just a client library for DynamoDB, so you have to be familiar with the underlying concepts of this No-SQL database.
@@ -50,14 +48,30 @@ Users should be able to choose simplicity over flexibility
 
 Even if you *want* to be able to :meth:`~.PutItem.return_item_collection_metrics_size`, most of the time you don't care. And processing :attr:`~.BatchWriteItemResponse.unprocessed_items` should be abstracted away. So we provide :ref:`compounds`. More details in :ref:`actions-vs-compounds` bellow.
 
-Authentication
+The connection
 ==============
 
+The main entry point of LowVoltage is the :class:`.Connection` class.
+
+    >>> from LowVoltage import *
+    >>> connection = Connection("us-west-2", EnvironmentCredentials())
+
+Authentication
+--------------
+
 DynamoDB requires authentication and signing of the requests.
-In LowVoltage we use simple dependency injection of a credentials provider.
+In LowVoltage we use simple dependency injection of a credentials provider (:class:`.EnvironmentCredentials` in the example above).
 This approach is flexible and allows implementation of any credentials rotation policy.
 LowVoltage comes with credentials providers for simple use cases.
-See the :mod:`.credentials` documentation for details.
+See :mod:`.credentials` for details.
+
+Error handling
+--------------
+
+Some errors are retryable: :exc:`.NetworkError` or :exc:`.ServerError` for example.
+The :class:`.Connection` accepts a ``retry_policy`` parameter to specify this behavior.
+See :mod:`.retry_policies` for details.
+See also :mod:`.exceptions` for a description of the exceptions classes.
 
 .. _actions-vs-compounds:
 
@@ -67,15 +81,22 @@ Actions vs. compounds
 As briefly described in the :ref:`tenets`, LowVoltage is built in successive layers of increasing abstraction and decreasing flexibility.
 
 The :ref:`actions` layer provides almost no abstraction over `the API <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference>`__.
-It maps exactly to the DynamoDB actions, parameters and return values. It does convert between Python types and DynamoDB notation though.
+It maps exactly to the DynamoDB actions, parameters and return values.
+It does convert between :ref:`python-types` and DynamoDB notation though.
+
+    >>> table = "LowVoltage.Tests.Doc.1"
+    >>> connection(GetItem(table, {"h": 0})).item
+    {u'h': 0, u'gr': 0, u'gh': 0}
 
 The :ref:`compounds` layer provides helper that intend to complete actions in their simplest use cases.
 For example :class:`.BatchGetItem` is limited to get 100 keys at once and requires processing :attr:`.BatchGetItemResponse.unprocessed_keys`, so we provide :class:`.BatchGetItemIterator` to do that.
 The tradeoff is that you loose :attr:`.BatchGetItemResponse.consumed_capacity` and the ability to get items from several tables at once.
 Similarly :func:`.BatchPutItem` remove the limit of 25 items in :class:`.BatchWriteItem` but also removes the ability to put and delete from several tables in the same action.
 
-You can easily distinguish between actions and compounds because actions are passed to the :class:`.Connection` but compounds *receive* the connection as an argument:
-actions are atomic and compounds are able to perform several actions.
+    >>> BatchPutItem(connection, table, {"h": 0, "a": 42}, {"h": 1, "b": 53})
+
+You can easily distinguish between actions and compounds because actions are *passed to* the :class:`.Connection` but compounds *receive* the connection as an argument:
+actions are atomic while compounds are able to perform several actions.
 
 Someday, maybe, we'll write a Table abstraction and implement an "active record" pattern? It would be even simpler than compounds, but less flexible.
 
@@ -84,16 +105,26 @@ Action building
 
 DynamoDB actions typically receive a lot of arguments.
 We chose to expose them using `method chaining <https://en.wikipedia.org/wiki/Method_chaining#Python>`__ to reduce the risk of giving them in the wrong order.
-We believe this gives a better interface in our case than encouraging clients to use named parameters.
+We believe this gives a better interface in our case than just encouraging clients to use named parameters.
 
-@todoc The notion of active [table|index].
+    >>> Query(table2).index_name("lsi").key_eq("h", 0).key_ge("r2", 10)
+    <LowVoltage.actions.query.Query object at ...>
+
+Some actions can operate on several resources.
+:class:`.BatchGetItem` can get items from several tables at once for example.
+To build those, we need a concept of "active table": :meth:`.BatchGetItem.keys` will always add keys to get from the active table.
+The active table is set by :meth:`.BatchGetItem.table`.
+
+    >>> (BatchGetItem()
+    ...   .table("Table1").keys({"h": 0})
+    ...   .table("Table2").keys({"x": 42})
+    ... )
+    <LowVoltage.actions.batch_get_item.BatchGetItem object at ...>
+
+The previous example will get ``{"h": 0}`` from ``Table1`` and ``{"x": 42}`` from ``Table2``.
 
 Expressions
 ===========
 
-@todoc Condition, projection, attribute names, attribute values. @todoc add links to here in the next gen mixins.
-
-Error/retry strategy
-====================
-
-@todoc
+@todoc Condition, projection, attribute names, attribute values.
+@todoc Cross link here, next gen mixins and expression builders.
