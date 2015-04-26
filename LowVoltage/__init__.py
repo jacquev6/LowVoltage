@@ -17,3 +17,4 @@ from exceptions import *
 # @todo improve builder for expressions
 # @todo metrics
 # @todo debug logging
+# @todo Table abstraction (will DescribeTable to know the keys and indexes available, and choose the right index to Query, maybe even do a GetItem if the query is key_eq on ha&sh and range.) Higher level than compounds.

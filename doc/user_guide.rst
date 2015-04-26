@@ -25,12 +25,20 @@ Everything is available in top-level module
 Credentials
 ===========
 
+.. _actions-vs-compounds:
+
 Actions vs. compounds
 =====================
 
 Actions: zero abstraction, total flexibility.
 
+Here are the available actions (@todo link).
+
 Compounds: some features disappear (BatchGet from several tables, return consumed capacity) but usage is simpler.
+
+Here are the available compounds (@todo link).
+
+Someday, maybe, an ORM-like? Even simpler than compounds, even less flexible.
 
 Builders (with proxies) for actions
 ===================================
@@ -42,8 +50,3 @@ Condition, projection, attribute names, attribute values. @todo add links to her
 
 Error/retry strategy
 ====================
-
-Someday, maybe, an ORM-like?
-============================
-
-Even simpler than compounds, even less flexible.

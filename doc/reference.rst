@@ -39,7 +39,7 @@ Exceptions
 Actions
 =======
 
-@todo Link to user guide (action/compound).
+See also :ref:`actions-vs-compounds` in the user guide.
 @todo In actions that have a compound, link to this compound.
 
 Admin actions
@@ -83,7 +83,7 @@ Return types
 Compounds
 =========
 
-@todo Link to user guide (action/compound).
+See also :ref:`actions-vs-compounds` in the user guide.
 
 .. toctree::
 
