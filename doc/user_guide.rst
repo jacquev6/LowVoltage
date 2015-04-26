@@ -2,6 +2,8 @@
 User guide
 ==========
 
+@todoc User guide
+
 Introduction
 ============
 
@@ -32,11 +34,11 @@ Actions vs. compounds
 
 Actions: zero abstraction, total flexibility.
 
-Here are the available actions (@todo link).
+Here are the available :ref:`actions`.
 
 Compounds: some features disappear (BatchGet from several tables, return consumed capacity) but usage is simpler.
 
-Here are the available compounds (@todo link).
+Here are the available :ref:`compounds`.
 
 Someday, maybe, an ORM-like? Even simpler than compounds, even less flexible.
 

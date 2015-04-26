@@ -130,8 +130,6 @@ class BatchGetItem(Action):
         self.__active_table = self.__tables[name]
         return self
 
-    # @todo Add unit tests about calling keys (and others) without an active table. Same in other multi-table actions. Same in CreateTable for active index.
-
     def keys(self, *keys):
         """
         Add keys to get from the active table.

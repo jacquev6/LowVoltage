@@ -36,11 +36,12 @@ Exceptions
 
     reference/exceptions
 
+.. _actions:
+
 Actions
 =======
 
 See also :ref:`actions-vs-compounds` in the user guide.
-@todo In actions that have a compound, link to this compound.
 
 Admin actions
 -------------
@@ -79,6 +80,8 @@ Return types
 .. toctree::
 
     reference/actions/return_types
+
+.. _compounds:
 
 Compounds
 =========

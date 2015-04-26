@@ -39,7 +39,7 @@ class BatchGetItemIterator(Iterator):
     def __init__(self, connection, table, *keys):
         self.__table = table
         self.__keys = []
-        # @todo Factorize this logic for variadic parameters
+        # @todo Factorize this logic for variadic parameters. Also raise if len(keys) == 0
         for key in keys:
             if isinstance(key, dict):
                 key = [key]

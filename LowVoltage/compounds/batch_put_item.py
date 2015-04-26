@@ -31,8 +31,6 @@ def BatchPutItem(connection, table, *items):
     ... )
     """
 
-    # @todo assert len(items) != 0
-
     put = []
     for item in items:
         if isinstance(item, dict):

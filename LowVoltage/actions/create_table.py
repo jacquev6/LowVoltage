@@ -76,8 +76,6 @@ class CreateTable(Action):
     The `CreateTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_RequestParameters>`__.
     """
 
-    # @todo Should we add ctor parameters and allow use to choose between ctor and builder syntaxes? Same for .global_secondary_index. Same everywhere.
-
     def __init__(self, table_name):
         super(CreateTable, self).__init__("CreateTable", CreateTableResponse)
         self.__table_name = table_name
@@ -92,6 +90,7 @@ class CreateTable(Action):
 
     @property
     def payload(self):
+        # @todo Review all .payload properties to make them more linear (PutItem might be a good example)
         data = {"TableName": self.__table_name}
         schema = []
         if self._hash_key:
@@ -250,7 +249,6 @@ class CreateTable(Action):
         """
         if name not in self.__lsis:
             self.__lsis[name] = self._Index(name)
-        # @todo Should we copy the hash key from the table? (It must be the same)
         self.__active_index = self.__lsis[name]
         return self
 

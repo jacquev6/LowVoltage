@@ -10,6 +10,3 @@ from .query_iterator import QueryIterator
 from .scan_iterator import ScanIterator
 from .wait_for_table_activation import WaitForTableActivation
 from .wait_for_table_deletion import WaitForTableDeletion
-
-# @todo Review the interfaces in this package: some accept a reference Action (Query, Scan), others don't
-# Also it's weird that Actions are passed to the connection, but compounds accept the connection as an argument

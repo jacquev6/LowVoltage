@@ -142,7 +142,7 @@ class ProjectionExpression(CommaSeparatedStringsValue("ProjectionExpression")):
         Add name(s) to ProjectionExpression.
         The request will return only projected attributes.
 
-        Note that this method accepts a variable number of names or iterables.  @todo A section in the user guide describing those methods.
+        Note that this method accepts a variable number of names or iterables.  @todoc A section in the user guide describing those methods.
         """
         return super(ProjectionExpression, self).add(*names)
 

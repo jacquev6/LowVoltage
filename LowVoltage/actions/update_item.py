@@ -51,8 +51,6 @@ class UpdateItemResponse(object):
         if _is_dict(self.__attributes):  # pragma no branch (Defensive code)
             return _convert_db_to_dict(self.__attributes)
 
-    # @todo Remove '_' prefix from classes in .return_types.
-
     @property
     def consumed_capacity(self):
         """

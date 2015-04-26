@@ -89,8 +89,6 @@ class UpdateTable(Action):
     The `UpdateTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_RequestParameters>`__.
     """
 
-    # @todo Create and delete secondary indexes!
-
     def __init__(self, table_name):
         super(UpdateTable, self).__init__("UpdateTable", UpdateTableResponse)
         self.__table_name = table_name

@@ -35,7 +35,6 @@ def WaitForTableActivation(connection, table):
 
     r = connection(_lv.DescribeTable(table))
     while r.table.table_status != "ACTIVE" or (r.table.global_secondary_indexes is not None and any(gsi.index_status != "ACTIVE" for gsi in r.table.global_secondary_indexes)):
-        # @todo Use a policy to choose polling interval? Same in WaitForTableDeletion.
         time.sleep(3)
         r = connection(_lv.DescribeTable(table))
 

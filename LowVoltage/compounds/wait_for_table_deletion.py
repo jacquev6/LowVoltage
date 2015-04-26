@@ -8,7 +8,7 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 
 
-# @todo Should we abort if the table_status is not "DELETING"?
+# @todo Should we abort if the table_status is not "DELETING"? Better provide a DeleteTableAndWait compound
 def WaitForTableDeletion(connection, table):
     """
     Make :class:`.DescribeTable` actions until a :exc:`.ResourceNotFoundException` is raised.

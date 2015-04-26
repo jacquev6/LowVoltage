@@ -45,7 +45,7 @@ class ConnectedIntegTests(ResourcedTestCase):
     #         }
     #     ]
     # }
-    # @todo Could we refine the policy to ensure the total provisioned throughput is capped?
+    # Could we refine the policy to ensure the total provisioned throughput is capped?
 
     def setUp(self):
         super(ConnectedIntegTests, self).setUp()

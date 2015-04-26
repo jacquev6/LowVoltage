@@ -56,7 +56,7 @@ class Connection(object):
         """
         Send requests and return responses.
 
-        @todo Document the Action interface?
+        @todoc Document the Action interface?
         """
         errors = []
         while True:
@@ -267,10 +267,6 @@ class Signer(object):
 
     def __call__(self, key, secret, now, action, payload):
         # http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
-        assert isinstance(now, datetime.datetime)
-        assert isinstance(action, basestring)
-        assert isinstance(payload, basestring)
-        # @todo Probably remove all asserts
 
         timestamp = now.strftime("%Y%m%dT%H%M%SZ")
         datestamp = now.strftime("%Y%m%d")
