@@ -29,6 +29,8 @@ from .next_gen_mixins import (
     ExpressionAttributeNames,
     ProjectionExpression,
     ReturnConsumedCapacity,
+    MandatoryItemParameter,
+    MandatoryStringParameter,
 )
 from .return_types import ConsumedCapacity, _is_dict
 
@@ -73,26 +75,37 @@ class GetItem(Action):
     The `GetItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_RequestParameters>`__
     """
 
-    def __init__(self, table_name, key):
+    def __init__(self, table_name=None, key=None):
         super(GetItem, self).__init__("GetItem", GetItemResponse)
-        self.__table_name = table_name
-        self.__key = key
         self.__consistent_read = ConsistentRead(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
+        self.__key = MandatoryItemParameter("Key", self, key)
         self.__projection_expression = ProjectionExpression(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        self.__table_name = MandatoryStringParameter("TableName", self, table_name)
 
     @property
     def payload(self):
-        data = {
-            "TableName": self.__table_name,
-            "Key": _convert_dict_to_db(self.__key),
-        }
+        data = {}
         data.update(self.__consistent_read.payload)
         data.update(self.__expression_attribute_names.payload)
+        data.update(self.__key.payload)
         data.update(self.__projection_expression.payload)
         data.update(self.__return_consumed_capacity.payload)
+        data.update(self.__table_name.payload)
         return data
+
+    def table_name(self, table_name):
+        """
+        Set TableName. Mandatory: can also be set in the constructor.
+        """
+        return self.__table_name.set(table_name)
+
+    def key(self, key):
+        """
+        Set Key. Mandatory: can also be set in the constructor.
+        """
+        return self.__key.set(key)
 
     @proxy
     def consistent_read_true(self):
@@ -168,7 +181,32 @@ class GetItemUnitTests(_tst.UnitTests):
     def test_name(self):
         self.assertEqual(GetItem("Table", {"hash": 42}).name, "GetItem")
 
-    def test_key(self):
+    def test_missing_table_name(self):
+        with self.assertRaises(_lv.BuilderError):
+            GetItem().key({"h": 42}).payload
+
+    def test_bad_table_name(self):
+        with self.assertRaises(TypeError):
+            GetItem().table_name(42)
+
+    def test_bad_key(self):
+        with self.assertRaises(TypeError):
+            GetItem().key(42)
+
+    def test_missing_key(self):
+        with self.assertRaises(_lv.BuilderError):
+            GetItem().table_name("Foo").payload
+
+    def test_table_name_and_key(self):
+        self.assertEqual(
+            GetItem().table_name("Table").key({"hash": 42}).payload,
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+            }
+        )
+
+    def test_constructor(self):
         self.assertEqual(
             GetItem("Table", {"hash": 42}).payload,
             {

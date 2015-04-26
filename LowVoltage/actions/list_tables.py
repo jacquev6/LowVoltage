@@ -18,6 +18,7 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .return_types import _is_str, _is_list_of_str
+from .next_gen_mixins import ScalarValue
 
 
 class ListTablesResponse(object):
@@ -65,16 +66,14 @@ class ListTables(Action):
 
     def __init__(self):
         super(ListTables, self).__init__("ListTables", ListTablesResponse)
-        self.__limit = None
-        self.__exclusive_start_table_name = None
+        self.__limit = ScalarValue("Limit", self)
+        self.__exclusive_start_table_name = ScalarValue("ExclusiveStartTableName", self)
 
     @property
     def payload(self):
         data = {}
-        if self.__limit is not None:
-            data["Limit"] = self.__limit
-        if self.__exclusive_start_table_name:
-            data["ExclusiveStartTableName"] = self.__exclusive_start_table_name
+        data.update(self.__limit.payload)
+        data.update(self.__exclusive_start_table_name.payload)
         return data
 
     def limit(self, limit):
@@ -87,8 +86,7 @@ class ListTables(Action):
         >>> r.last_evaluated_table_name
         u'LowVoltage.Tests.Doc.1'
         """
-        self.__limit = limit
-        return self
+        return self.__limit.set(limit)
 
     def exclusive_start_table_name(self, table_name):
         """
@@ -103,8 +101,7 @@ class ListTables(Action):
         ... ).table_names
         [u'LowVoltage.Tests.Doc.2']
         """
-        self.__exclusive_start_table_name = table_name
-        return self
+        return self.__exclusive_start_table_name.set(table_name)
 
 
 class ListTablesUnitTests(_tst.UnitTests):

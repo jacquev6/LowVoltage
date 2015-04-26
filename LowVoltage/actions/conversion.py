@@ -86,7 +86,6 @@ Note that lists are stored as ``"L"`` even if they are homogeneous, so you have 
 Traceback (most recent call last):
   ...
 TypeError: ...
-
 """
 
 import base64

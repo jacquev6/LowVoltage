@@ -125,9 +125,9 @@ class Scan(Action):
         self.__limit = Limit(self)
         self.__projection_expression = ProjectionExpression(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
-        self.__segment = ScalarValue("Segment")(self)
+        self.__segment = ScalarValue("Segment", self)
         self.__select = Select(self)
-        self.__total_segments = ScalarValue("TotalSegments")(self)
+        self.__total_segments = ScalarValue("TotalSegments", self)
 
     @property
     def payload(self):

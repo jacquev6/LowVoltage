@@ -5,10 +5,12 @@
 import inspect
 import functools
 
+import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .conversion import _convert_value_to_db, _convert_dict_to_db
 
 
+# @todo Put variadic somewhere else: it's used by compounds as well
 def variadic(typ):
     def flatten(args):
         flat_args = []
@@ -49,10 +51,69 @@ def variadic(typ):
     return decorator
 
 
-def ScalarValue(name):
+class ScalarParameter(object):
+    def __init__(self, name, parent, value):
+        self._name = name
+        self._parent = parent
+        self.set(value)
+
+    def set(self, value):
+        if value is None:
+            self._value = None
+        else:
+            self._value = self._convert(value)
+        return self._parent
+
+
+class MandatoryScalarParameter(ScalarParameter):
+    @property
+    def payload(self):
+        if self._value is None:
+            raise _lv.BuilderError("Mandatory parameter {} is missing.".format(self._name))
+        else:
+            return {self._name: self._value}
+
+
+class OptionalScalarParameter(ScalarParameter):
+    def __init__(self, name, parent):
+        super(OptionalScalarParameter, self).__init__(name, parent, None)
+
+    @property
+    def payload(self):
+        data = {}
+        if self._value is not None:
+            data[self._name] = self._value
+        return data
+
+
+class StringParameterMixin(object):
+    def _convert(self, s):
+        if isinstance(s, basestring):
+            return s
+        else:
+            raise TypeError("Parameter {} must be a string.".format(self._name))
+
+
+class ItemParameterMixin(object):
+    def _convert(self, item):
+        if isinstance(item, dict):
+            return _convert_dict_to_db(item)
+        else:
+            raise TypeError("Parameter {} must be a dict.".format(self._name))
+
+
+class MandatoryStringParameter(MandatoryScalarParameter, StringParameterMixin):
+    pass
+
+
+class MandatoryItemParameter(MandatoryScalarParameter, ItemParameterMixin):
+    pass
+
+
+def ScalarValue(name, parent=None, value=None):
     class ScalarValue(object):
-        def __init__(self, parent):
-            self.__value = None
+        def __init__(self, parent, value=None):
+            self.__value = value
             self.__parent = parent
 
         def set(self, value):
@@ -66,13 +127,16 @@ def ScalarValue(name):
                 data[name] = self.__value
             return data
 
-    return ScalarValue
+    if parent is None:
+        return ScalarValue
+    else:
+        return ScalarValue(parent, value)
 
 
-def DictValue(name):
+def DictValue(name, parent=None, data=None):
     class DictValue(object):
-        def __init__(self, parent):
-            self.__data = {}
+        def __init__(self, parent, data=None):
+            self.__data = data or {}
             self.__parent = parent
 
         def add(self, name, value):
@@ -86,13 +150,16 @@ def DictValue(name):
                 data[name] = self.__data
             return data
 
-    return DictValue
+    if parent is None:
+        return DictValue
+    else:
+        return DictValue(parent, data)
 
 
-def CommaSeparatedStringsValue(name):
+def CommaSeparatedStringsValue(name, parent=None, values=None):
     class CommaSeparatedStringsValue(object):
-        def __init__(self, parent):
-            self.__values = []
+        def __init__(self, parent, values=None):
+            self.__values = values or []
             self.__parent = parent
 
         def add(self, values):
@@ -106,7 +173,10 @@ def CommaSeparatedStringsValue(name):
                 data[name] = ", ".join(self.__values)
             return data
 
-    return CommaSeparatedStringsValue
+    if parent is None:
+        return CommaSeparatedStringsValue
+    else:
+        return CommaSeparatedStringsValue(parent, values)
 
 
 class ConditionExpression(ScalarValue("ConditionExpression")):

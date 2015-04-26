@@ -32,6 +32,7 @@ from .next_gen_mixins import (
     ReturnConsumedCapacity,
     ScalarValue,
     Select,
+    DictValue,
 )
 from .return_types import ConsumedCapacity, _is_dict, _is_int, _is_list_of_dict
 
@@ -117,30 +118,29 @@ class Query(Action):
     def __init__(self, table_name):
         super(Query, self).__init__("Query", QueryResponse)
         self.__table_name = table_name
-        self.__conditions = {}
         self.__consistent_read = ConsistentRead(self)
         self.__exclusive_start_key = ExclusiveStartKey(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__expression_attribute_values = ExpressionAttributeValues(self)
         self.__filter_expression = FilterExpression(self)
-        self.__index_name = ScalarValue("IndexName")(self)
+        self.__index_name = ScalarValue("IndexName", self)
+        self.__key_conditions = DictValue("KeyConditions", self)
         self.__limit = Limit(self)
         self.__projection_expression = ProjectionExpression(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
-        self.__scan_index_forward = ScalarValue("ScanIndexForward")(self)
+        self.__scan_index_forward = ScalarValue("ScanIndexForward", self)
         self.__select = Select(self)
 
     @property
     def payload(self):
         data = {"TableName": self.__table_name}
-        if self.__conditions:
-            data["KeyConditions"] = self.__conditions
         data.update(self.__consistent_read.payload)
         data.update(self.__exclusive_start_key.payload)
         data.update(self.__expression_attribute_names.payload)
         data.update(self.__expression_attribute_values.payload)
         data.update(self.__filter_expression.payload)
         data.update(self.__index_name.payload)
+        data.update(self.__key_conditions.payload)
         data.update(self.__limit.payload)
         data.update(self.__projection_expression.payload)
         data.update(self.__return_consumed_capacity.payload)
@@ -156,8 +156,7 @@ class Query(Action):
         >>> connection(Query(table2).key_eq("h", 42)).items
         [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}, {u'h': 42, u'r1': 2, u'r2': 8}, ...]
         """
-        self.__conditions[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__add_key_condition(name, "EQ", value)
 
     def key_le(self, name, value):
         """
@@ -171,8 +170,7 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "LE", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__add_key_condition(name, "LE", value)
 
     def key_lt(self, name, value):
         """
@@ -186,8 +184,7 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "LT", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__add_key_condition(name, "LT", value)
 
     def key_ge(self, name, value):
         """
@@ -201,8 +198,7 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 7}, {u'h': 42, u'r1': 8}, {u'h': 42, u'r1': 9}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "GE", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__add_key_condition(name, "GE", value)
 
     def key_gt(self, name, value):
         """
@@ -216,16 +212,14 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 7}, {u'h': 42, u'r1': 8}, {u'h': 42, u'r1': 9}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "GT", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__add_key_condition(name, "GT", value)
 
     def key_begins_with(self, name, value):
         """
         Add a BEGINS_WITH condition to KeyConditions. Usable only on the range key if it is a string.
         The response will contain items whose key attribute ``name`` begins with ``value``.
         """
-        self.__conditions[name] = {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__add_key_condition(name, "BEGINS_WITH", value)
 
     def key_between(self, name, lo, hi):
         """
@@ -239,8 +233,16 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 4, u'r2': 6}, {u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 6}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [_convert_value_to_db(lo), _convert_value_to_db(hi)]}
-        return self
+        return self.__add_key_condition(name, "BETWEEN", lo, hi)
+
+    def __add_key_condition(self, name, operator, *values):
+        return self.__key_conditions.add(
+            name,
+            {
+                "ComparisonOperator": operator,
+                "AttributeValueList": [_convert_value_to_db(value) for value in values]
+            }
+        )
 
     @proxy("Query")
     def exclusive_start_key(self, key):
