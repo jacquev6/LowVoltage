@@ -4,44 +4,29 @@
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
+from LowVoltage.actions.next_gen_mixins import variadic
 
 
-def BatchDeleteItem(connection, table, *keys):
+@variadic(dict)
+def BatchDeleteItem(connection, table, keys):
     """
     Make as many :class:`.BatchWriteItem` actions as needed to delete all specified keys.
     Including processing :attr:`.BatchWriteItemResponse.unprocessed_items`.
-
-    Keys can be passed individually:
 
     >>> BatchDeleteItem(
     ...   connection,
     ...   table,
     ...   {"h": 0},
     ...   {"h": 1},
-    ...   {"h": 2},
-    ... )
-
-    Or as iterables:
-
-    >>> BatchDeleteItem(
-    ...   connection,
-    ...   table,
-    ...   [{"h": h} for h in range(3, 7)],
-    ...   ({"h": h} for h in range(7, 10)),
+    ...   {"h": 2}
     ... )
     """
 
-    delete = []
-    for key in keys:
-        if isinstance(key, dict):
-            key = [key]
-        delete.extend(key)
-
     unprocessed_items = []
 
-    while len(delete) != 0:
-        r = connection(_lv.BatchWriteItem().table(table).delete(delete[:25]))
-        delete = delete[25:]
+    while len(keys) != 0:
+        r = connection(_lv.BatchWriteItem().table(table).delete(keys[:25]))
+        keys = keys[25:]
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]
 

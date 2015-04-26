@@ -4,14 +4,14 @@
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
+from LowVoltage.actions.next_gen_mixins import variadic
 
 
-def BatchPutItem(connection, table, *items):
+@variadic(dict)
+def BatchPutItem(connection, table, items):
     """
     Make as many :class:`.BatchWriteItem` actions as needed to put all specified items.
     Including processing :attr:`.BatchWriteItemResponse.unprocessed_items`.
-
-    Items can be passed individually:
 
     >>> BatchPutItem(
     ...   connection,
@@ -20,28 +20,13 @@ def BatchPutItem(connection, table, *items):
     ...   {"h": 1, "a": 57},
     ...   {"h": 2, "a": 33, "b": 22},
     ... )
-
-    Or as iterables:
-
-    >>> BatchPutItem(
-    ...   connection,
-    ...   table,
-    ...   [{"h": h, "a": h * 2} for h in range(3, 7)],
-    ...   ({"h": h, "b": h ** 3} for h in range(7, 10)),
-    ... )
     """
-
-    put = []
-    for item in items:
-        if isinstance(item, dict):
-            item = [item]
-        put.extend(item)
 
     unprocessed_items = []
 
-    while len(put) != 0:
-        r = connection(_lv.BatchWriteItem().table(table).put(put[:25]))
-        put = put[25:]
+    while len(items) != 0:
+        r = connection(_lv.BatchWriteItem().table(table).put(items[:25]))
+        items = items[25:]
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]
 

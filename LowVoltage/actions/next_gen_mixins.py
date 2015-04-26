@@ -2,8 +2,51 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+import inspect
+import functools
+
 import LowVoltage.testing as _tst
 from .conversion import _convert_value_to_db, _convert_dict_to_db
+
+
+def variadic(typ):
+    def flatten(args):
+        flat_args = []
+        for arg in args:
+            if isinstance(arg, typ):
+                flat_args.append(arg)
+            else:
+                flat_args.extend(arg)
+        return flat_args
+
+    def decorator(wrapped):
+        assert wrapped.__doc__ is not None
+        spec = inspect.getargspec(wrapped)
+        assert len(spec.args) >= 1
+        assert spec.varargs is None
+        assert spec.keywords is None
+        assert spec.defaults is None
+
+        def call_wrapped(*args):
+            args = list(args)
+            args[-1] = flatten(args[-1])
+            return wrapped(*args)
+
+        prototype = list(spec.args)
+        prototype[-1] = "*" + prototype[-1]
+        prototype = ", ".join(prototype)
+        call = ", ".join(spec.args)
+        wrapper_code = "def wrapper({}): return call_wrapped({})".format(prototype, call)
+
+        exec_globals = {"call_wrapped": call_wrapped}
+        exec wrapper_code in exec_globals
+        wrapper = exec_globals["wrapper"]
+
+        functools.update_wrapper(wrapper, wrapped)
+        wrapper.__doc__ = "Note that this function is variadic. See :ref:`variadic-functions`.\n\n" + wrapper.__doc__
+        return wrapper
+
+    return decorator
 
 
 def ScalarValue(name):
@@ -52,11 +95,8 @@ def CommaSeparatedStringsValue(name):
             self.__values = []
             self.__parent = parent
 
-        def add(self, *values):
-            for value in values:
-                if isinstance(value, basestring):
-                    value = [value]
-                self.__values.extend(value)
+        def add(self, values):
+            self.__values += values
             return self.__parent
 
         @property
@@ -137,14 +177,13 @@ class Limit(ScalarValue("Limit")):
 
 
 class ProjectionExpression(CommaSeparatedStringsValue("ProjectionExpression")):
-    def add(self, *names):
+    @variadic(basestring)
+    def add(self, names):
         """
         Add name(s) to ProjectionExpression.
         The request will return only projected attributes.
-
-        Note that this method accepts a variable number of names or iterables.  @todoc A section in the user guide describing those methods.
         """
-        return super(ProjectionExpression, self).add(*names)
+        return super(ProjectionExpression, self).add(names)
 
 
 class ReturnConsumedCapacity(ScalarValue("ReturnConsumedCapacity")):

@@ -24,7 +24,7 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db, _convert_db_to_dict
-from .next_gen_mixins import proxy
+from .next_gen_mixins import proxy, variadic
 from .next_gen_mixins import (
     ConsistentRead,
     ExpressionAttributeNames,
@@ -130,28 +130,22 @@ class BatchGetItem(Action):
         self.__active_table = self.__tables[name]
         return self
 
-    def keys(self, *keys):
+    @variadic(dict)
+    def keys(self, keys):
         """
         Add keys to get from the active table.
-        This method accepts a variable number of keys or iterables.
 
         :raise: :exc:`.BuilderError` if called when no table is active.
 
         >>> connection(
         ...   BatchGetItem()
         ...     .table(table)
-        ...     .keys({"h": 1})
-        ...     .keys({"h": 2}, {"h": 3})
-        ...     .keys([{"h": 4}, {"h": 5}])
-        ...     .keys({"h": h} for h in range(6, 10))
+        ...     .keys({"h": 1}, {"h": 2}, {"h": 3})
         ... )
         <LowVoltage.actions.batch_get_item.BatchGetItemResponse ...>
         """
         self.__check_active_table()
-        for key in keys:
-            if isinstance(key, dict):
-                key = [key]
-            self.__active_table.keys.extend(key)
+        self.__active_table.keys += keys
         return self
 
     @proxy

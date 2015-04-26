@@ -17,7 +17,7 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_dict_to_db
-from .next_gen_mixins import proxy
+from .next_gen_mixins import proxy, variadic
 from .next_gen_mixins import ReturnConsumedCapacity, ReturnItemCollectionMetrics
 from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict, _is_list_of_dict
 
@@ -119,50 +119,38 @@ class BatchWriteItem(Action):
         self.__active_table = self.__tables[name]
         return self
 
-    def put(self, *items):
+    @variadic(dict)
+    def put(self, items):
         """
         Add items to put in the active table.
-        This method accepts a variable number of items or iterables.
 
         :raise: :exc:`.BuilderError` if called when no table is active.
 
         >>> connection(
         ...   BatchWriteItem().table(table)
-        ...     .put({"h": 11})
         ...     .put({"h": 12}, {"h": 13})
-        ...     .put([{"h": 14}, {"h": 15}])
-        ...     .put({"h": h} for h in range(16, 20))
         ... )
         <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
         """
         self.__check_active_table()
-        for item in items:
-            if isinstance(item, dict):
-                item = [item]
-            self.__active_table.put.extend(item)
+        self.__active_table.put.extend(items)
         return self
 
-    def delete(self, *keys):
+    @variadic(dict)
+    def delete(self, keys):
         """
         Add keys to delete from the active table.
-        This method accepts a variable number of keys or iterables.
 
         :raise: :exc:`.BuilderError` if called when no table is active.
 
         >>> connection(
         ...   BatchWriteItem().table(table)
-        ...     .delete({"h": 11})
         ...     .delete({"h": 12}, {"h": 13})
-        ...     .delete([{"h": 14}, {"h": 15}])
-        ...     .delete({"h": h} for h in range(16, 20))
         ... )
         <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
         """
         self.__check_active_table()
-        for key in keys:
-            if isinstance(key, dict):
-                key = [key]
-            self.__active_table.delete.extend(key)
+        self.__active_table.delete.extend(keys)
         return self
 
     @proxy

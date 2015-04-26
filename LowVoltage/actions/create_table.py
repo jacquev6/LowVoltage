@@ -45,6 +45,7 @@ import datetime
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
+from .next_gen_mixins import variadic
 from .return_types import TableDescription, _is_dict
 
 
@@ -281,7 +282,8 @@ class CreateTable(Action):
         self.__active_index._projection = "KEYS_ONLY"
         return self
 
-    def project(self, *attrs):
+    @variadic(basestring)
+    def project(self, attrs):
         """
         Set ProjectionType to INCLUDE for the active index and add names to NonKeyAttributes.
 
@@ -292,10 +294,7 @@ class CreateTable(Action):
         self.__check_active_index()
         if not isinstance(self.__active_index._projection, list):
             self.__active_index._projection = []
-        for attr in attrs:
-            if isinstance(attr, basestring):
-                attr = [attr]
-            self.__active_index._projection.extend(attr)
+        self.__active_index._projection.extend(attrs)
         return self
 
     def __check_active_index(self):

@@ -14,6 +14,7 @@ class Iterator(object):
         self.__next_action = first_action
 
     def __iter__(self):
+        # @todo It seems that __iter__ can yield directly so we may be able to remove "next".
         return self
 
     def next(self):

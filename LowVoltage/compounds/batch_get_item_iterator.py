@@ -4,17 +4,20 @@
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
+from LowVoltage.actions.next_gen_mixins import variadic
 from .iterator import Iterator
 
 
 class BatchGetItemIterator(Iterator):
     """
+    Note that this function is variadic. See :ref:`variadic-functions`.
+
     Make as many :class:`.BatchGetItem` actions as needed to iterate over all specified items.
     Including processing :attr:`.BatchGetItemResponse.unprocessed_keys`.
 
-    .. Warning, those are NOT doctests. Because doctests aren't stable because items order changes.
+    .. Warning, this is NOT doctest. Because doctests aren't stable because items order changes.
 
-    Keys can be passed individually::
+    ::
 
         >>> for item in BatchGetItemIterator(connection, table, {"h": 0}, {"h": 1}, {"h": 2}):
         ...   print item
@@ -22,28 +25,16 @@ class BatchGetItemIterator(Iterator):
         {u'h': 2, u'gr': 0, u'gh': 0}
         {u'h': 0, u'gr': 0, u'gh': 0}
 
-    Or as iterables::
-
-        >>> for item in BatchGetItemIterator(connection, table, ({"h": h} for h in range(3, 7))):
-        ...   print item
-        {u'h': 4, u'gr': 0, u'gh': 0}
-        {u'h': 5, u'gr': 0, u'gh': 0}
-        {u'h': 6, u'gr': 0, u'gh': 0}
-        {u'h': 3, u'gr': 0, u'gh': 0}
-
     Note that items are returned in an unspecified order.
 
     A :class:`BatchGetItemIterator` instance is iterable once and must be discarded after that.
     """
 
-    def __init__(self, connection, table, *keys):
+    @variadic(dict)
+    def __init__(self, connection, table, keys):
+        """FOO! the @variadic decorator adds doc here but we want it in the class' doc"""
         self.__table = table
-        self.__keys = []
-        # @todo Factorize this logic for variadic parameters. Also raise if len(keys) == 0
-        for key in keys:
-            if isinstance(key, dict):
-                key = [key]
-            self.__keys.extend(key)
+        self.__keys = keys
         self.__unprocessed_keys = []
         Iterator.__init__(self, connection, self.__next_action())
 

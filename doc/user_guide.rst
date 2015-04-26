@@ -110,6 +110,9 @@ We believe this gives a better interface in our case than just encouraging clien
     >>> Query(table2).index_name("lsi").key_eq("h", 0).key_ge("r2", 10)
     <LowVoltage.actions.query.Query object at ...>
 
+Active resource
+---------------
+
 Some actions can operate on several resources.
 :class:`.BatchGetItem` can get items from several tables at once for example.
 To build those, we need a concept of "active table": :meth:`.BatchGetItem.keys` will always add keys to get from the active table.
@@ -122,6 +125,23 @@ The active table is set by :meth:`.BatchGetItem.table`.
     <LowVoltage.actions.batch_get_item.BatchGetItem object at ...>
 
 The previous example will get ``{"h": 0}`` from ``Table1`` and ``{"x": 42}`` from ``Table2``.
+
+.. _variadic-functions:
+
+Variadic functions
+------------------
+
+Some methods, like :meth:`.BatchGetItem.keys` are variadic.
+But a special kind of variadic: not only do they accept any number of arguments, but for greater flexibility those arguments can also be iterable.
+
+    >>> (BatchGetItem().table("Table1")
+    ...   .keys({"h": 0})
+    ...   .keys({"h": 1}, {"h": 2})
+    ...   .keys({"h": 3}, [{"h": 4}, {"h": 5}], {"h": 6}, [{"h": 7}])
+    ...   .keys({"h": h} for h in range(8, 12))
+    ...   .keys(({"h": h} for h in range(12, 17)), {"h": 17}, [{"h": h} for h in range(18, 20)])
+    ... )
+    <LowVoltage.actions.batch_get_item.BatchGetItem object at ...>
 
 Expressions
 ===========
