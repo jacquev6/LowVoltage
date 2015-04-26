@@ -110,14 +110,8 @@ class MandatoryItemParameter(MandatoryScalarParameter, ItemParameterMixin):
     pass
 
 
-class TableName(MandatoryStringParameter):
-    def __init__(self, parent, value):
-        super(MandatoryStringParameter, self).__init__("TableName", parent, value)
-
-
-class Key(MandatoryItemParameter):
-    def __init__(self, parent, value):
-        super(MandatoryItemParameter, self).__init__("Key", parent, value)
+TableName = functools.partial(MandatoryStringParameter, "TableName")
+Key = functools.partial(MandatoryItemParameter, "Key")
 
 
 def ScalarValue(name, parent=None, value=None):
