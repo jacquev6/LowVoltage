@@ -8,14 +8,38 @@ from .iterator import Iterator
 
 
 class BatchGetItemIterator(Iterator):
-    """Make as many "BatchGetItem" actions as needed to iterate over all specified items. Including UnprocessedKeys.
+    """
+    Make as many :class:`.BatchGetItem` actions as needed to iterate over all specified items.
+    Including processing :attr:`.BatchGetItemResponse.unprocessed_keys`.
 
-    Warning: items are returned by DynamoDB in an unspecified order and LowVoltage does not try to change that.
+    .. Warning, those are NOT doctests. Because doctests aren't stable because items order changes.
+
+    Keys can be passed individually::
+
+        >>> for item in BatchGetItemIterator(connection, table, {"h": 0}, {"h": 1}, {"h": 2}):
+        ...   print item
+        {u'h': 1, u'gr': 0, u'gh': 0}
+        {u'h': 2, u'gr': 0, u'gh': 0}
+        {u'h': 0, u'gr': 0, u'gh': 0}
+
+    Or as iterables::
+
+        >>> for item in BatchGetItemIterator(connection, table, ({"h": h} for h in range(3, 7))):
+        ...   print item
+        {u'h': 4, u'gr': 0, u'gh': 0}
+        {u'h': 5, u'gr': 0, u'gh': 0}
+        {u'h': 6, u'gr': 0, u'gh': 0}
+        {u'h': 3, u'gr': 0, u'gh': 0}
+
+    Note that items are returned in an unspecified order.
+
+    A :class:`BatchGetItemIterator` instance is iterable once and must be discarded after that.
     """
 
     def __init__(self, connection, table, *keys):
         self.__table = table
         self.__keys = []
+        # @todo Factorize this logic for variadic parameters
         for key in keys:
             if isinstance(key, dict):
                 key = [key]
@@ -38,7 +62,7 @@ class BatchGetItemIterator(Iterator):
     def process(self, action, r):
         if isinstance(r.unprocessed_keys, dict) and self.__table in r.unprocessed_keys and "Keys" in r.unprocessed_keys[self.__table]:
             self.__unprocessed_keys += r.unprocessed_keys[self.__table]["Keys"]
-        return self.__next_action(), r.responses[self.__table]
+        return self.__next_action(), r.responses.get(self.__table, [])
 
 
 class BatchGetItemIteratorUnitTests(_tst.UnitTestsWithMocks):

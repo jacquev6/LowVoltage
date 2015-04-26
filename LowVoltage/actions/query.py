@@ -12,6 +12,8 @@ Items are accessed like this:
 
 >>> connection(Query(table2).key_eq("h", 42)).items
 [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}, {u'h': 42, u'r1': 2, u'r2': 8}, {u'h': 42, u'r1': 3, u'r2': 7}, {u'h': 42, u'r1': 4, u'r2': 6}, {u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 6}, {u'h': 42, u'r1': 7}, {u'h': 42, u'r1': 8}, {u'h': 42, u'r1': 9}]
+
+See also the :class:`.QueryIterator` compound. And :ref:`actions-vs-compounds` in the user guide.
 """
 
 import LowVoltage as _lv
@@ -88,6 +90,8 @@ class QueryResponse(object):
     def last_evaluated_key(self):
         """
         The key of the last item evaluated by the query. If not None, it should be given to :meth:`~Query.exclusive_start_key` is a subsequent :class:`Query`.
+
+        The :class:`.QueryIterator` compound does that for you.
 
         :type: ``None`` or dict
         """
@@ -241,6 +245,8 @@ class Query(Action):
     @proxy("Query")
     def exclusive_start_key(self, key):
         """
+        The :class:`.QueryIterator` compound does that for you.
+
         >>> r = connection(
         ...   Query(table2)
         ...     .key_eq("h", 42)

@@ -14,6 +14,8 @@ Items are accessed like this:
 [{u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}]
 
 Note that items are returned in an undefined order.
+
+See also the :class:`.ScanIterator` compound. And :ref:`actions-vs-compounds` in the user guide.
 """
 
 import LowVoltage as _lv
@@ -90,6 +92,8 @@ class ScanResponse(object):
         """
         The key of the last item evaluated by the scan. If not None, it should be given to :meth:`~Scan.exclusive_start_key` is a subsequent :class:`Scan`.
 
+        The :class:`.ScanIterator` compound does that for you.
+
         :type: ``None`` or dict
         """
         if _is_dict(self.__last_evaluated_key):  # pragma no branch (Defensive code)
@@ -147,7 +151,7 @@ class Scan(Action):
         Items will be partitioned in ``total_segments`` segments of approximately the same size,
         ans only the items of the ``segment``-th segment will be returned in this request.
 
-        See also :meth:`.ScanIterator.parallelize`.
+        :meth:`.ScanIterator.parallelize` does that for you.
 
         >>> connection(
         ...   Scan(table)
@@ -168,6 +172,8 @@ class Scan(Action):
     @proxy("Scan")
     def exclusive_start_key(self, key):
         """
+        The :class:`.ScanIterator` compound does that for you.
+
         >>> r = connection(
         ...   Scan(table)
         ...     .project("h")

@@ -16,6 +16,8 @@ Responses are accessed like this:
 [{u'h': 0, u'gr': 0, u'gh': 0}]
 
 Note that responses are in an undefined order.
+
+See also the :class:`.BatchGetItemIterator` compound. And :ref:`actions-vs-compounds` in the user guide.
 """
 
 import LowVoltage as _lv
@@ -72,6 +74,8 @@ class BatchGetItemResponse(object):
     def unprocessed_keys(self):
         """
         Keys that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchGetItem`.
+
+        The :class:`.BatchGetItemIterator` compound processes those for you.
 
         :type: ``None`` or exactly as returned by DynamoDB
         """

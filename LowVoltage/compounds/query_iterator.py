@@ -8,7 +8,21 @@ from .iterator import Iterator
 
 
 class QueryIterator(Iterator):
-    """Make as many "Query" actions as needed to iterate over all matching items."""
+    """
+    Make as many :class:`.Query` actions as needed to iterate over all matching items.
+    That is until :attr:`.QueryResponse.last_evaluated_key` is ``None``.
+
+    >>> for item in QueryIterator(connection, Query(table2).key_eq("h", 42).key_between("r1", 4, 7)):
+    ...   print item
+    {u'h': 42, u'r1': 4, u'r2': 6}
+    {u'h': 42, u'r1': 5, u'r2': 5}
+    {u'h': 42, u'r1': 6}
+    {u'h': 42, u'r1': 7}
+
+    A :class:`QueryIterator` instance is iterable once and must be discarded after that.
+
+    The :class:`.Query` instance passed in must also be discarded (it is modified during the iteration).
+    """
 
     def __init__(self, connection, query):
         Iterator.__init__(self, connection, query)

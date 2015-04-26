@@ -8,7 +8,17 @@ from .iterator import Iterator
 
 
 class ListTablesIterator(Iterator):
-    """Make as many "ListTables" actions as needed to iterate over all tables."""
+    """
+    Make as many :class:`.ListTables` actions as needed to iterate over all tables.
+    That is until :attr:`.ListTablesResponse.last_evaluated_table_name` is ``None``.
+
+    >>> for table in ListTablesIterator(connection):
+    ...   print table
+    LowVoltage.Tests.Doc.1
+    LowVoltage.Tests.Doc.2
+
+    A :class:`ListTablesIterator` instance is iterable once and must be discarded after that.
+    """
 
     def __init__(self, connection):
         Iterator.__init__(self, connection, _lv.ListTables())

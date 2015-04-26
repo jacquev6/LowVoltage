@@ -10,6 +10,8 @@ When given a :class:`ListTables`, the connection will return a :class:`ListTable
 <LowVoltage.actions.list_tables.ListTablesResponse ...>
 >>> r.table_names
 [u'LowVoltage.Tests.Doc.1', u'LowVoltage.Tests.Doc.2']
+
+See also the :class:`.ListTablesIterator` compound. And :ref:`actions-vs-compounds` in the user guide.
 """
 
 import LowVoltage as _lv
@@ -37,6 +39,8 @@ class ListTablesResponse(object):
         """
         The name of the last table that was considered during the request.
         If not None, you should give it to :meth:`~ListTables.exclusive_start_table_name` in a subsequent :class:`ListTables`.
+
+        The :class:`.ListTablesIterator` compound does that for you.
 
         :type: ``None`` or string
         """
@@ -90,6 +94,8 @@ class ListTables(Action):
         """
         Set ExclusiveStartTableName. The response will contains tables that are after this one.
         Typically the :attr:`~ListTablesResponse.last_evaluated_table_name` of a previous response.
+
+        The :class:`.ListTablesIterator` compound does that for you.
 
         >>> connection(
         ...   ListTables()
