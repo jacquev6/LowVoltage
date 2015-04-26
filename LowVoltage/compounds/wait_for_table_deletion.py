@@ -10,7 +10,24 @@ import LowVoltage.testing as _tst
 
 # @todo Should we abort if the table_status is not "DELETING"?
 def WaitForTableDeletion(connection, table):
-    """Make "DescribeTable" actions until a ResourceNotFoundException is raised."""
+    """
+    Make :class:`.DescribeTable` actions until a :exc:`.ResourceNotFoundException` is raised.
+    Useful after :class:`.DeleteTable` action.
+
+    .. testsetup::
+
+        table = "LowVoltage.Tests.Doc.WaitForTableDeletion.1"
+        connection(CreateTable(table).hash_key("h", STRING).provisioned_throughput(1, 1))
+        WaitForTableActivation(connection, table)
+
+    >>> connection(DeleteTable(table)).table_description.table_status
+    u'DELETING'
+    >>> WaitForTableDeletion(connection, table)
+    >>> connection(DescribeTable(table))
+    Traceback (most recent call last):
+      ...
+    LowVoltage.exceptions.ResourceNotFoundException: ...
+    """
 
     while True:
         try:

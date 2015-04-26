@@ -4,6 +4,13 @@
 
 """
 All public symbols are visible in the top-level module, no need to import submodules.
+
+All examples in this doc depend on:
+
+>>> from LowVoltage import *
+>>> table = "LowVoltage.Tests.Docs.1"
+>>> table2 = "LowVoltage.Tests.Docs.2"
+>>> connection = Connection("eu-west-1", EnvironmentCredentials())
 """
 
 from actions import *

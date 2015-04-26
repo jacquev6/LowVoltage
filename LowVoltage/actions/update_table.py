@@ -35,7 +35,7 @@ When given a :class:`UpdateTable`, the connection will return a :class:`UpdateTa
 >>> r.table_description.table_status
 u'UPDATING'
 
-Note that you can use :func:`.WaitForTableActivation` to poll the table status until it's updated.
+Note that you can use the :func:`.WaitForTableActivation` compound to poll the table status until it's updated. See :ref:`actions-vs-compounds` in the user guide.
 
 .. testcleanup::
 

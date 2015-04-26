@@ -17,7 +17,7 @@ When given a :class:`DeleteTable`, the connection will return a :class:`DeleteTa
 >>> r.table_description.table_status
 u'DELETING'
 
-Note that you can use :func:`.WaitForTableDeletion` to poll the table status until it's deleted.
+Note that you can use the :func:`.WaitForTableDeletion` compound to poll the table status until it's deleted. See :ref:`actions-vs-compounds` in the user guide.
 
 .. testcleanup::
 

@@ -22,7 +22,7 @@ When given a :class:`CreateTable`, the connection will return a :class:`CreateTa
 >>> r.table_description.table_status
 u'CREATING'
 
-Note that you can use :func:`.WaitForTableActivation` to poll the table status until it's usable.
+Note that you can use the :func:`.WaitForTableActivation` compound to poll the table status until it's usable. See :ref:`actions-vs-compounds` in the user guide.
 
 .. testcleanup::
 
