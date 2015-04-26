@@ -8,7 +8,7 @@ Contents
 ========
 
 .. toctree::
-    :maxdepth: 20
+    :maxdepth: 3
 
     user_guide
     reference
