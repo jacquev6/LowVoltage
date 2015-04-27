@@ -142,9 +142,6 @@ class UpdateItem(Action):
         """
         return self.__key.set(key)
 
-    # @todo should we provide bundle methods for set, add, delete that do an implicit expression_attribute_value with a generated value_name?
-    # @todo should we provide add_to_int (accepting an int), add_to_set and delete_from_set (accepting several ints, strs or binaries)?
-
     def set(self, attribute_name, value_name):
         """
         Add a value to SET as an attribute to UpdateExpression.
@@ -207,15 +204,6 @@ class UpdateItem(Action):
         """
         self.__add[attribute_name] = value_name
         return self
-
-    # @todo What happens if you add and delete from the same set? The same values?
-    # @todo What happens if you add twice to the same number?
-    # @todo What happens if you add twice to the same set?
-    # @todo What happens if you delete twice from the same set?
-    # @todo What happens if you set the same attribute twice?
-    # @todo What happens if you remove the same attribute twice?
-    # @todo What happens if you set and remove the same attribute?
-    # @todo Should we handle those cases in a "the last call wins" manner like we do for return_values_xxx?
 
     def delete(self, attribute_name, value_name):
         """

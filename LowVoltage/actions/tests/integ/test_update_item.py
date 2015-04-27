@@ -82,6 +82,20 @@ class UpdateItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
             {"h": u"expr", "a": 42, "b": 42, "checked": True}
         )
 
+    def test_add_and_delete_from_same_set(self):
+        self.connection(_lv.PutItem("Aaa", {"h": u"expr", "a": {1, 2, 3}}))
+
+        # A bit sad: you can't add to and delete from the same set
+        with self.assertRaises(_lv.ValidationException):
+            self.connection(
+                _lv.UpdateItem("Aaa", {"h": u"expr"})
+                    .delete("a", "three")
+                    .add("a", "four")
+                    .expression_attribute_value("three", {3})
+                    .expression_attribute_value("four", {4})
+                    .return_values_all_new()
+            )
+
 
 class UpdateItemConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def tearDown(self):
