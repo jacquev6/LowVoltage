@@ -505,6 +505,9 @@ class QueryUnitTests(_tst.UnitTests):
         self.assertEqual(Query("Aaa").name, "Query")
 
     def test_table_name(self):
+        self.assertEqual(Query().table_name("Aaa").payload, {"TableName": "Aaa"})
+
+    def test_constructor(self):
         self.assertEqual(Query("Aaa").payload, {"TableName": "Aaa"})
 
     def test_key_eq(self):

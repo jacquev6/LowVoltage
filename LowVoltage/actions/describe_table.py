@@ -79,7 +79,10 @@ class DescribeTableUnitTests(_tst.UnitTests):
     def test_name(self):
         self.assertEqual(DescribeTable("Foo").name, "DescribeTable")
 
-    def test_payload(self):
+    def test_table_name(self):
+        self.assertEqual(DescribeTable().table_name("Foo").payload, {"TableName": "Foo"})
+
+    def test_constuctor(self):
         self.assertEqual(DescribeTable("Foo").payload, {"TableName": "Foo"})
 
 

@@ -308,6 +308,9 @@ class ScanUnitTests(_tst.UnitTests):
         self.assertEqual(Scan("Aaa").name, "Scan")
 
     def test_table_name(self):
+        self.assertEqual(Scan().table_name("Aaa").payload, {"TableName": "Aaa"})
+
+    def test_constructor(self):
         self.assertEqual(Scan("Aaa").payload, {"TableName": "Aaa"})
 
     def test_segment(self):
@@ -318,6 +321,9 @@ class ScanUnitTests(_tst.UnitTests):
 
     def test_limit(self):
         self.assertEqual(Scan("Aaa").limit(4).payload, {"TableName": "Aaa", "Limit": 4})
+
+    def test_index_name(self):
+        self.assertEqual(Scan("Aaa").index_name("FooBar").payload, {"TableName": "Aaa", "IndexName": "FooBar"})
 
     def test_select_all_attributes(self):
         self.assertEqual(Scan("Aaa").select_all_attributes().payload, {"TableName": "Aaa", "Select": "ALL_ATTRIBUTES"})
@@ -420,6 +426,11 @@ class ScanConnectedIntegTests(_tst.ConnectedIntegTestsWithTable):
     def tearDown(self):
         self.connection(_lv.DeleteItem(self.table, self.tab_key))
         super(ScanConnectedIntegTests, self).tearDown()
+
+    def test_index_name(self):
+        r = self.connection(_lv.Scan(self.table).index_name("gsi"))
+
+        self.assertEqual(len(r.items), 1)
 
     def test_return_consumed_capacity_total(self):
         r = self.connection(_lv.Scan(self.table).return_consumed_capacity_total())

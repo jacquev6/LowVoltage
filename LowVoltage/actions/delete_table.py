@@ -92,7 +92,10 @@ class DeleteTableUnitTests(_tst.UnitTests):
     def test_name(self):
         self.assertEqual(DeleteTable("Foo").name, "DeleteTable")
 
-    def test_payload(self):
+    def test_table_name(self):
+        self.assertEqual(DeleteTable().table_name("Foo").payload, {"TableName": "Foo"})
+
+    def test_constructor(self):
         self.assertEqual(DeleteTable("Foo").payload, {"TableName": "Foo"})
 
 

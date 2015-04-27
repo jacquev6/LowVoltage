@@ -20,7 +20,7 @@ table_name_prefix = datetime.datetime.now().strftime("LowVoltage.Tests.Integ.%Y-
 
 
 def make_connection():
-    return _lv.Connection("eu-west-1", _lv.EnvironmentCredentials())
+    return _lv.Connection("us-west-1", _lv.EnvironmentCredentials())
 
 
 class ConnectedIntegTests(ResourcedTestCase):
