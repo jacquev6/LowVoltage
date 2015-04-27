@@ -4,7 +4,7 @@
 
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
-from LowVoltage.actions.next_gen_mixins import variadic
+from LowVoltage.variadic import variadic
 
 
 @variadic(dict)
