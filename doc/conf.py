@@ -59,7 +59,7 @@ html_theme_options = {
 
 # http://sphinx-doc.org/ext/autodoc.html
 extensions.append("sphinx.ext.autodoc")
-# autoclass_content
+autoclass_content ="both"
 autodoc_member_order = "bysource"
 autodoc_default_flags = ["members"]
 # autodoc_docstring_signature

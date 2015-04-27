@@ -36,7 +36,7 @@ def iterate_batch_get_item(connection, table, keys):
             yield item
 
     while len(unprocessed_keys) != 0:
-        r = connection(_lv.BatchGetItem({table: {"Keys": unprocessed_keys[:100]}}))
+        r = connection(_lv.BatchGetItem().previous_unprocessed_keys({table: {"Keys": unprocessed_keys[:100]}}))
         unprocessed_keys = unprocessed_keys[100:]
         if isinstance(r.unprocessed_keys, dict) and table in r.unprocessed_keys and "Keys" in r.unprocessed_keys[table]:
             unprocessed_keys += r.unprocessed_keys[table]["Keys"]

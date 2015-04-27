@@ -74,9 +74,11 @@ class BatchGetItemResponse(object):
     @property
     def unprocessed_keys(self):
         """
-        Keys that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchGetItem`.
+        Keys that were not processed during this request.
+        If not None, you should give this back to :meth:`~BatchGetItem.previous_unprocessed_keys`
+        in a subsequent :class:`BatchGetItem`.
 
-        The :func:`.iterate_batch_get_item` compound processes those for you.
+        The :func:`.iterate_batch_get_item` compound does that for you.
 
         :type: ``None`` or exactly as returned by DynamoDB
         """
@@ -88,12 +90,18 @@ class BatchGetItem(Action):
     The `BatchGetItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_RequestParameters>`__
     """
 
-    def __init__(self, previous_unprocessed_keys=None):
+    @variadic(dict)
+    def __init__(self, table=None, keys=[]):
+        """
+        @todoc Document the constructors of classes that accept optional params.
+        """
         super(BatchGetItem, self).__init__("BatchGetItem", BatchGetItemResponse)
-        self.__previous_unprocessed_keys = previous_unprocessed_keys
+        self.__previous_unprocessed_keys = None
         self.__tables = {}
         self.__active_table = None
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
+        if table is not None:
+            self.table(table, keys)
 
     @property
     def payload(self):
@@ -122,13 +130,30 @@ class BatchGetItem(Action):
             data.update(self.projection_expression.payload)
             return data
 
-    def table(self, name):
+    @variadic(dict)
+    def table(self, name, keys):
         """
         Set the active table. Calls to methods like :meth:`keys` or :meth:`consistent_read_true` will apply to this table.
+
+        >>> connection(
+        ...   BatchGetItem()
+        ...     .table(table)
+        ...     .keys({"h": 1}, {"h": 2}, {"h": 3})
+        ... )
+        <LowVoltage.actions.batch_get_item.BatchGetItemResponse ...>
+
+        If some keys are provided, they'll be added to the keys to get from the table.
+
+        >>> connection(
+        ...   BatchGetItem()
+        ...     .table(table, {"h": 1}, {"h": 2}, {"h": 3})
+        ... )
+        <LowVoltage.actions.batch_get_item.BatchGetItemResponse ...>
         """
         if name not in self.__tables:
             self.__tables[name] = self._Table(self)
         self.__active_table = self.__tables[name]
+        self.keys(keys)
         return self
 
     @variadic(dict)
@@ -148,6 +173,18 @@ class BatchGetItem(Action):
         self.__check_active_table()
         # @todo Replace all += by .extend
         self.__active_table.keys += keys
+        return self
+
+    def previous_unprocessed_keys(self, previous_unprocessed_keys):
+        """
+        Set Table and Keys to retry previous :attr:`~BatchGetItemResponse.unprocessed_keys`.
+
+        The :func:`.iterate_batch_get_item` compound does that for you.
+
+        Note that using this method is incompatible with using :meth:`table` or :meth:`keys`
+        or passing a ``table`` or ``keys`` in the constructor.
+        """
+        self.__previous_unprocessed_keys = previous_unprocessed_keys
         return self
 
     @proxy
@@ -284,6 +321,81 @@ class BatchGetItemUnitTests(_tst.UnitTests):
             BatchGetItem().return_consumed_capacity_total().payload,
             {
                 "ReturnConsumedCapacity": "TOTAL",
+            }
+        )
+
+    def test_constructor_with_table(self):
+        self.assertEqual(
+            BatchGetItem("Table").keys({"h": u"1"}, {"h": u"2"}).payload,
+            {
+                "RequestItems": {
+                    "Table": {
+                        "Keys": [
+                            {"h": {"S": "1"}},
+                            {"h": {"S": "2"}},
+                        ]
+                    },
+                }
+            }
+        )
+
+    def test_constructor_with_keys(self):
+        self.assertEqual(
+            BatchGetItem("Table", {"h": u"1"}, {"h": u"2"}).payload,
+            {
+                "RequestItems": {
+                    "Table": {
+                        "Keys": [
+                            {"h": {"S": "1"}},
+                            {"h": {"S": "2"}},
+                        ]
+                    },
+                }
+            }
+        )
+
+    def test_constructor_with_keys_in_list(self):
+        self.assertEqual(
+            BatchGetItem("Table", [{"h": u"1"}, {"h": u"2"}]).payload,
+            {
+                "RequestItems": {
+                    "Table": {
+                        "Keys": [
+                            {"h": {"S": "1"}},
+                            {"h": {"S": "2"}},
+                        ]
+                    },
+                }
+            }
+        )
+
+    def test_table_keys(self):
+        self.assertEqual(
+            BatchGetItem().table("Table", {"h": u"1"}, {"h": u"2"}).payload,
+            {
+                "RequestItems": {
+                    "Table": {
+                        "Keys": [
+                            {"h": {"S": "1"}},
+                            {"h": {"S": "2"}},
+                        ]
+                    },
+                }
+            }
+        )
+
+    def test_table_keys_twice(self):
+        self.assertEqual(
+            BatchGetItem().table("Table", {"h": u"1"}).table("Table", {"h": u"2"}).payload,
+            {
+                "RequestItems": {
+                    "Table": {
+                        "Keys": [
+                            {"h": {"S": "1"}},
+                            {"h": {"S": "2"}},
+                        ]
+                    },
+                }
             }
         )
 

@@ -31,7 +31,7 @@ def batch_put_item(connection, table, items):
             unprocessed_items += r.unprocessed_items[table]
 
     while len(unprocessed_items) != 0:
-        r = connection(_lv.BatchWriteItem({table: unprocessed_items[:25]}))
+        r = connection(_lv.BatchWriteItem().previous_unprocessed_items({table: unprocessed_items[:25]}))
         unprocessed_items = unprocessed_items[25:]
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]

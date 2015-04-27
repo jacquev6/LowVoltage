@@ -34,7 +34,7 @@ def batch_delete_item(connection, table, keys):
     # @todo In the first loop, maybe wait a bit before next request if we get unprocessed items? Might not be a good idea.
 
     while len(unprocessed_items) != 0:
-        r = connection(_lv.BatchWriteItem({table: unprocessed_items[:25]}))
+        r = connection(_lv.BatchWriteItem().previous_unprocessed_items({table: unprocessed_items[:25]}))
         unprocessed_items = unprocessed_items[25:]
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items += r.unprocessed_items[table]

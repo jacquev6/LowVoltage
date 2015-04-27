@@ -28,7 +28,6 @@ def variadic(typ):
         assert len(spec.args) >= 1
         assert spec.varargs is None
         assert spec.keywords is None
-        assert spec.defaults is None
 
         def call_wrapped(*args):
             args = list(args)
@@ -36,6 +35,13 @@ def variadic(typ):
             return wrapped(*args)
 
         prototype = list(spec.args)
+        if spec.defaults is not None:
+            # Could we do that outside of the generated code?
+            # Reusing the original default objects instead of dumping them as string would work in more cases.
+            # But he this is good enough for None, which is our only use case yet.
+            assert spec.defaults[-1] == []
+            for i in range(len(prototype) - len(spec.defaults), len(prototype) - 1):
+                prototype[i] += "={}".format(spec.defaults[i - len(prototype)])
         prototype[-1] = "*" + prototype[-1]
         prototype = ", ".join(prototype)
         call = ", ".join(spec.args)

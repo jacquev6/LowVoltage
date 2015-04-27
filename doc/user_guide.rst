@@ -100,8 +100,10 @@ actions are atomic while compounds are able to perform several actions.
 
 Someday, maybe, we'll write a Table abstraction and implement an "active record" pattern? It would be even simpler than compounds, but less flexible.
 
-Action building
-===============
+.. _building-actions:
+
+Building actions
+================
 
 @todo Implement what's described bellow in CreateTable, UpdateTable, BatchGetItem, BatchWriteItem
 
