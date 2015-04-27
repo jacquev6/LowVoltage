@@ -229,35 +229,6 @@ class ConnectionUnitTests(_tst.UnitTestsWithMocks):
         self.assertEqual(self.connection(self.action.object), "m")
 
 
-class ConnectionLocalIntegTests(_tst.LocalIntegTests):
-    class TestAction:
-        class response_class(object):
-            def __init__(self, **kwds):
-                self.kwds = kwds
-
-        def __init__(self, name, payload):
-            self.name = name
-            self.payload = payload
-
-    def test_network_error(self):
-        connection = _lv.Connection("us-west-2", _lv.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/", _lv.ExponentialBackoffRetryPolicy(0, 1, 3))
-        with self.assertRaises(_exn.NetworkError):
-            connection(self.TestAction("ListTables", {}))
-
-    def test_request(self):
-        r = self.connection(self.TestAction("ListTables", {}))
-        self.assertIsInstance(r, self.TestAction.response_class)
-        self.assertEqual(r.kwds, {"TableNames": []})
-
-    def test_client_error(self):
-        with self.assertRaises(_exn.InvalidAction):
-            self.connection(self.TestAction("UnexistingAction", {}))
-
-    def test_unexisting_table(self):
-        with self.assertRaises(_exn.ResourceNotFoundException):
-            self.connection(self.TestAction("GetItem", {"TableName": "Bbb"}))
-
-
 class Signer(object):
     def __init__(self, region, host):
         self.__host = host

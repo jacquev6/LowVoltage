@@ -110,12 +110,3 @@ class BatchPutItemUnitTests(_tst.UnitTestsWithMocks):
         )
 
         batch_put_item(self.connection.object, "Aaa", [{"h": i} for i in range(35)])
-
-
-class BatchPutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
-    def key(self, i):
-        return u"{:03}".format(i)
-
-    def test(self):
-        _lv.batch_put_item(self.connection, "Aaa", [{"h": self.key(i)} for i in range(100)])
-        self.assertEqual(len(list(_lv.iterate_scan(self.connection, _lv.Scan("Aaa")))), 100)

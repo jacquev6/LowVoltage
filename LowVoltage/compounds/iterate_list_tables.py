@@ -65,25 +65,3 @@ class IterateListTablesUnitTests(_tst.UnitTestsWithMocks):
             list(iterate_list_tables(self.connection.object)),
             ["A", "B", "C", "E", "F", "G", "I", "J", "K"]
         )
-
-
-class IterateListTablesLocalIntegTests(_tst.LocalIntegTests):
-    table_names = ["Tab{:03}".format(i) for i in range(103)]
-
-    def setUp(self):
-        super(IterateListTablesLocalIntegTests, self).setUp()
-        for t in self.table_names:
-            self.connection(
-                _lv.CreateTable(t).hash_key("h", _lv.STRING).provisioned_throughput(1, 1)
-            )
-
-    def tearDown(self):
-        for t in self.table_names:
-            self.connection(_lv.DeleteTable(t))
-        super(IterateListTablesLocalIntegTests, self).tearDown()
-
-    def test(self):
-        self.assertEqual(
-            list(_lv.iterate_list_tables(self.connection)),
-            self.table_names
-        )
