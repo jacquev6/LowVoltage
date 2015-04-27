@@ -45,7 +45,10 @@ import datetime
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
-from .next_gen_mixins import variadic
+from .next_gen_mixins import variadic, proxy
+from .next_gen_mixins import (
+    TableName,
+)
 from .return_types import TableDescription, _is_dict
 
 
@@ -77,9 +80,9 @@ class CreateTable(Action):
     The `CreateTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_RequestParameters>`__.
     """
 
-    def __init__(self, table_name):
+    def __init__(self, table_name=None):
         super(CreateTable, self).__init__("CreateTable", CreateTableResponse)
-        self.__table_name = table_name
+        self.__table_name = TableName(self, table_name)
         self._hash_key = None
         self._range_key = None
         self.__attribute_definitions = {}
@@ -91,8 +94,9 @@ class CreateTable(Action):
 
     @property
     def payload(self):
-        # @todo Review all .payload properties to make them more linear (PutItem might be a good example)
-        data = {"TableName": self.__table_name}
+        # @todo Simplify, make more linear
+        data = {}
+        data.update(self.__table_name.payload)
         schema = []
         if self._hash_key:
             schema.append({"AttributeName": self._hash_key, "KeyType": "HASH"})
@@ -159,12 +163,19 @@ class CreateTable(Action):
                 data["ProvisionedThroughput"] = throughput
             return data
 
+    @proxy
+    def table_name(self, table_name):
+        """
+        See :meth:`range_key` an example.
+        """
+        return self.__table_name.set(table_name)
+
     def hash_key(self, name, typ=None):
         """
         Set the hash key in KeySchema for the table or the active index.
         If you provide a second argument, :meth:`attribute_definition` will be called as well.
 
-        See :meth:`range_key` for examples.
+        See :meth:`range_key` an example.
         """
         self.__active_index._hash_key = name
         if typ is not None:
@@ -177,7 +188,8 @@ class CreateTable(Action):
         If you provide a second argument, :meth:`attribute_definition` will be called as well.
 
         >>> connection(
-        ...   CreateTable(table2)
+        ...   CreateTable()
+        ...     .table_name(table2)
         ...     .hash_key("h", STRING)
         ...     .range_key("r")
         ...     .provisioned_throughput(1, 1)
@@ -306,8 +318,11 @@ class CreateTableUnitTests(_tst.UnitTests):
     def test_name(self):
         self.assertEqual(CreateTable("Foo").name, "CreateTable")
 
-    def test_no_arguments(self):
+    def test_constructor(self):
         self.assertEqual(CreateTable("Foo").payload, {"TableName": "Foo"})
+
+    def test_table_name(self):
+        self.assertEqual(CreateTable().table_name("Foo").payload, {"TableName": "Foo"})
 
     def test_hash_key(self):
         self.assertEqual(

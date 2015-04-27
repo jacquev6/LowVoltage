@@ -91,6 +91,7 @@ class BatchWriteItem(Action):
 
     @property
     def payload(self):
+        # @todo Simplify, make more linear
         data = {}
         if self.__previous_unprocessed_items:
             data["RequestItems"] = self.__previous_unprocessed_items

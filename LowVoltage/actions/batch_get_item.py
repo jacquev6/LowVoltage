@@ -105,6 +105,7 @@ class BatchGetItem(Action):
 
     @property
     def payload(self):
+        # @todo Simplify, make more linear
         data = {}
         if self.__previous_unprocessed_keys:
             data["RequestItems"] = self.__previous_unprocessed_keys
