@@ -11,7 +11,7 @@ When given a :class:`Scan`, the connection will return a :class:`ScanResponse`:
 Items are accessed like this:
 
 >>> connection(Scan(table)).items
-[{u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}]
+[{u'a': 0, u'h': 7}, {u'a': 0, u'h': 8}, {u'h': 3, u'gr': 4, u'gh': 9}, {u'h': 2, u'gr': 6, u'gh': 4}, {u'a': 0, u'h': 9}, {u'h': 4, u'gr': 2, u'gh': 16}, {u'h': 6, u'gr': -2, u'gh': 36}, {u'h': 1, u'gr': 8, u'gh': 1}, {u'h': 0, u'gr': 10, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 25}]
 
 Note that items are returned in an undefined order.
 
@@ -217,7 +217,7 @@ class Scan(Action):
         ...   Scan(table)
         ...     .index_name("gsi")
         ... ).items
-        []
+        [{u'h': 5, u'gr': 0, u'gh': 25}, {u'h': 3, u'gr': 4, u'gh': 9}, {u'h': 2, u'gr': 6, u'gh': 4}, {u'h': 4, u'gr': 2, u'gh': 16}, {u'h': 6, u'gr': -2, u'gh': 36}, {u'h': 1, u'gr': 8, u'gh': 1}, {u'h': 0, u'gr': 10, u'gh': 0}]
         """
         return self.__index_name.set(index_name)
 
@@ -298,7 +298,7 @@ class Scan(Action):
     def select_all_attributes(self):
         """
         >>> connection(Scan(table).select_all_attributes()).items
-        [{u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}]
+        [{u'a': 0, u'h': 7}, {u'a': 0, u'h': 8}, {u'h': 3, u'gr': 4, u'gh': 9}, {u'h': 2, u'gr': 6, u'gh': 4}, {u'a': 0, u'h': 9}, {u'h': 4, u'gr': 2, u'gh': 16}, {u'h': 6, u'gr': -2, u'gh': 36}, {u'h': 1, u'gr': 8, u'gh': 1}, {u'h': 0, u'gr': 10, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 25}]
         """
         return self.__select.all_attributes()
 

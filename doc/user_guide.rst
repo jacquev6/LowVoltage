@@ -86,7 +86,7 @@ It does convert between :ref:`python-types` and DynamoDB notation though.
 
     >>> table = "LowVoltage.Tests.Doc.1"
     >>> connection(GetItem(table, {"h": 0})).item
-    {u'h': 0, u'gr': 0, u'gh': 0}
+    {u'h': 0, u'gr': 10, u'gh': 0}
 
 The :ref:`compounds` layer provides helper functions that intend to complete actions in their simplest use cases.
 For example :class:`.BatchGetItem` is limited to get 100 keys at once and requires processing :attr:`.BatchGetItemResponse.unprocessed_keys`, so we provide :func:`.iterate_batch_get_item` to do that.

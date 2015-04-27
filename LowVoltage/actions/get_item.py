@@ -11,7 +11,7 @@ When given a :class:`GetItem`, the connection will return a :class:`GetItemRespo
 The item is accessed like this:
 
 >>> connection(GetItem(table, {"h": 0})).item
-{u'h': 0, u'gr': 0, u'gh': 0}
+{u'h': 0, u'gr': 10, u'gh': 0}
 
 Note that getting an unexisting item does not raise an exception:
 
@@ -149,7 +149,7 @@ class GetItem(Action):
         ...     .expression_attribute_name("syn", "gr")
         ...     .project("#syn")
         ... ).item
-        {u'gr': 0}
+        {u'gr': 10}
         """
         return self.__expression_attribute_names.add(synonym, name)
 
@@ -160,7 +160,7 @@ class GetItem(Action):
         ...   GetItem(table, {"h": 0})
         ...     .project("gr")
         ... ).item
-        {u'gr': 0}
+        {u'gr': 10}
         """
         return self.__projection_expression.add(*names)
 

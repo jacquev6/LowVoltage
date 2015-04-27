@@ -14,7 +14,7 @@ Note that deleting the same item twice is not an error (deleting is idempotent).
 ...   DeleteItem(table, {"h": 1})
 ...     .return_values_all_old()
 ... ).attributes
-{u'h': 1, u'gr': 0, u'gh': 0}
+{u'h': 1, u'gr': 8, u'gh': 1}
 >>> print connection(
 ...   DeleteItem(table, {"h": 1})
 ...     .return_values_all_old()
@@ -145,7 +145,7 @@ class DeleteItem(Action):
         ...   DeleteItem(table, {"h": 2})
         ...     .condition_expression("#syn=:val")
         ...     .expression_attribute_name("syn", "gr")
-        ...     .expression_attribute_value("val", 0)
+        ...     .expression_attribute_value("val", 6)
         ... )
         <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
         """
@@ -235,7 +235,7 @@ class DeleteItem(Action):
         ...   DeleteItem(table, {"h": 3})
         ...     .return_values_all_old()
         ... ).attributes
-        {u'h': 3, u'gr': 0, u'gh': 0}
+        {u'h': 3, u'gr': 4, u'gh': 9}
         """
         return self.__return_values.all_old()
 

@@ -243,7 +243,7 @@ class UpdateItem(Action):
         ...     .remove("gh")
         ...     .condition_expression("#syn=:val")
         ...     .expression_attribute_name("syn", "gr")
-        ...     .expression_attribute_value("val", 0)
+        ...     .expression_attribute_value("val", 8)
         ... )
         <LowVoltage.actions.update_item.UpdateItemResponse object at ...>
         """

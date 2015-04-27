@@ -131,7 +131,7 @@ class PutItem(Action):
         ...   PutItem(table, {"h": 1})
         ...     .condition_expression("#syn=:val")
         ...     .expression_attribute_name("syn", "gr")
-        ...     .expression_attribute_value("val", 0)
+        ...     .expression_attribute_value("val", 8)
         ... )
         <LowVoltage.actions.put_item.PutItemResponse object at ...>
         """
@@ -221,7 +221,7 @@ class PutItem(Action):
         ...   PutItem(table, {"h": 2})
         ...     .return_values_all_old()
         ... ).attributes
-        {u'h': 2, u'gr': 0, u'gh': 0}
+        {u'h': 2, u'gr': 6, u'gh': 4}
         """
         return self.__return_values.all_old()
 

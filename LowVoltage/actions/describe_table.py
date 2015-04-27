@@ -58,11 +58,13 @@ class DescribeTable(Action):
 
     def __init__(self, table_name=None):
         super(DescribeTable, self).__init__("DescribeTable", DescribeTableResponse)
-        self.__table_name = table_name
+        self.__table_name = TableName(self, table_name)
 
     @property
     def payload(self):
-        return {"TableName": self.__table_name}
+        data = {}
+        data.update(self.__table_name.payload)
+        return data
 
     @proxy
     def table_name(self, table_name):

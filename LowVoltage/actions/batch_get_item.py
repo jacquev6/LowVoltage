@@ -13,7 +13,7 @@ Responses are accessed like this:
 >>> connection(
 ...   BatchGetItem().table(table).keys({"h": 0})
 ... ).responses[table]
-[{u'h': 0, u'gr': 0, u'gh': 0}]
+[{u'h': 0, u'gr': 10, u'gh': 0}]
 
 Note that responses are in an undefined order.
 
@@ -199,7 +199,7 @@ class BatchGetItem(Action):
         ...     .keys({"h": 0})
         ...     .project("h", "gr")
         ... ).responses[table]
-        [{u'h': 0, u'gr': 0}]
+        [{u'h': 0, u'gr': 10}]
         """
         self.__check_active_table()
         self.__active_table.projection_expression.add(*names)
