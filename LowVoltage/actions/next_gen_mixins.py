@@ -94,6 +94,14 @@ class StringParameterMixin(object):
             raise TypeError("Parameter {} must be a string.".format(self._name))
 
 
+class BoolParameterMixin(object):
+    def _convert(self, b):
+        if isinstance(b, bool):
+            return b
+        else:
+            raise TypeError("Parameter {} must be a boolean.".format(self._name))
+
+
 class ItemParameterMixin(object):
     def _convert(self, item):
         if isinstance(item, dict):
@@ -110,8 +118,41 @@ class MandatoryItemParameter(MandatoryScalarParameter, ItemParameterMixin):
     pass
 
 
-TableName = functools.partial(MandatoryStringParameter, "TableName")
-Key = functools.partial(MandatoryItemParameter, "Key")
+class OptionalBoolParameter(OptionalScalarParameter, BoolParameterMixin):
+    pass
+
+
+class TableName(MandatoryStringParameter):
+    def __init__(self, parent, value):
+        super(TableName, self).__init__("TableName", parent, value)
+
+    def set(self, table_name):
+        """
+        Set TableName. Mandatory, can also be set in the constructor.
+        """
+        return super(TableName, self).set(table_name)
+
+
+class Key(MandatoryItemParameter):
+    def __init__(self, parent, value):
+        super(Key, self).__init__("Key", parent, value)
+
+    def set(self, table_name):
+        """
+        Set Key. Mandatory, can also be set in the constructor.
+        """
+        return super(Key, self).set(table_name)
+
+
+class Item(MandatoryItemParameter):
+    def __init__(self, parent, value):
+        super(Item, self).__init__("Item", parent, value)
+
+    def set(self, table_name):
+        """
+        Set Item. Mandatory, can also be set in the constructor.
+        """
+        return super(Item, self).set(table_name)
 
 
 def ScalarValue(name, parent=None, value=None):
@@ -192,7 +233,10 @@ class ConditionExpression(ScalarValue("ConditionExpression")):
         return super(ConditionExpression, self).set(expression)
 
 
-class ConsistentRead(ScalarValue("ConsistentRead")):
+class ConsistentRead(OptionalBoolParameter):
+    def __init__(self, parent):
+        super(ConsistentRead, self).__init__("ConsistentRead", parent)
+
     def false(self):
         """
         Set ConsistentRead to False.
@@ -366,6 +410,8 @@ def proxy(*proxy_args):
         "expression_attribute_name": ExpressionAttributeNames.add,
         "expression_attribute_value": ExpressionAttributeValues.add,
         "filter_expression": FilterExpression.set,
+        "item": Item.set,
+        "key": Key.set,
         "limit": Limit.set,
         "project": ProjectionExpression.add,
         "return_consumed_capacity_indexes": ReturnConsumedCapacity.indexes,
@@ -381,6 +427,7 @@ def proxy(*proxy_args):
         "select_all_attributes": Select.all_attributes,
         "select_all_projected_attributes": Select.all_projected_attributes,
         "select_count": Select.count,
+        "table_name": TableName.set,
     }
 
     if len(proxy_args) != 1 or isinstance(proxy_args[0], basestring):

@@ -120,7 +120,7 @@ Optional parameters are exposed only using `method chaining <https://en.wikipedi
 
 Alternatively, mandatory parameters can be set using method chaining as well.
 
-    >>> GetItem().table("Table").key({"h": 0})
+    >>> GetItem().table_name("Table").key({"h": 0})
     <LowVoltage.actions.get_item.GetItem object at ...>
 
 If you try to pass an action with missing mandatory parameters, you'll get a :exc:`.BuilderError`:

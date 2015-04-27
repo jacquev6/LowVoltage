@@ -95,15 +95,25 @@ class GetItem(Action):
         data.update(self.__table_name.payload)
         return data
 
+    @proxy
     def table_name(self, table_name):
         """
-        Set TableName. Mandatory: can also be set in the constructor.
+        >>> connection(
+        ...   GetItem(key={"h": 0})
+        ...     .table_name(table)
+        ... )
+        <LowVoltage.actions.get_item.GetItemResponse object at ...>
         """
         return self.__table_name.set(table_name)
 
+    @proxy
     def key(self, key):
         """
-        Set Key. Mandatory: can also be set in the constructor.
+        >>> connection(
+        ...   GetItem(table_name=table)
+        ...     .key({"h": 0})
+        ... )
+        <LowVoltage.actions.get_item.GetItemResponse object at ...>
         """
         return self.__key.set(key)
 
@@ -132,17 +142,6 @@ class GetItem(Action):
         return self.__consistent_read.false()
 
     @proxy
-    def project(self, *names):
-        """
-        >>> connection(
-        ...   GetItem(table, {"h": 0})
-        ...     .project("gr")
-        ... ).item
-        {u'gr': 0}
-        """
-        return self.__projection_expression.add(*names)
-
-    @proxy
     def expression_attribute_name(self, synonym, name):
         """
         >>> connection(
@@ -153,6 +152,17 @@ class GetItem(Action):
         {u'gr': 0}
         """
         return self.__expression_attribute_names.add(synonym, name)
+
+    @proxy
+    def project(self, *names):
+        """
+        >>> connection(
+        ...   GetItem(table, {"h": 0})
+        ...     .project("gr")
+        ... ).item
+        {u'gr': 0}
+        """
+        return self.__projection_expression.add(*names)
 
     @proxy
     def return_consumed_capacity_total(self):

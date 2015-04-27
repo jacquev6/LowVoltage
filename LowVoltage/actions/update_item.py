@@ -18,9 +18,11 @@ from .next_gen_mixins import (
     ConditionExpression,
     ExpressionAttributeNames,
     ExpressionAttributeValues,
+    Key,
     ReturnConsumedCapacity,
     ReturnItemCollectionMetrics,
     ReturnValues,
+    TableName
 )
 from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict
 
@@ -77,10 +79,8 @@ class UpdateItem(Action):
     The `UpdateItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_RequestParameters>`__.
     """
 
-    def __init__(self, table_name, key):
+    def __init__(self, table_name=None, key=None):
         super(UpdateItem, self).__init__("UpdateItem", UpdateItemResponse)
-        self.__table_name = table_name
-        self.__key = key
         self.__set = {}
         self.__remove = []
         self.__add = {}
@@ -88,16 +88,15 @@ class UpdateItem(Action):
         self.__condition_expression = ConditionExpression(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__expression_attribute_values = ExpressionAttributeValues(self)
+        self.__key = Key(self, key)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__return_values = ReturnValues(self)
+        self.__table_name = TableName(self, table_name)
 
     @property
     def payload(self):
-        data = {
-            "TableName": self.__table_name,
-            "Key": _convert_dict_to_db(self.__key),
-        }
+        data = {}
         update = []
         if self.__set:
             update.append("SET {}".format(", ".join("{}={}".format(n, v) for n, v in self.__set.iteritems())))
@@ -112,10 +111,36 @@ class UpdateItem(Action):
         data.update(self.__condition_expression.payload)
         data.update(self.__expression_attribute_names.payload)
         data.update(self.__expression_attribute_values.payload)
+        data.update(self.__key.payload)
         data.update(self.__return_consumed_capacity.payload)
         data.update(self.__return_item_collection_metrics.payload)
         data.update(self.__return_values.payload)
+        data.update(self.__table_name.payload)
         return data
+
+    @proxy
+    def table_name(self, table_name):
+        """
+        >>> connection(
+        ...   UpdateItem(key={"h": 0})
+        ...     .table_name(table)
+        ...     .remove("a")
+        ... )
+        <LowVoltage.actions.update_item.UpdateItemResponse object at ...>
+        """
+        return self.__table_name.set(table_name)
+
+    @proxy
+    def key(self, key):
+        """
+        >>> connection(
+        ...   UpdateItem(table_name=table)
+        ...     .key({"h": 0})
+        ...     .remove("a")
+        ... )
+        <LowVoltage.actions.update_item.UpdateItemResponse object at ...>
+        """
+        return self.__key.set(key)
 
     # @todo should we provide bundle methods for set, add, delete that do an implicit expression_attribute_value with a generated value_name?
     # @todo should we provide add_to_int (accepting an int), add_to_set and delete_from_set (accepting several ints, strs or binaries)?
@@ -239,6 +264,69 @@ class UpdateItem(Action):
         return self.__expression_attribute_values.add(name, value)
 
     @proxy
+    def return_consumed_capacity_indexes(self):
+        """
+        >>> c = connection(
+        ...   UpdateItem(table, {"h": 5}).set("gh", "h").set("gr", "h")
+        ...     .return_consumed_capacity_indexes()
+        ... ).consumed_capacity
+        >>> c.capacity_units
+        3.0
+        >>> c.table.capacity_units
+        1.0
+        >>> c.global_secondary_indexes["gsi"].capacity_units
+        2.0
+        """
+        return self.__return_consumed_capacity.indexes()
+
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> connection(
+        ...   UpdateItem(table, {"h": 4}).set("gh", "h").set("gr", "h")
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        3.0
+        """
+        return self.__return_consumed_capacity.total()
+
+    @proxy
+    def return_consumed_capacity_none(self):
+        """
+        >>> print connection(
+        ...   UpdateItem(table, {"h": 6}).set("gh", "h").set("gr", "h")
+        ...     .return_consumed_capacity_none()
+        ... ).consumed_capacity
+        None
+        """
+        return self.__return_consumed_capacity.none()
+
+    @proxy
+    def return_item_collection_metrics_size(self):
+        """
+        >>> m = connection(
+        ...   UpdateItem(table2, {"h": 0, "r1": 0}).set("a", "h")
+        ...     .return_item_collection_metrics_size()
+        ... ).item_collection_metrics
+        >>> m.item_collection_key
+        {u'h': 0}
+        >>> m.size_estimate_range_gb
+        [0.0, 1.0]
+        """
+        return self.__return_item_collection_metrics.size()
+
+    @proxy
+    def return_item_collection_metrics_none(self):
+        """
+        >>> print connection(
+        ...   UpdateItem(table2, {"h": 1, "r1": 0}).set("a", "h")
+        ...     .return_item_collection_metrics_none()
+        ... ).item_collection_metrics
+        None
+        """
+        return self.__return_item_collection_metrics.none()
+
+    @proxy
     def return_values_all_old(self):
         """
         >>> connection(PutItem(table, {"h": 0, "a": 1, "b": 2}))
@@ -313,75 +401,21 @@ class UpdateItem(Action):
         """
         return self.__return_values.none()
 
-    @proxy
-    def return_consumed_capacity_total(self):
-        """
-        >>> connection(
-        ...   UpdateItem(table, {"h": 4}).set("gh", "h").set("gr", "h")
-        ...     .return_consumed_capacity_total()
-        ... ).consumed_capacity.capacity_units
-        3.0
-        """
-        return self.__return_consumed_capacity.total()
-
-    @proxy
-    def return_consumed_capacity_indexes(self):
-        """
-        >>> c = connection(
-        ...   UpdateItem(table, {"h": 5}).set("gh", "h").set("gr", "h")
-        ...     .return_consumed_capacity_indexes()
-        ... ).consumed_capacity
-        >>> c.capacity_units
-        3.0
-        >>> c.table.capacity_units
-        1.0
-        >>> c.global_secondary_indexes["gsi"].capacity_units
-        2.0
-        """
-        return self.__return_consumed_capacity.indexes()
-
-    @proxy
-    def return_consumed_capacity_none(self):
-        """
-        >>> print connection(
-        ...   UpdateItem(table, {"h": 6}).set("gh", "h").set("gr", "h")
-        ...     .return_consumed_capacity_none()
-        ... ).consumed_capacity
-        None
-        """
-        return self.__return_consumed_capacity.none()
-
-    @proxy
-    def return_item_collection_metrics_size(self):
-        """
-        >>> m = connection(
-        ...   UpdateItem(table2, {"h": 0, "r1": 0}).set("a", "h")
-        ...     .return_item_collection_metrics_size()
-        ... ).item_collection_metrics
-        >>> m.item_collection_key
-        {u'h': 0}
-        >>> m.size_estimate_range_gb
-        [0.0, 1.0]
-        """
-        return self.__return_item_collection_metrics.size()
-
-    @proxy
-    def return_item_collection_metrics_none(self):
-        """
-        >>> print connection(
-        ...   UpdateItem(table2, {"h": 1, "r1": 0}).set("a", "h")
-        ...     .return_item_collection_metrics_none()
-        ... ).item_collection_metrics
-        None
-        """
-        return self.__return_item_collection_metrics.none()
-
 
 class UpdateItemUnitTests(_tst.UnitTests):
     def test_name(self):
         self.assertEqual(UpdateItem("Table", {"hash": 42}).name, "UpdateItem")
 
-    def test_key(self):
+    def test_table_name_and_key(self):
+        self.assertEqual(
+            UpdateItem().table_name("Table").key({"hash": 42}).payload,
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+            }
+        )
+
+    def test_constructor(self):
         self.assertEqual(
             UpdateItem("Table", {"hash": 42}).payload,
             {
