@@ -16,7 +16,7 @@ When given a :class:`DeleteTable`, the connection will return a :class:`DeleteTa
 
 >>> r = connection(DeleteTable(table))
 >>> r
-<LowVoltage.actions.delete_table.DeleteTableResponse object at ...>
+<LowVoltage.actions.delete_table.DeleteTableResponse ...>
 >>> r.table_description.table_status
 u'DELETING'
 
@@ -82,9 +82,8 @@ class DeleteTable(Action):
     def table_name(self, table_name):
         """
         >>> connection(DeleteTable().table_name(table2))
-        <LowVoltage.actions.delete_table.DeleteTableResponse object at ...>
+        <LowVoltage.actions.delete_table.DeleteTableResponse ...>
         """
-        # @todoc Remove *all* "object at " for consistency and noise reduction
         return self.__table_name.set(table_name)
 
 

@@ -5,7 +5,7 @@
 When given a :class:`PutItem`, the connection will return a :class:`PutItemResponse`:
 
 >>> connection(PutItem(table, {"h": 0}))
-<LowVoltage.actions.put_item.PutItemResponse object at ...>
+<LowVoltage.actions.put_item.PutItemResponse ...>
 """
 
 import LowVoltage as _lv
@@ -109,7 +109,7 @@ class PutItem(Action):
         ...   PutItem(table_name=table)
         ...     .item({"h": 0})
         ... )
-        <LowVoltage.actions.put_item.PutItemResponse object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse ...>
         """
         return self.__item.set(item)
 
@@ -120,7 +120,7 @@ class PutItem(Action):
         ...   PutItem(item={"h": 0})
         ...     .table_name(table)
         ... )
-        <LowVoltage.actions.put_item.PutItemResponse object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse ...>
         """
         return self.__table_name.set(table_name)
 
@@ -133,7 +133,7 @@ class PutItem(Action):
         ...     .expression_attribute_name("syn", "gr")
         ...     .expression_attribute_value("val", 8)
         ... )
-        <LowVoltage.actions.put_item.PutItemResponse object at ...>
+        <LowVoltage.actions.put_item.PutItemResponse ...>
         """
         return self.__condition_expression.set(expression)
 

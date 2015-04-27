@@ -6,7 +6,7 @@
 When given a :class:`DeleteItem`, the connection will return a :class:`DeleteItemResponse`:
 
 >>> connection(DeleteItem(table, {"h": 0}))
-<LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
+<LowVoltage.actions.delete_item.DeleteItemResponse ...>
 
 Note that deleting the same item twice is not an error (deleting is idempotent). To know if an item was actually deleted, use :meth:`~DeleteItem.return_values_all_old`:
 
@@ -123,7 +123,7 @@ class DeleteItem(Action):
         ...   DeleteItem(key={"h": 8})
         ...     .table_name(table)
         ... )
-        <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
+        <LowVoltage.actions.delete_item.DeleteItemResponse ...>
         """
         return self.__table_name.set(table_name)
 
@@ -134,7 +134,7 @@ class DeleteItem(Action):
         ...   DeleteItem(table_name=table)
         ...     .key({"h": 9})
         ... )
-        <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
+        <LowVoltage.actions.delete_item.DeleteItemResponse ...>
         """
         return self.__key.set(key)
 
@@ -147,7 +147,7 @@ class DeleteItem(Action):
         ...     .expression_attribute_name("syn", "gr")
         ...     .expression_attribute_value("val", 6)
         ... )
-        <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
+        <LowVoltage.actions.delete_item.DeleteItemResponse ...>
         """
         return self.__condition_expression.set(expression)
 

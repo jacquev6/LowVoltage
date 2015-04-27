@@ -113,17 +113,17 @@ When you build an action, you *can* pass all mandatory parameters to the constru
 You may want to use named parameters to reduce the risk of giving them in the wrong order.
 
     >>> GetItem("Table", {"h": 0})
-    <LowVoltage.actions.get_item.GetItem object at ...>
+    <LowVoltage.actions.get_item.GetItem ...>
 
 Optional parameters are exposed only using `method chaining <https://en.wikipedia.org/wiki/Method_chaining#Python>`__ to avoid giving them in the wrong order.
 
     >>> GetItem("Table", {"h": 0}).return_consumed_capacity_total()
-    <LowVoltage.actions.get_item.GetItem object at ...>
+    <LowVoltage.actions.get_item.GetItem ...>
 
 Alternatively, mandatory parameters can be set using method chaining as well.
 
     >>> GetItem().table_name("Table").key({"h": 0})
-    <LowVoltage.actions.get_item.GetItem object at ...>
+    <LowVoltage.actions.get_item.GetItem ...>
 
 If you try to pass an action with missing mandatory parameters, you'll get a :exc:`.BuilderError`:
 
@@ -144,7 +144,7 @@ The active table is set by :meth:`.BatchGetItem.table`.
     ...   .table("Table1").keys({"h": 0})
     ...   .table("Table2").keys({"x": 42})
     ... )
-    <LowVoltage.actions.batch_get_item.BatchGetItem object at ...>
+    <LowVoltage.actions.batch_get_item.BatchGetItem ...>
 
 The previous example will get ``{"h": 0}`` from ``Table1`` and ``{"x": 42}`` from ``Table2``.
 
@@ -163,7 +163,7 @@ But a special kind of variadic: not only do they accept any number of parameters
     ...   .keys({"h": h} for h in range(8, 12))
     ...   .keys(({"h": h} for h in range(12, 17)), {"h": 17}, [{"h": h} for h in range(18, 20)])
     ... )
-    <LowVoltage.actions.batch_get_item.BatchGetItem object at ...>
+    <LowVoltage.actions.batch_get_item.BatchGetItem ...>
 
 Expressions
 ===========

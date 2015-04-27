@@ -31,7 +31,7 @@ When given a :class:`UpdateTable`, the connection will return a :class:`UpdateTa
 ...     .provisioned_throughput(2, 2)
 ... )
 >>> r
-<LowVoltage.actions.update_table.UpdateTableResponse object at ...>
+<LowVoltage.actions.update_table.UpdateTableResponse ...>
 >>> r.table_description.table_status
 u'UPDATING'
 

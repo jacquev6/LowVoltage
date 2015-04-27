@@ -6,7 +6,7 @@
 When given a :class:`GetItem`, the connection will return a :class:`GetItemResponse`:
 
 >>> connection(GetItem(table, {"h": 0}))
-<LowVoltage.actions.get_item.GetItemResponse object at ...>
+<LowVoltage.actions.get_item.GetItemResponse ...>
 
 The item is accessed like this:
 
@@ -102,7 +102,7 @@ class GetItem(Action):
         ...   GetItem(key={"h": 0})
         ...     .table_name(table)
         ... )
-        <LowVoltage.actions.get_item.GetItemResponse object at ...>
+        <LowVoltage.actions.get_item.GetItemResponse ...>
         """
         return self.__table_name.set(table_name)
 
@@ -113,7 +113,7 @@ class GetItem(Action):
         ...   GetItem(table_name=table)
         ...     .key({"h": 0})
         ... )
-        <LowVoltage.actions.get_item.GetItemResponse object at ...>
+        <LowVoltage.actions.get_item.GetItemResponse ...>
         """
         return self.__key.set(key)
 

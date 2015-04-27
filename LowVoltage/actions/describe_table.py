@@ -70,7 +70,7 @@ class DescribeTable(Action):
     def table_name(self, table_name):
         """
         >>> connection(DescribeTable().table_name(table))
-        <LowVoltage.actions.describe_table.DescribeTableResponse object at ...>
+        <LowVoltage.actions.describe_table.DescribeTableResponse ...>
         """
         return self.__table_name.set(table_name)
 

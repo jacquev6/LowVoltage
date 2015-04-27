@@ -18,7 +18,7 @@ When given a :class:`CreateTable`, the connection will return a :class:`CreateTa
 ...     .provisioned_throughput(1, 1)
 ... )
 >>> r
-<LowVoltage.actions.create_table.CreateTableResponse object at ...>
+<LowVoltage.actions.create_table.CreateTableResponse ...>
 >>> r.table_description.table_status
 u'CREATING'
 
