@@ -172,8 +172,7 @@ class BatchGetItem(Action):
         <LowVoltage.actions.batch_get_item.BatchGetItemResponse ...>
         """
         self.__check_active_table()
-        # @todo Replace all += by .extend
-        self.__active_table.keys += keys
+        self.__active_table.keys.extend(keys)
         return self
 
     def previous_unprocessed_keys(self, previous_unprocessed_keys):
