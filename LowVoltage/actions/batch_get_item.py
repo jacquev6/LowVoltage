@@ -33,7 +33,8 @@ from .next_gen_mixins import (
 )
 from .return_types import ConsumedCapacity, _is_dict, _is_list_of_dict
 
-
+# @todo Cover XxxResponse with unit tests
+# @todo Measuring unit test coverage would be easier if integ tests were in different files
 class BatchGetItemResponse(object):
     """
     The `BatchGetItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_ResponseElements>`__
@@ -145,6 +146,7 @@ class BatchGetItem(Action):
         <LowVoltage.actions.batch_get_item.BatchGetItemResponse ...>
         """
         self.__check_active_table()
+        # @todo Replace all += by .extend
         self.__active_table.keys += keys
         return self
 

@@ -22,6 +22,10 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .return_types import TableDescription, _is_dict
+from .next_gen_mixins import proxy
+from .next_gen_mixins import (
+    TableName,
+)
 
 
 class DescribeTableResponse(object):
@@ -52,13 +56,21 @@ class DescribeTable(Action):
     The `DescribeTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_RequestParameters>`__.
     """
 
-    def __init__(self, table_name):
+    def __init__(self, table_name=None):
         super(DescribeTable, self).__init__("DescribeTable", DescribeTableResponse)
         self.__table_name = table_name
 
     @property
     def payload(self):
         return {"TableName": self.__table_name}
+
+    @proxy
+    def table_name(self, table_name):
+        """
+        >>> connection(DescribeTable().table_name(table))
+        <LowVoltage.actions.describe_table.DescribeTableResponse object at ...>
+        """
+        return self.__table_name.set(table_name)
 
 
 class DescribeTableUnitTests(_tst.UnitTests):

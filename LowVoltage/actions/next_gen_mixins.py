@@ -6,7 +6,7 @@ import numbers
 import inspect
 import functools
 
-import LowVoltage as _lv
+import LowVoltage.exceptions as _exn
 import LowVoltage.testing as _tst
 from .conversion import _convert_value_to_db, _convert_dict_to_db
 
@@ -70,7 +70,7 @@ class MandatoryScalarParameter(ScalarParameter):
     @property
     def payload(self):
         if self._value is None:
-            raise _lv.BuilderError("Mandatory parameter {} is missing.".format(self._name))
+            raise _exn.BuilderError("Mandatory parameter {} is missing.".format(self._name))
         else:
             return {self._name: self._value}
 
@@ -105,28 +105,14 @@ class OptionalDictParameter(object):
         return data
 
 
-class StringParameterMixin(object):
-    def _convert(self, s):
-        if isinstance(s, basestring):
-            return s
-        else:
-            raise TypeError("Parameter {} must be a string.".format(self._name))
-
-
-class IntParameterMixin(object):
-    def _convert(self, i):
-        if isinstance(i, numbers.Integral):
-            return i
-        else:
-            raise TypeError("Parameter {} must be an integer.".format(self._name))
-
-
-class BoolParameterMixin(object):
-    def _convert(self, b):
-        if isinstance(b, bool):
-            return b
-        else:
-            raise TypeError("Parameter {} must be a boolean.".format(self._name))
+def plain_parameter_mixin(typ):
+    class PlainParameterMixin(object):
+        def _convert(self, s):
+            if isinstance(s, typ):
+                return s
+            else:
+                raise TypeError("Parameter {} must be a {}.".format(self._name, typ.__name__))
+    return PlainParameterMixin
 
 
 class ItemParameterMixin(object):
@@ -137,10 +123,23 @@ class ItemParameterMixin(object):
             raise TypeError("Parameter {} must be a dict.".format(self._name))
 
 
+class ValueParameterMixin(object):
+    def _convert(self, value):
+        return _convert_value_to_db(value)
+
+
+class IntParameterMixin(plain_parameter_mixin(numbers.Integral)): pass
+class BoolParameterMixin(plain_parameter_mixin(bool)): pass
+class StringParameterMixin(plain_parameter_mixin(basestring)): pass
+
+
 class OptionalItemParameter(OptionalScalarParameter, ItemParameterMixin): pass
 class OptionalIntParameter(OptionalScalarParameter, IntParameterMixin): pass
 class OptionalBoolParameter(OptionalScalarParameter, BoolParameterMixin): pass
 class OptionalStringParameter(OptionalScalarParameter, StringParameterMixin): pass
+
+class OptionalDictOfStringParameter(OptionalDictParameter, StringParameterMixin): pass
+class OptionalDictOfValueParameter(OptionalDictParameter, ValueParameterMixin): pass
 
 class MandatoryItemParameter(MandatoryScalarParameter, ItemParameterMixin): pass
 class MandatoryIntParameter(MandatoryScalarParameter, IntParameterMixin): pass
@@ -192,76 +191,10 @@ class IndexName(OptionalStringParameter):
         return super(IndexName, self).set(index_name)
 
 
-def ScalarValue(name, parent=None, value=None):
-    class ScalarValue(object):
-        def __init__(self, parent, value=None):
-            self.__value = value
-            self.__parent = parent
+class ConditionExpression(OptionalStringParameter):
+    def __init__(self, parent):
+        super(ConditionExpression, self).__init__("ConditionExpression", parent)
 
-        def set(self, value):
-            self.__value = value
-            return self.__parent
-
-        @property
-        def payload(self):
-            data = {}
-            if self.__value is not None:
-                data[name] = self.__value
-            return data
-
-    if parent is None:
-        return ScalarValue
-    else:
-        return ScalarValue(parent, value)
-
-
-def DictValue(name, parent=None, data=None):
-    class DictValue(object):
-        def __init__(self, parent, data=None):
-            self.__data = data or {}
-            self.__parent = parent
-
-        def add(self, name, value):
-            self.__data[name] = value
-            return self.__parent
-
-        @property
-        def payload(self):
-            data = {}
-            if len(self.__data) != 0:
-                data[name] = self.__data
-            return data
-
-    if parent is None:
-        return DictValue
-    else:
-        return DictValue(parent, data)
-
-
-def CommaSeparatedStringsValue(name, parent=None, values=None):
-    class CommaSeparatedStringsValue(object):
-        def __init__(self, parent, values=None):
-            self.__values = values or []
-            self.__parent = parent
-
-        def add(self, values):
-            self.__values += values
-            return self.__parent
-
-        @property
-        def payload(self):
-            data = {}
-            if len(self.__values) != 0:
-                data[name] = ", ".join(self.__values)
-            return data
-
-    if parent is None:
-        return CommaSeparatedStringsValue
-    else:
-        return CommaSeparatedStringsValue(parent, values)
-
-
-class ConditionExpression(ScalarValue("ConditionExpression")):
     def set(self, expression):
         """
         Set the ConditionExpression, making the request conditional.
@@ -289,16 +222,22 @@ class ConsistentRead(OptionalBoolParameter):
         return self.set(True)
 
 
-class ExclusiveStartKey(ScalarValue("ExclusiveStartKey")):
+class ExclusiveStartKey(OptionalItemParameter):
+    def __init__(self, parent):
+        super(ExclusiveStartKey, self).__init__("ExclusiveStartKey", parent)
+
     def set(self, key):
         """
         Set ExclusiveStartKey. The request will only scan items that are after this key.
         This is typically the :attr:`~{}Response.last_evaluated_key` of a previous response.
         """
-        return super(ExclusiveStartKey, self).set(_convert_dict_to_db(key))
+        return super(ExclusiveStartKey, self).set(key)
 
 
-class ExpressionAttributeNames(DictValue("ExpressionAttributeNames")):
+class ExpressionAttributeNames(OptionalDictOfStringParameter):
+    def __init__(self, parent):
+        super(ExpressionAttributeNames, self).__init__("ExpressionAttributeNames", parent)
+
     def add(self, synonym, name):
         """
         Add a synonym for an attribute name to ExpressionAttributeNames.
@@ -307,15 +246,21 @@ class ExpressionAttributeNames(DictValue("ExpressionAttributeNames")):
         return super(ExpressionAttributeNames, self).add("#" + synonym, name)
 
 
-class ExpressionAttributeValues(DictValue("ExpressionAttributeValues")):
+class ExpressionAttributeValues(OptionalDictOfValueParameter):
+    def __init__(self, parent):
+        super(ExpressionAttributeValues, self).__init__("ExpressionAttributeValues", parent)
+
     def add(self, name, value):
         """
         Add a named value to ExpressionAttributeValues.
         """
-        return super(ExpressionAttributeValues, self).add(":" + name, _convert_value_to_db(value))
+        return super(ExpressionAttributeValues, self).add(":" + name, value)
 
 
-class FilterExpression(ScalarValue("FilterExpression")):
+class FilterExpression(OptionalStringParameter):
+    def __init__(self, parent):
+        super(FilterExpression, self).__init__("FilterExpression", parent)
+
     def set(self, expression):
         """
         Set the FilterExpression. The response will contain only items that match.
@@ -323,7 +268,10 @@ class FilterExpression(ScalarValue("FilterExpression")):
         return super(FilterExpression, self).set(expression)
 
 
-class Limit(ScalarValue("Limit")):
+class Limit(OptionalIntParameter):
+    def __init__(self, parent):
+        super(Limit, self).__init__("Limit", parent)
+
     def set(self, limit):
         """
         Set Limit. The request will scan at most this number of items.
@@ -331,17 +279,32 @@ class Limit(ScalarValue("Limit")):
         return super(Limit, self).set(limit)
 
 
-class ProjectionExpression(CommaSeparatedStringsValue("ProjectionExpression")):
+class ProjectionExpression(object):
+    def __init__(self, parent):
+        self.__names = []
+        self.__parent = parent
+
+    @property
+    def payload(self):
+        data = {}
+        if len(self.__names) != 0:
+            data["ProjectionExpression"] = ", ".join(self.__names)
+        return data
+
     @variadic(basestring)
     def add(self, names):
         """
         Add name(s) to ProjectionExpression.
         The request will return only projected attributes.
         """
-        return super(ProjectionExpression, self).add(names)
+        self.__names.extend(names)
+        return self.__parent
 
 
-class ReturnConsumedCapacity(ScalarValue("ReturnConsumedCapacity")):
+class ReturnConsumedCapacity(OptionalStringParameter):
+    def __init__(self, parent):
+        super(ReturnConsumedCapacity, self).__init__("ReturnConsumedCapacity", parent)
+
     def indexes(self):
         """
         Set ReturnConsumedCapacity to INDEXES.
@@ -364,7 +327,10 @@ class ReturnConsumedCapacity(ScalarValue("ReturnConsumedCapacity")):
         return self.set("TOTAL")
 
 
-class ReturnItemCollectionMetrics(ScalarValue("ReturnItemCollectionMetrics")):
+class ReturnItemCollectionMetrics(OptionalStringParameter):
+    def __init__(self, parent):
+        super(ReturnItemCollectionMetrics, self).__init__("ReturnItemCollectionMetrics", parent)
+
     def none(self):
         """
         Set ReturnItemCollectionMetrics to NONE.
@@ -380,7 +346,10 @@ class ReturnItemCollectionMetrics(ScalarValue("ReturnItemCollectionMetrics")):
         return self.set("SIZE")
 
 
-class ReturnValues(ScalarValue("ReturnValues")):
+class ReturnValues(OptionalStringParameter):
+    def __init__(self, parent):
+        super(ReturnValues, self).__init__("ReturnValues", parent)
+
     def all_new(self):
         """
         Set ReturnValues to ALL_NEW.
@@ -417,7 +386,10 @@ class ReturnValues(ScalarValue("ReturnValues")):
         return self.set("UPDATED_OLD")
 
 
-class Select(ScalarValue("Select")):
+class Select(OptionalStringParameter):
+    def __init__(self, parent):
+        super(Select, self).__init__("Select", parent)
+
     def all_attributes(self):
         """
         Set Select to ALL_ATTRIBUTES. The response will contain all attributes of the matching items.

@@ -8,8 +8,11 @@ When given a :class:`DeleteTable`, the connection will return a :class:`DeleteTa
 .. testsetup::
 
     table = "LowVoltage.Tests.Doc.DeleteTable.1"
+    table2 = "LowVoltage.Tests.Doc.DeleteTable.2"
     connection(CreateTable(table).hash_key("h", STRING).provisioned_throughput(1, 1))
+    connection(CreateTable(table2).hash_key("h", STRING).provisioned_throughput(1, 1))
     wait_for_table_activation(connection, table)
+    wait_for_table_activation(connection, table2)
 
 >>> r = connection(DeleteTable(table))
 >>> r
@@ -22,6 +25,7 @@ Note that you can use the :func:`.wait_for_table_deletion` compound to poll the 
 .. testcleanup::
 
     wait_for_table_deletion(connection, table)
+    wait_for_table_deletion(connection, table2)
 """
 
 import datetime
@@ -30,6 +34,10 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .return_types import TableDescription, _is_dict
+from .next_gen_mixins import proxy
+from .next_gen_mixins import (
+    TableName,
+)
 
 
 class DeleteTableResponse(object):
@@ -60,13 +68,24 @@ class DeleteTable(Action):
     The `DeleteTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_RequestParameters>`__.
     """
 
-    def __init__(self, table_name):
+    def __init__(self, table_name=None):
         super(DeleteTable, self).__init__("DeleteTable", DeleteTableResponse)
-        self.__table_name = table_name
+        self.__table_name = TableName(self, table_name)
 
     @property
     def payload(self):
-        return {"TableName": self.__table_name}
+        data = {}
+        data.update(self.__table_name.payload)
+        return data
+
+    @proxy
+    def table_name(self, table_name):
+        """
+        >>> connection(DeleteTable().table_name(table2))
+        <LowVoltage.actions.delete_table.DeleteTableResponse object at ...>
+        """
+        # @todoc Remove *all* "object at " for consistency and noise reduction
+        return self.__table_name.set(table_name)
 
 
 class DeleteTableUnitTests(_tst.UnitTests):

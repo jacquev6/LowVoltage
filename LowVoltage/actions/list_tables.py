@@ -18,7 +18,7 @@ import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
 from .return_types import _is_str, _is_list_of_str
-from .next_gen_mixins import ScalarValue
+from .next_gen_mixins import OptionalIntParameter, OptionalStringParameter
 
 
 class ListTablesResponse(object):
@@ -66,8 +66,8 @@ class ListTables(Action):
 
     def __init__(self):
         super(ListTables, self).__init__("ListTables", ListTablesResponse)
-        self.__limit = ScalarValue("Limit", self)
-        self.__exclusive_start_table_name = ScalarValue("ExclusiveStartTableName", self)
+        self.__limit = OptionalIntParameter("Limit", self)
+        self.__exclusive_start_table_name = OptionalStringParameter("ExclusiveStartTableName", self)
 
     @property
     def payload(self):
