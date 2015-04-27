@@ -56,7 +56,7 @@ class GetItemResponse(object):
 
         :type: ``None`` or :class:`.ConsumedCapacity`
         """
-        if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+        if _is_dict(self.__consumed_capacity):
             return ConsumedCapacity(**self.__consumed_capacity)
 
     @property
@@ -66,7 +66,7 @@ class GetItemResponse(object):
 
         :type: ``None`` or dict
         """
-        if _is_dict(self.__item):  # pragma no branch (Defensive code)
+        if _is_dict(self.__item):
             return _convert_db_to_dict(self.__item)
 
 
@@ -284,3 +284,16 @@ class GetItemUnitTests(_tst.UnitTests):
                 "ExpressionAttributeNames": {"#n": "path"},
             }
         )
+
+
+class GetItemResponseUnitTests(_tst.UnitTests):
+    def test_all_none(self):
+        r = GetItemResponse()
+        self.assertIsNone(r.consumed_capacity)
+        self.assertIsNone(r.item)
+
+    def test_all_set(self):
+        unprocessed_keys = object()
+        r = GetItemResponse(ConsumedCapacity={}, Item={"h": {"S": "a"}})
+        self.assertIsInstance(r.consumed_capacity, ConsumedCapacity)
+        self.assertEqual(r.item, {"h": u"a"})

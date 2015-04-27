@@ -47,7 +47,7 @@ class BatchWriteItemResponse(object):
 
         :type: ``None`` or list of :class:`.ConsumedCapacity`
         """
-        if _is_list_of_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+        if _is_list_of_dict(self.__consumed_capacity):
             return [ConsumedCapacity(**c) for c in self.__consumed_capacity]
 
     @property
@@ -57,7 +57,7 @@ class BatchWriteItemResponse(object):
 
         :type: ``None`` or dict of string (table name) to list of :class:`.ItemCollectionMetrics`
         """
-        if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
+        if _is_dict(self.__item_collection_metrics):
             return {n: [ItemCollectionMetrics(**m) for m in v] for n, v in self.__item_collection_metrics.iteritems()}
 
     @property
@@ -473,3 +473,18 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
         with self.assertRaises(_lv.BuilderError) as catcher:
             BatchWriteItem().delete({"h": 0})
         self.assertEqual(catcher.exception.args, ("No active table.",))
+
+
+class BatchWriteItemResponseUnitTests(_tst.UnitTests):
+    def test_all_none(self):
+        r = BatchWriteItemResponse()
+        self.assertIsNone(r.consumed_capacity)
+        self.assertIsNone(r.item_collection_metrics)
+        self.assertIsNone(r.unprocessed_items)
+
+    def test_all_set(self):
+        unprocessed_items = object()
+        r = BatchWriteItemResponse(ConsumedCapacity=[{}], ItemCollectionMetrics={"A": [{}]}, UnprocessedItems=unprocessed_items)
+        self.assertIsInstance(r.consumed_capacity[0], ConsumedCapacity)
+        self.assertIsInstance(r.item_collection_metrics["A"][0], ItemCollectionMetrics)
+        self.assertIs(r.unprocessed_items, unprocessed_items)

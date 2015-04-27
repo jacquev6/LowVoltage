@@ -59,7 +59,7 @@ class DeleteTableResponse(object):
 
         :type: ``None`` or :class:`.TableDescription`
         """
-        if _is_dict(self.__table_description):  # pragma no branch (Defensive code)
+        if _is_dict(self.__table_description):
             return TableDescription(**self.__table_description)
 
 
@@ -96,3 +96,13 @@ class DeleteTableUnitTests(_tst.UnitTests):
 
     def test_constructor(self):
         self.assertEqual(DeleteTable("Foo").payload, {"TableName": "Foo"})
+
+
+class DeleteTableResponseUnitTests(_tst.UnitTests):
+    def test_all_none(self):
+        r = DeleteTableResponse()
+        self.assertIsNone(r.table_description)
+
+    def test_all_set(self):
+        r = DeleteTableResponse(TableDescription={})
+        self.assertIsInstance(r.table_description, TableDescription)

@@ -65,7 +65,7 @@ class QueryResponse(object):
 
         :type: ``None`` or :class:`.ConsumedCapacity`
         """
-        if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+        if _is_dict(self.__consumed_capacity):
             return ConsumedCapacity(**self.__consumed_capacity)
 
     @property
@@ -75,7 +75,7 @@ class QueryResponse(object):
 
         :type: ``None`` or long
         """
-        if _is_int(self.__count):  # pragma no branch (Defensive code)
+        if _is_int(self.__count):
             return long(self.__count)
 
     @property
@@ -85,7 +85,7 @@ class QueryResponse(object):
 
         :type: ``None`` or list of dict
         """
-        if _is_list_of_dict(self.__items):  # pragma no branch (Defensive code)
+        if _is_list_of_dict(self.__items):
             return [_convert_db_to_dict(i) for i in self.__items]
 
     @property
@@ -97,7 +97,7 @@ class QueryResponse(object):
 
         :type: ``None`` or dict
         """
-        if _is_dict(self.__last_evaluated_key):  # pragma no branch (Defensive code)
+        if _is_dict(self.__last_evaluated_key):
             return _convert_db_to_dict(self.__last_evaluated_key)
 
     @property
@@ -107,7 +107,7 @@ class QueryResponse(object):
 
         :type: ``None`` or long
         """
-        if _is_int(self.__scanned_count):  # pragma no branch (Defensive code)
+        if _is_int(self.__scanned_count):
             return long(self.__scanned_count)
 
 
@@ -623,3 +623,22 @@ class QueryUnitTests(_tst.UnitTests):
 
     def test_scan_index_forward_false(self):
         self.assertEqual(Query("Aaa").scan_index_forward_false().payload, {"TableName": "Aaa", "ScanIndexForward": False})
+
+
+class QueryResponseUnitTests(_tst.UnitTests):
+    def test_all_none(self):
+        r = QueryResponse()
+        self.assertIsNone(r.consumed_capacity)
+        self.assertIsNone(r.count)
+        self.assertIsNone(r.items)
+        self.assertIsNone(r.last_evaluated_key)
+        self.assertIsNone(r.scanned_count)
+
+    def test_all_set(self):
+        unprocessed_keys = object()
+        r = QueryResponse(ConsumedCapacity={}, Count=1, Items=[{"h": {"S": "a"}}], LastEvaluatedKey={"h": {"S": "b"}}, ScannedCount=2)
+        self.assertIsInstance(r.consumed_capacity, ConsumedCapacity)
+        self.assertEqual(r.count, 1)
+        self.assertEqual(r.items, [{"h": "a"}])
+        self.assertEqual(r.last_evaluated_key, {"h": "b"})
+        self.assertEqual(r.scanned_count, 2)

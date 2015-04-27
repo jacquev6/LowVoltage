@@ -57,7 +57,7 @@ class BatchGetItemResponse(object):
 
         :type: ``None`` or list of :class:`.ConsumedCapacity`
         """
-        if _is_list_of_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+        if _is_list_of_dict(self.__consumed_capacity):
             return [ConsumedCapacity(**c) for c in self.__consumed_capacity]
 
     @property
@@ -67,7 +67,7 @@ class BatchGetItemResponse(object):
 
         :type: ``None`` or dict of string (table name) to list of dict
         """
-        if _is_dict(self.__responses):  # pragma no branch (Defensive code)
+        if _is_dict(self.__responses):
             return {t: [_convert_db_to_dict(v) for v in vs] for t, vs in self.__responses.iteritems()}
 
     @property
@@ -483,3 +483,18 @@ class BatchGetItemUnitTests(_tst.UnitTests):
         with self.assertRaises(_lv.BuilderError) as catcher:
             BatchGetItem().expression_attribute_name("a", "b")
         self.assertEqual(catcher.exception.args, ("No active table.",))
+
+
+class BatchGetItemResponseUnitTests(_tst.UnitTests):
+    def test_all_none(self):
+        r = BatchGetItemResponse()
+        self.assertIsNone(r.consumed_capacity)
+        self.assertIsNone(r.responses)
+        self.assertIsNone(r.unprocessed_keys)
+
+    def test_all_set(self):
+        unprocessed_keys = object()
+        r = BatchGetItemResponse(ConsumedCapacity=[{}], Responses={"A": [{"h": {"S": "a"}}]}, UnprocessedKeys=unprocessed_keys)
+        self.assertIsInstance(r.consumed_capacity[0], ConsumedCapacity)
+        self.assertEqual(r.responses, {"A": [{"h": u"a"}]})
+        self.assertIs(r.unprocessed_keys, unprocessed_keys)

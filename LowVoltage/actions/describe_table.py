@@ -47,7 +47,7 @@ class DescribeTableResponse(object):
 
         :type: ``None`` or :class:`.TableDescription`
         """
-        if _is_dict(self.__table):  # pragma no branch (Defensive code)
+        if _is_dict(self.__table):
             return TableDescription(**self.__table)
 
 
@@ -84,3 +84,13 @@ class DescribeTableUnitTests(_tst.UnitTests):
 
     def test_constuctor(self):
         self.assertEqual(DescribeTable("Foo").payload, {"TableName": "Foo"})
+
+
+class DescribeTableResponseUnitTests(_tst.UnitTests):
+    def test_all_none(self):
+        r = DescribeTableResponse()
+        self.assertIsNone(r.table)
+
+    def test_all_set(self):
+        r = DescribeTableResponse(Table={})
+        self.assertIsInstance(r.table, TableDescription)

@@ -50,7 +50,7 @@ class UpdateItemResponse(object):
 
         :type: ``None`` or dict
         """
-        if _is_dict(self.__attributes):  # pragma no branch (Defensive code)
+        if _is_dict(self.__attributes):
             return _convert_db_to_dict(self.__attributes)
 
     @property
@@ -60,7 +60,7 @@ class UpdateItemResponse(object):
 
         :type: ``None`` or :class:`.ConsumedCapacity`
         """
-        if _is_dict(self.__consumed_capacity):  # pragma no branch (Defensive code)
+        if _is_dict(self.__consumed_capacity):
             return ConsumedCapacity(**self.__consumed_capacity)
 
     @property
@@ -70,7 +70,7 @@ class UpdateItemResponse(object):
 
         :type: ``None`` or :class:`.ItemCollectionMetrics`
         """
-        if _is_dict(self.__item_collection_metrics):  # pragma no branch (Defensive code)
+        if _is_dict(self.__item_collection_metrics):
             return ItemCollectionMetrics(**self.__item_collection_metrics)
 
 
@@ -644,3 +644,18 @@ class UpdateItemUnitTests(_tst.UnitTests):
                 "ReturnItemCollectionMetrics": "NONE",
             }
         )
+
+
+class UpdateItemResponseUnitTests(_tst.UnitTests):
+    def test_all_none(self):
+        r = UpdateItemResponse()
+        self.assertIsNone(r.attributes)
+        self.assertIsNone(r.consumed_capacity)
+        self.assertIsNone(r.item_collection_metrics)
+
+    def test_all_set(self):
+        unprocessed_keys = object()
+        r = UpdateItemResponse(Attributes={"h": {"S": "a"}}, ConsumedCapacity={}, ItemCollectionMetrics={})
+        self.assertEqual(r.attributes, {"h": "a"})
+        self.assertIsInstance(r.consumed_capacity, ConsumedCapacity)
+        self.assertIsInstance(r.item_collection_metrics, ItemCollectionMetrics)

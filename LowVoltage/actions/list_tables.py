@@ -45,7 +45,7 @@ class ListTablesResponse(object):
 
         :type: ``None`` or string
         """
-        if _is_str(self.__last_evaluated_table_name):  # pragma no branch (Defensive code)
+        if _is_str(self.__last_evaluated_table_name):
             return self.__last_evaluated_table_name
 
     @property
@@ -55,7 +55,7 @@ class ListTablesResponse(object):
 
         :type: ``None`` or list of string
         """
-        if _is_list_of_str(self.__table_names):  # pragma no branch (Defensive code)
+        if _is_list_of_str(self.__table_names):
             return self.__table_names
 
 
@@ -116,3 +116,16 @@ class ListTablesUnitTests(_tst.UnitTests):
 
     def test_exclusive_start_table_name(self):
         self.assertEqual(ListTables().exclusive_start_table_name("Bar").payload, {"ExclusiveStartTableName": "Bar"})
+
+
+class ListTablesResponseUnitTests(_tst.UnitTests):
+    def test_all_none(self):
+        r = ListTablesResponse()
+        self.assertIsNone(r.last_evaluated_table_name)
+        self.assertIsNone(r.table_names)
+
+    def test_all_set(self):
+        unprocessed_keys = object()
+        r = ListTablesResponse(LastEvaluatedTableName="Foo", TableNames=["Bar"])
+        self.assertEqual(r.last_evaluated_table_name, "Foo")
+        self.assertEqual(r.table_names, ["Bar"])
