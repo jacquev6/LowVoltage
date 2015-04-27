@@ -2,7 +2,7 @@
 Changelog
 =========
 
-????/??/?? v0.7.0
+2015/04/27, v0.7.0
 ==================
 
 - A few hours after writing "I believe the interface is stable", I had an aha moment and had to change the :ref:`compounds`, making them all functions instead of a mix of classes and badly named functions.
