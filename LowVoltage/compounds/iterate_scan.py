@@ -15,16 +15,16 @@ def iterate_scan(connection, scan):
 
     >>> for item in iterate_scan(connection, Scan(table)):
     ...   print item
-    {u'h': 7, u'gr': 0, u'gh': 0}
-    {u'h': 8, u'gr': 0, u'gh': 0}
-    {u'h': 3, u'gr': 0, u'gh': 0}
-    {u'h': 2, u'gr': 0, u'gh': 0}
-    {u'h': 9, u'gr': 0, u'gh': 0}
-    {u'h': 4, u'gr': 0, u'gh': 0}
-    {u'h': 6, u'gr': 0, u'gh': 0}
-    {u'h': 1, u'gr': 0, u'gh': 0}
-    {u'h': 0, u'gr': 0, u'gh': 0}
-    {u'h': 5, u'gr': 0, u'gh': 0}
+    {u'a': 0, u'h': 7}
+    {u'a': 0, u'h': 8}
+    {u'h': 3, u'gr': 4, u'gh': 9}
+    {u'h': 2, u'gr': 6, u'gh': 4}
+    {u'a': 0, u'h': 9}
+    {u'h': 4, u'gr': 2, u'gh': 16}
+    {u'h': 6, u'gr': -2, u'gh': 36}
+    {u'h': 1, u'gr': 8, u'gh': 1}
+    {u'h': 0, u'gr': 10, u'gh': 0}
+    {u'h': 5, u'gr': 0, u'gh': 25}
 
     The :class:`.Scan` instance passed in must be discarded (it is modified during the iteration).
     """
@@ -51,18 +51,18 @@ def parallelize_scan(scan, total_segments):
     ...   for item in iterate_scan(connection, segment):
     ...     print item
     Segment
-    {u'h': 7, u'gr': 0, u'gh': 0}
-    {u'h': 8, u'gr': 0, u'gh': 0}
-    {u'h': 3, u'gr': 0, u'gh': 0}
+    {u'a': 0, u'h': 7}
+    {u'a': 0, u'h': 8}
+    {u'h': 3, u'gr': 4, u'gh': 9}
     Segment
-    {u'h': 2, u'gr': 0, u'gh': 0}
-    {u'h': 9, u'gr': 0, u'gh': 0}
-    {u'h': 4, u'gr': 0, u'gh': 0}
-    {u'h': 6, u'gr': 0, u'gh': 0}
+    {u'h': 2, u'gr': 6, u'gh': 4}
+    {u'a': 0, u'h': 9}
+    {u'h': 4, u'gr': 2, u'gh': 16}
+    {u'h': 6, u'gr': -2, u'gh': 36}
     Segment
-    {u'h': 1, u'gr': 0, u'gh': 0}
-    {u'h': 0, u'gr': 0, u'gh': 0}
-    {u'h': 5, u'gr': 0, u'gh': 0}
+    {u'h': 1, u'gr': 8, u'gh': 1}
+    {u'h': 0, u'gr': 10, u'gh': 0}
+    {u'h': 5, u'gr': 0, u'gh': 25}
     """
     return [
         copy.deepcopy(scan).segment(i, total_segments)

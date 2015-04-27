@@ -56,7 +56,7 @@ Install from PyPI::
 Import the package and create a connection (assuming your ``AWS_ACCESS_KEY_ID`` and ``AWS_SECRET_ACCESS_KEY`` environment variables are set)::
 
     >>> from LowVoltage import *
-    >>> connection = Connection("eu-west-1", EnvironmentCredentials())
+    >>> connection = Connection("us-west-2", EnvironmentCredentials())
 
 Assuming you have a table named ``"LowVoltage.Tests.Doc.1"`` with a hash key on the number attribute ``"h"``, you can put an item and get it back::
 

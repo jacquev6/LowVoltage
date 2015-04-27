@@ -58,7 +58,10 @@ import datetime
 import LowVoltage as _lv
 import LowVoltage.testing as _tst
 from .action import Action
-from .next_gen_mixins import variadic
+from .next_gen_mixins import variadic, proxy
+from .next_gen_mixins import (
+    TableName,
+)
 from .return_types import TableDescription, _is_dict
 
 
@@ -90,9 +93,9 @@ class UpdateTable(Action):
     The `UpdateTable request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_RequestParameters>`__.
     """
 
-    def __init__(self, table_name):
+    def __init__(self, table_name=None):
         super(UpdateTable, self).__init__("UpdateTable", UpdateTableResponse)
-        self.__table_name = table_name
+        self.__table_name = TableName(self, table_name)
         self.__attribute_definitions = {}
         self._read_capacity_units = None
         self._write_capacity_units = None
@@ -101,7 +104,9 @@ class UpdateTable(Action):
 
     @property
     def payload(self):
-        data = {"TableName": self.__table_name}
+        # @todo Simplify, make more linear
+        data = {}
+        data.update(self.__table_name.payload)
         if self.__attribute_definitions:
             data["AttributeDefinitions"] = [
                 {"AttributeName": name, "AttributeType": typ}
@@ -150,6 +155,13 @@ class UpdateTable(Action):
             if throughput:
                 data["ProvisionedThroughput"] = throughput
             return {self._verb: data}
+
+    @proxy
+    def table_name(self, table_name):
+        """
+        See :meth:`update_global_secondary_index` for an example.
+        """
+        return self.__table_name.set(table_name)
 
     def hash_key(self, name, typ=None):
         """
@@ -225,7 +237,8 @@ class UpdateTable(Action):
         This method sets the active index: methods like :meth:`provisioned_throughput` will apply to the index.
 
         >>> connection(
-        ...   UpdateTable(table2)
+        ...   UpdateTable()
+        ...     .table_name(table2)
         ...     .update_global_secondary_index("gsi")
         ...       .provisioned_throughput(2, 2)
         ... )
@@ -302,8 +315,11 @@ class UpdateTableUnitTests(_tst.UnitTests):
     def test_name(self):
         self.assertEqual(UpdateTable("Foo").name, "UpdateTable")
 
-    def test_no_arguments(self):
+    def test_constructor(self):
         self.assertEqual(UpdateTable("Foo").payload, {"TableName": "Foo"})
+
+    def test_table_name(self):
+        self.assertEqual(UpdateTable().table_name("Foo").payload, {"TableName": "Foo"})
 
     def test_throughput(self):
         self.assertEqual(

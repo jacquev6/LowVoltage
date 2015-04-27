@@ -14,7 +14,7 @@ Note that deleting the same item twice is not an error (deleting is idempotent).
 ...   DeleteItem(table, {"h": 1})
 ...     .return_values_all_old()
 ... ).attributes
-{u'h': 1, u'gr': 0, u'gh': 0}
+{u'h': 1, u'gr': 8, u'gh': 1}
 >>> print connection(
 ...   DeleteItem(table, {"h": 1})
 ...     .return_values_all_old()
@@ -31,9 +31,11 @@ from .next_gen_mixins import (
     ConditionExpression,
     ExpressionAttributeNames,
     ExpressionAttributeValues,
+    Key,
     ReturnConsumedCapacity,
     ReturnItemCollectionMetrics,
     ReturnValues,
+    TableName,
 )
 from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict
 
@@ -90,30 +92,51 @@ class DeleteItem(Action):
     The `DeleteItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_RequestParameters>`__
     """
 
-    def __init__(self, table_name, key):
+    def __init__(self, table_name=None, key=None):
         super(DeleteItem, self).__init__("DeleteItem", DeleteItemResponse)
-        self.__table_name = table_name
-        self.__key = key
         self.__condition_expression = ConditionExpression(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__expression_attribute_values = ExpressionAttributeValues(self)
+        self.__key = Key(self, key)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__return_values = ReturnValues(self)
+        self.__table_name = TableName(self, table_name)
 
     @property
     def payload(self):
-        data = {
-            "TableName": self.__table_name,
-            "Key": _convert_dict_to_db(self.__key),
-        }
+        data = {}
         data.update(self.__condition_expression.payload)
         data.update(self.__expression_attribute_names.payload)
         data.update(self.__expression_attribute_values.payload)
+        data.update(self.__key.payload)
         data.update(self.__return_consumed_capacity.payload)
         data.update(self.__return_item_collection_metrics.payload)
         data.update(self.__return_values.payload)
+        data.update(self.__table_name.payload)
         return data
+
+    @proxy
+    def table_name(self, table_name):
+        """
+        >>> connection(
+        ...   DeleteItem(key={"h": 8})
+        ...     .table_name(table)
+        ... )
+        <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
+        """
+        return self.__table_name.set(table_name)
+
+    @proxy
+    def key(self, key):
+        """
+        >>> connection(
+        ...   DeleteItem(table_name=table)
+        ...     .key({"h": 9})
+        ... )
+        <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
+        """
+        return self.__key.set(key)
 
     @proxy
     def condition_expression(self, expression):
@@ -122,7 +145,7 @@ class DeleteItem(Action):
         ...   DeleteItem(table, {"h": 2})
         ...     .condition_expression("#syn=:val")
         ...     .expression_attribute_name("syn", "gr")
-        ...     .expression_attribute_value("val", 0)
+        ...     .expression_attribute_value("val", 6)
         ... )
         <LowVoltage.actions.delete_item.DeleteItemResponse object at ...>
         """
@@ -143,39 +166,6 @@ class DeleteItem(Action):
         return self.__expression_attribute_values.add(name, value)
 
     @proxy
-    def return_values_all_old(self):
-        """
-        >>> connection(
-        ...   DeleteItem(table, {"h": 3})
-        ...     .return_values_all_old()
-        ... ).attributes
-        {u'h': 3, u'gr': 0, u'gh': 0}
-        """
-        return self.__return_values.all_old()
-
-    @proxy
-    def return_values_none(self):
-        """
-        >>> print connection(
-        ...   DeleteItem(table, {"h": 4})
-        ...     .return_values_none()
-        ... ).attributes
-        None
-        """
-        return self.__return_values.none()
-
-    @proxy
-    def return_consumed_capacity_total(self):
-        """
-        >>> connection(
-        ...   DeleteItem(table, {"h": 5})
-        ...     .return_consumed_capacity_total()
-        ... ).consumed_capacity.capacity_units
-        2.0
-        """
-        return self.__return_consumed_capacity.total()
-
-    @proxy
     def return_consumed_capacity_indexes(self):
         """
         >>> c = connection(
@@ -190,6 +180,17 @@ class DeleteItem(Action):
         1.0
         """
         return self.__return_consumed_capacity.indexes()
+
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> connection(
+        ...   DeleteItem(table, {"h": 5})
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        2.0
+        """
+        return self.__return_consumed_capacity.total()
 
     @proxy
     def return_consumed_capacity_none(self):
@@ -227,12 +228,43 @@ class DeleteItem(Action):
         """
         return self.__return_item_collection_metrics.none()
 
+    @proxy
+    def return_values_all_old(self):
+        """
+        >>> connection(
+        ...   DeleteItem(table, {"h": 3})
+        ...     .return_values_all_old()
+        ... ).attributes
+        {u'h': 3, u'gr': 4, u'gh': 9}
+        """
+        return self.__return_values.all_old()
+
+    @proxy
+    def return_values_none(self):
+        """
+        >>> print connection(
+        ...   DeleteItem(table, {"h": 4})
+        ...     .return_values_none()
+        ... ).attributes
+        None
+        """
+        return self.__return_values.none()
+
 
 class DeleteItemUnitTests(_tst.UnitTests):
     def test_name(self):
         self.assertEqual(DeleteItem("Table", {"hash": 42}).name, "DeleteItem")
 
-    def test_key(self):
+    def test_table_name_and_key(self):
+        self.assertEqual(
+            DeleteItem().table_name("Table").key({"hash": 42}).payload,
+            {
+                "TableName": "Table",
+                "Key": {"hash": {"N": "42"}},
+            }
+        )
+
+    def test_constructor(self):
         self.assertEqual(
             DeleteItem("Table", {"hash": 42}).payload,
             {

@@ -21,17 +21,19 @@ import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_value_to_db, _convert_db_to_dict
 from .next_gen_mixins import proxy
+from .next_gen_mixins import OptionalBoolParameter, OptionalDictParameter
 from .next_gen_mixins import (
     ConsistentRead,
     ExclusiveStartKey,
     ExpressionAttributeNames,
     ExpressionAttributeValues,
     FilterExpression,
+    IndexName,
     Limit,
     ProjectionExpression,
     ReturnConsumedCapacity,
-    ScalarValue,
     Select,
+    TableName,
 )
 from .return_types import ConsumedCapacity, _is_dict, _is_int, _is_list_of_dict
 
@@ -109,55 +111,80 @@ class QueryResponse(object):
             return long(self.__scanned_count)
 
 
+class KeyConditions(OptionalDictParameter):
+    def __init__(self, parent):
+        super(KeyConditions, self).__init__("KeyConditions", parent)
+
+    def _convert(self, (operator, values)):
+        return {
+            "ComparisonOperator": operator,
+            "AttributeValueList": [_convert_value_to_db(value) for value in values]
+        }
+
+
 class Query(Action):
     """
     The `Query request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_RequestParameters>`__.
     """
 
-    def __init__(self, table_name):
+    def __init__(self, table_name=None):
         super(Query, self).__init__("Query", QueryResponse)
-        self.__table_name = table_name
-        self.__conditions = {}
         self.__consistent_read = ConsistentRead(self)
         self.__exclusive_start_key = ExclusiveStartKey(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__expression_attribute_values = ExpressionAttributeValues(self)
         self.__filter_expression = FilterExpression(self)
-        self.__index_name = ScalarValue("IndexName")(self)
+        self.__index_name = IndexName(self)
+        self.__key_conditions = KeyConditions(self)
         self.__limit = Limit(self)
         self.__projection_expression = ProjectionExpression(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
-        self.__scan_index_forward = ScalarValue("ScanIndexForward")(self)
+        self.__scan_index_forward = OptionalBoolParameter("ScanIndexForward", self)
         self.__select = Select(self)
+        self.__table_name = TableName(self, table_name)
 
     @property
     def payload(self):
-        data = {"TableName": self.__table_name}
-        if self.__conditions:
-            data["KeyConditions"] = self.__conditions
+        data = {}
         data.update(self.__consistent_read.payload)
         data.update(self.__exclusive_start_key.payload)
         data.update(self.__expression_attribute_names.payload)
         data.update(self.__expression_attribute_values.payload)
         data.update(self.__filter_expression.payload)
         data.update(self.__index_name.payload)
+        data.update(self.__key_conditions.payload)
         data.update(self.__limit.payload)
         data.update(self.__projection_expression.payload)
         data.update(self.__return_consumed_capacity.payload)
         data.update(self.__scan_index_forward.payload)
         data.update(self.__select.payload)
+        data.update(self.__table_name.payload)
         return data
+
+    @proxy
+    def table_name(self, table_name):
+        """
+        >>> connection(
+        ...   Query()
+        ...     .table_name(table2)
+        ...     .key_eq("h", 42)
+        ... )
+        <LowVoltage.actions.query.QueryResponse ...>
+        """
+        return self.__table_name.set(table_name)
 
     def key_eq(self, name, value):
         """
         Add a EQ condition to KeyConditions. Usable on both the hash key and the range key.
         The response will contain items whose key attribute ``name`` is equal to ``value``.
 
-        >>> connection(Query(table2).key_eq("h", 42)).items
+        >>> connection(
+        ...   Query(table2)
+        ...     .key_eq("h", 42)
+        ... ).items
         [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}, {u'h': 42, u'r1': 2, u'r2': 8}, ...]
         """
-        self.__conditions[name] = {"ComparisonOperator": "EQ", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__key_conditions.add(name, ("EQ", [value]))
 
     def key_le(self, name, value):
         """
@@ -171,8 +198,7 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "LE", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__key_conditions.add(name, ("LE", [value]))
 
     def key_lt(self, name, value):
         """
@@ -186,8 +212,7 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 0, u'r2': 10}, {u'h': 42, u'r1': 1, u'r2': 9}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "LT", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__key_conditions.add(name, ("LT", [value]))
 
     def key_ge(self, name, value):
         """
@@ -201,8 +226,7 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 7}, {u'h': 42, u'r1': 8}, {u'h': 42, u'r1': 9}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "GE", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__key_conditions.add(name, ("GE", [value]))
 
     def key_gt(self, name, value):
         """
@@ -216,16 +240,14 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 7}, {u'h': 42, u'r1': 8}, {u'h': 42, u'r1': 9}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "GT", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__key_conditions.add(name, ("GT", [value]))
 
     def key_begins_with(self, name, value):
         """
         Add a BEGINS_WITH condition to KeyConditions. Usable only on the range key if it is a string.
         The response will contain items whose key attribute ``name`` begins with ``value``.
         """
-        self.__conditions[name] = {"ComparisonOperator": "BEGINS_WITH", "AttributeValueList": [_convert_value_to_db(value)]}
-        return self
+        return self.__key_conditions.add(name, ("BEGINS_WITH", [value]))
 
     def key_between(self, name, lo, hi):
         """
@@ -239,8 +261,7 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 4, u'r2': 6}, {u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 6}]
         """
-        self.__conditions[name] = {"ComparisonOperator": "BETWEEN", "AttributeValueList": [_convert_value_to_db(lo), _convert_value_to_db(hi)]}
-        return self
+        return self.__key_conditions.add(name, ("BETWEEN", [lo, hi]))
 
     @proxy("Query")
     def exclusive_start_key(self, key):
@@ -316,10 +337,9 @@ class Query(Action):
         """
         return self.__select.all_projected_attributes()
 
-    def index_name(self, name):
+    @proxy
+    def index_name(self, index_name):
         """
-        Set Index. The request will use this index instead of the table key.
-
         >>> connection(
         ...   Query(table2)
         ...     .key_eq("h", 42)
@@ -327,7 +347,7 @@ class Query(Action):
         ... ).items
         [{u'h': 42, u'r1': 5, u'r2': 5}, {u'h': 42, u'r1': 4, u'r2': 6}, {u'h': 42, u'r1': 3, u'r2': 7}, {u'h': 42, u'r1': 2, u'r2': 8}, {u'h': 42, u'r1': 1, u'r2': 9}, {u'h': 42, u'r1': 0, u'r2': 10}]
         """
-        return self.__index_name.set(name)
+        return self.__index_name.set(index_name)
 
     def scan_index_forward_true(self):
         """
@@ -485,6 +505,9 @@ class QueryUnitTests(_tst.UnitTests):
         self.assertEqual(Query("Aaa").name, "Query")
 
     def test_table_name(self):
+        self.assertEqual(Query().table_name("Aaa").payload, {"TableName": "Aaa"})
+
+    def test_constructor(self):
         self.assertEqual(Query("Aaa").payload, {"TableName": "Aaa"})
 
     def test_key_eq(self):

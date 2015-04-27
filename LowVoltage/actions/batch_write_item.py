@@ -63,9 +63,11 @@ class BatchWriteItemResponse(object):
     @property
     def unprocessed_items(self):
         """
-        Items that were not processed during this request. If not None, you should give this back to the constructor of a subsequent :class:`BatchWriteItem`.
+        Items that were not processed during this request.
+        If not None, you should give this back to:meth:`~BatchWriteItem.previous_unprocessed_items`
+        in a subsequent :class:`BatchWriteItem`.
 
-        The :func:`.batch_put_item` and :func:`.batch_delete_item` compounds process those for you.
+        The :func:`.batch_put_item` and :func:`.batch_delete_item` compounds do that for you.
 
         :type: ``None`` or exactly as returned by DynamoDB
         """
@@ -77,16 +79,19 @@ class BatchWriteItem(Action):
     The `BatchWriteItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_RequestParameters>`__.
     """
 
-    def __init__(self, previous_unprocessed_items=None):
+    def __init__(self, table=None, put=[], delete=[]):
         super(BatchWriteItem, self).__init__("BatchWriteItem", BatchWriteItemResponse)
-        self.__previous_unprocessed_items = previous_unprocessed_items
+        self.__previous_unprocessed_items = None
         self.__tables = {}
         self.__active_table = None
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
+        if table is not None:
+            self.table(table, put, delete)
 
     @property
     def payload(self):
+        # @todo Simplify, make more linear
         data = {}
         if self.__previous_unprocessed_items:
             data["RequestItems"] = self.__previous_unprocessed_items
@@ -110,13 +115,35 @@ class BatchWriteItem(Action):
                 items.extend({"PutRequest": {"Item": _convert_dict_to_db(i)}} for i in self.put)
             return items
 
-    def table(self, name):
+    def table(self, name, put=[], delete=[]):
         """
         Set the active table. Calls to methods like :meth:`delete` or :meth:`put` will apply to this table.
+
+        >>> connection(
+        ...   BatchWriteItem().table(table)
+        ...     .put({"h": 12}, {"h": 13})
+        ... )
+        <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
+
+        If you pass a list of items as ``put``, they'll be added to the items to put in the table.
+
+        >>> connection(
+        ...   BatchWriteItem().table(table, put=[{"h": 12}, {"h": 13}])
+        ... )
+        <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
+
+        If you pass a list of keys as ``delete``, they'll be added to the keys to delete from the table.
+
+        >>> connection(
+        ...   BatchWriteItem().table(table, delete=[{"h": 12}, {"h": 13}])
+        ... )
+        <LowVoltage.actions.batch_write_item.BatchWriteItemResponse ...>
         """
         if name not in self.__tables:
             self.__tables[name] = self._Table(self)
         self.__active_table = self.__tables[name]
+        self.put(put)
+        self.delete(delete)
         return self
 
     @variadic(dict)
@@ -151,6 +178,18 @@ class BatchWriteItem(Action):
         """
         self.__check_active_table()
         self.__active_table.delete.extend(keys)
+        return self
+
+    def previous_unprocessed_items(self, previous_unprocessed_items):
+        """
+        Set Table and items to retry previous :attr:`~BatchWriteItemResponse.unprocessed_items`.
+
+        The :func:`.batch_put_item` and :func:`.batch_delete_item` compounds do that for you.
+
+        Note that using this method is incompatible with using :meth:`table`, :meth:`put` or :meth:`delete`
+        or passing a ``table`` or ``put`` or ``delete`` in the constructor.
+        """
+        self.__previous_unprocessed_items = previous_unprocessed_items
         return self
 
     @proxy
@@ -284,6 +323,94 @@ class BatchWriteItemUnitTests(_tst.UnitTests):
             {
                 "RequestItems": {
                     "Table": [
+                    ],
+                },
+            }
+        )
+
+    def test_constuctor_with_table(self):
+        self.assertEqual(
+            BatchWriteItem("Table").delete({"hash": u"h1"}).payload,
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h1"}}}},
+                    ],
+                },
+            }
+        )
+
+    def test_constuctor_with_table_and_delete(self):
+        self.assertEqual(
+            BatchWriteItem("Table", delete=[{"hash": u"h1"}]).payload,
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h1"}}}},
+                    ],
+                },
+            }
+        )
+
+    def test_constuctor_with_table_and_put(self):
+        self.assertEqual(
+            BatchWriteItem("Table", put=[{"hash": u"h1"}]).payload,
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"PutRequest": {"Item": {"hash": {"S": "h1"}}}},
+                    ],
+                },
+            }
+        )
+
+    def test_table_with_delete(self):
+        self.assertEqual(
+            BatchWriteItem().table("Table", delete=[{"hash": u"h1"}, {"hash": u"h2"}]).payload,
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h1"}}}},
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h2"}}}},
+                    ],
+                },
+            }
+        )
+
+    def test_table_with_delete_twice(self):
+        self.assertEqual(
+            BatchWriteItem().table("Table", delete=[{"hash": u"h1"}]).table("Table", delete=[{"hash": u"h2"}]).payload,
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h1"}}}},
+                        {"DeleteRequest": {"Key": {"hash": {"S": "h2"}}}},
+                    ],
+                },
+            }
+        )
+
+    def test_table_with_put(self):
+        self.assertEqual(
+            BatchWriteItem().table("Table", put=[{"hash": u"h1"}, {"hash": u"h2"}]).payload,
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"PutRequest": {"Item": {"hash": {"S": "h1"}}}},
+                        {"PutRequest": {"Item": {"hash": {"S": "h2"}}}},
+                    ],
+                },
+            }
+        )
+
+    def test_table_with_put_twice(self):
+        self.assertEqual(
+            BatchWriteItem().table("Table", put=[{"hash": u"h1"}]).table("Table", put=[{"hash": u"h2"}]).payload,
+            {
+                "RequestItems": {
+                    "Table": [
+                        {"PutRequest": {"Item": {"hash": {"S": "h1"}}}},
+                        {"PutRequest": {"Item": {"hash": {"S": "h2"}}}},
                     ],
                 },
             }

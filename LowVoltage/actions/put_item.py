@@ -17,9 +17,11 @@ from .next_gen_mixins import (
     ConditionExpression,
     ExpressionAttributeNames,
     ExpressionAttributeValues,
+    Item,
     ReturnConsumedCapacity,
     ReturnItemCollectionMetrics,
     ReturnValues,
+    TableName,
 )
 from .return_types import ItemCollectionMetrics, ConsumedCapacity, _is_dict
 
@@ -76,30 +78,51 @@ class PutItem(Action):
     The `PutItem request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_RequestParameters>`__.
     """
 
-    def __init__(self, table_name, item):
+    def __init__(self, table_name=None, item=None):
         super(PutItem, self).__init__("PutItem", PutItemResponse)
-        self.__table_name = table_name
-        self.__item = item
         self.__condition_expression = ConditionExpression(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__expression_attribute_values = ExpressionAttributeValues(self)
+        self.__item = Item(self, item)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         self.__return_item_collection_metrics = ReturnItemCollectionMetrics(self)
         self.__return_values = ReturnValues(self)
+        self.__table_name = TableName(self, table_name)
 
     @property
     def payload(self):
-        data = {
-            "TableName": self.__table_name,
-            "Item": _convert_dict_to_db(self.__item),
-        }
+        data = {}
         data.update(self.__condition_expression.payload)
         data.update(self.__expression_attribute_names.payload)
         data.update(self.__expression_attribute_values.payload)
+        data.update(self.__item.payload)
         data.update(self.__return_consumed_capacity.payload)
         data.update(self.__return_item_collection_metrics.payload)
         data.update(self.__return_values.payload)
+        data.update(self.__table_name.payload)
         return data
+
+    @proxy
+    def item(self, item):
+        """
+        >>> connection(
+        ...   PutItem(table_name=table)
+        ...     .item({"h": 0})
+        ... )
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
+        """
+        return self.__item.set(item)
+
+    @proxy
+    def table_name(self, table_name):
+        """
+        >>> connection(
+        ...   PutItem(item={"h": 0})
+        ...     .table_name(table)
+        ... )
+        <LowVoltage.actions.put_item.PutItemResponse object at ...>
+        """
+        return self.__table_name.set(table_name)
 
     @proxy
     def condition_expression(self, expression):
@@ -108,7 +131,7 @@ class PutItem(Action):
         ...   PutItem(table, {"h": 1})
         ...     .condition_expression("#syn=:val")
         ...     .expression_attribute_name("syn", "gr")
-        ...     .expression_attribute_value("val", 0)
+        ...     .expression_attribute_value("val", 8)
         ... )
         <LowVoltage.actions.put_item.PutItemResponse object at ...>
         """
@@ -129,39 +152,6 @@ class PutItem(Action):
         return self.__expression_attribute_values.add(name, value)
 
     @proxy
-    def return_values_all_old(self):
-        """
-        >>> connection(
-        ...   PutItem(table, {"h": 2})
-        ...     .return_values_all_old()
-        ... ).attributes
-        {u'h': 2, u'gr': 0, u'gh': 0}
-        """
-        return self.__return_values.all_old()
-
-    @proxy
-    def return_values_none(self):
-        """
-        >>> print connection(
-        ...   PutItem(table, {"h": 3})
-        ...     .return_values_none()
-        ... ).attributes
-        None
-        """
-        return self.__return_values.none()
-
-    @proxy
-    def return_consumed_capacity_total(self):
-        """
-        >>> connection(
-        ...   PutItem(table, {"h": 4, "gh": 4, "gr": 4})
-        ...     .return_consumed_capacity_total()
-        ... ).consumed_capacity.capacity_units
-        3.0
-        """
-        return self.__return_consumed_capacity.total()
-
-    @proxy
     def return_consumed_capacity_indexes(self):
         """
         >>> c = connection(
@@ -176,6 +166,17 @@ class PutItem(Action):
         2.0
         """
         return self.__return_consumed_capacity.indexes()
+
+    @proxy
+    def return_consumed_capacity_total(self):
+        """
+        >>> connection(
+        ...   PutItem(table, {"h": 4, "gh": 4, "gr": 4})
+        ...     .return_consumed_capacity_total()
+        ... ).consumed_capacity.capacity_units
+        3.0
+        """
+        return self.__return_consumed_capacity.total()
 
     @proxy
     def return_consumed_capacity_none(self):
@@ -213,12 +214,43 @@ class PutItem(Action):
         """
         return self.__return_item_collection_metrics.none()
 
+    @proxy
+    def return_values_all_old(self):
+        """
+        >>> connection(
+        ...   PutItem(table, {"h": 2})
+        ...     .return_values_all_old()
+        ... ).attributes
+        {u'h': 2, u'gr': 6, u'gh': 4}
+        """
+        return self.__return_values.all_old()
+
+    @proxy
+    def return_values_none(self):
+        """
+        >>> print connection(
+        ...   PutItem(table, {"h": 3})
+        ...     .return_values_none()
+        ... ).attributes
+        None
+        """
+        return self.__return_values.none()
+
 
 class PutItemUnitTests(_tst.UnitTests):
     def test_name(self):
         self.assertEqual(PutItem("Table", {"hash": 42}).name, "PutItem")
 
-    def test_item(self):
+    def test_table_name_and_item(self):
+        self.assertEqual(
+            PutItem().table_name("Table").item({"hash": 42}).payload,
+            {
+                "TableName": "Table",
+                "Item": {"hash": {"N": "42"}},
+            }
+        )
+
+    def test_constructor(self):
         self.assertEqual(
             PutItem("Table", {"hash": u"value"}).payload,
             {

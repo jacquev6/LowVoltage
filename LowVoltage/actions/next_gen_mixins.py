@@ -2,13 +2,16 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+import numbers
 import inspect
 import functools
 
+import LowVoltage.exceptions as _exn
 import LowVoltage.testing as _tst
 from .conversion import _convert_value_to_db, _convert_dict_to_db
 
 
+# @todo Put variadic somewhere else: it's used by compounds as well
 def variadic(typ):
     def flatten(args):
         flat_args = []
@@ -25,7 +28,6 @@ def variadic(typ):
         assert len(spec.args) >= 1
         assert spec.varargs is None
         assert spec.keywords is None
-        assert spec.defaults is None
 
         def call_wrapped(*args):
             args = list(args)
@@ -33,6 +35,13 @@ def variadic(typ):
             return wrapped(*args)
 
         prototype = list(spec.args)
+        if spec.defaults is not None:
+            # Could we do that outside of the generated code?
+            # Reusing the original default objects instead of dumping them as string would work in more cases.
+            # But he this is good enough for None, which is our only use case yet.
+            assert spec.defaults[-1] == []
+            for i in range(len(prototype) - len(spec.defaults), len(prototype) - 1):
+                prototype[i] += "={}".format(spec.defaults[i - len(prototype)])
         prototype[-1] = "*" + prototype[-1]
         prototype = ", ".join(prototype)
         call = ", ".join(spec.args)
@@ -49,67 +58,149 @@ def variadic(typ):
     return decorator
 
 
-def ScalarValue(name):
-    class ScalarValue(object):
-        def __init__(self, parent):
-            self.__value = None
-            self.__parent = parent
+class ScalarParameter(object):
+    def __init__(self, name, parent, value):
+        self._name = name
+        self._parent = parent
+        self.set(value)
 
-        def set(self, value):
-            self.__value = value
-            return self.__parent
-
-        @property
-        def payload(self):
-            data = {}
-            if self.__value is not None:
-                data[name] = self.__value
-            return data
-
-    return ScalarValue
+    def set(self, value):
+        if value is None:
+            self._value = None
+        else:
+            self._value = self._convert(value)
+        return self._parent
 
 
-def DictValue(name):
-    class DictValue(object):
-        def __init__(self, parent):
-            self.__data = {}
-            self.__parent = parent
-
-        def add(self, name, value):
-            self.__data[name] = value
-            return self.__parent
-
-        @property
-        def payload(self):
-            data = {}
-            if len(self.__data) != 0:
-                data[name] = self.__data
-            return data
-
-    return DictValue
+class MandatoryScalarParameter(ScalarParameter):
+    @property
+    def payload(self):
+        if self._value is None:
+            raise _exn.BuilderError("Mandatory parameter {} is missing.".format(self._name))
+        else:
+            return {self._name: self._value}
 
 
-def CommaSeparatedStringsValue(name):
-    class CommaSeparatedStringsValue(object):
-        def __init__(self, parent):
-            self.__values = []
-            self.__parent = parent
+class OptionalScalarParameter(ScalarParameter):
+    def __init__(self, name, parent):
+        super(OptionalScalarParameter, self).__init__(name, parent, None)
 
-        def add(self, values):
-            self.__values += values
-            return self.__parent
-
-        @property
-        def payload(self):
-            data = {}
-            if len(self.__values) != 0:
-                data[name] = ", ".join(self.__values)
-            return data
-
-    return CommaSeparatedStringsValue
+    @property
+    def payload(self):
+        data = {}
+        if self._value is not None:
+            data[self._name] = self._value
+        return data
 
 
-class ConditionExpression(ScalarValue("ConditionExpression")):
+class OptionalDictParameter(object):
+    def __init__(self, name, parent):
+        self._name = name
+        self._parent = parent
+        self._values = {}
+
+    def add(self, key, value):
+        self._values[key] = self._convert(value)
+        return self._parent
+
+    @property
+    def payload(self):
+        data = {}
+        if len(self._values) != 0:
+            data[self._name] = self._values
+        return data
+
+
+def plain_parameter_mixin(typ):
+    class PlainParameterMixin(object):
+        def _convert(self, s):
+            if isinstance(s, typ):
+                return s
+            else:
+                raise TypeError("Parameter {} must be a {}.".format(self._name, typ.__name__))
+    return PlainParameterMixin
+
+
+class ItemParameterMixin(object):
+    def _convert(self, item):
+        if isinstance(item, dict):
+            return _convert_dict_to_db(item)
+        else:
+            raise TypeError("Parameter {} must be a dict.".format(self._name))
+
+
+class ValueParameterMixin(object):
+    def _convert(self, value):
+        return _convert_value_to_db(value)
+
+
+class IntParameterMixin(plain_parameter_mixin(numbers.Integral)): pass
+class BoolParameterMixin(plain_parameter_mixin(bool)): pass
+class StringParameterMixin(plain_parameter_mixin(basestring)): pass
+
+
+class OptionalItemParameter(OptionalScalarParameter, ItemParameterMixin): pass
+class OptionalIntParameter(OptionalScalarParameter, IntParameterMixin): pass
+class OptionalBoolParameter(OptionalScalarParameter, BoolParameterMixin): pass
+class OptionalStringParameter(OptionalScalarParameter, StringParameterMixin): pass
+
+class OptionalDictOfStringParameter(OptionalDictParameter, StringParameterMixin): pass
+class OptionalDictOfValueParameter(OptionalDictParameter, ValueParameterMixin): pass
+
+class MandatoryItemParameter(MandatoryScalarParameter, ItemParameterMixin): pass
+class MandatoryIntParameter(MandatoryScalarParameter, IntParameterMixin): pass
+class MandatoryBoolParameter(MandatoryScalarParameter, BoolParameterMixin): pass
+class MandatoryStringParameter(MandatoryScalarParameter, StringParameterMixin): pass
+
+
+class TableName(MandatoryStringParameter):
+    def __init__(self, parent, value):
+        super(TableName, self).__init__("TableName", parent, value)
+
+    def set(self, table_name):
+        """
+        Set TableName. Mandatory, can also be set in the constructor.
+        """
+        return super(TableName, self).set(table_name)
+
+
+class Key(MandatoryItemParameter):
+    def __init__(self, parent, value):
+        super(Key, self).__init__("Key", parent, value)
+
+    def set(self, key):
+        """
+        Set Key. Mandatory, can also be set in the constructor.
+        """
+        return super(Key, self).set(key)
+
+
+class Item(MandatoryItemParameter):
+    def __init__(self, parent, value):
+        super(Item, self).__init__("Item", parent, value)
+
+    def set(self, item):
+        """
+        Set Item. Mandatory, can also be set in the constructor.
+        """
+        return super(Item, self).set(item)
+
+
+class IndexName(OptionalStringParameter):
+    def __init__(self, parent):
+        super(IndexName, self).__init__("IndexName", parent)
+
+    def set(self, index_name):
+        """
+        Set IndexName. The request will use this index instead of the table key.
+        """
+        return super(IndexName, self).set(index_name)
+
+
+class ConditionExpression(OptionalStringParameter):
+    def __init__(self, parent):
+        super(ConditionExpression, self).__init__("ConditionExpression", parent)
+
     def set(self, expression):
         """
         Set the ConditionExpression, making the request conditional.
@@ -118,7 +209,10 @@ class ConditionExpression(ScalarValue("ConditionExpression")):
         return super(ConditionExpression, self).set(expression)
 
 
-class ConsistentRead(ScalarValue("ConsistentRead")):
+class ConsistentRead(OptionalBoolParameter):
+    def __init__(self, parent):
+        super(ConsistentRead, self).__init__("ConsistentRead", parent)
+
     def false(self):
         """
         Set ConsistentRead to False.
@@ -134,16 +228,22 @@ class ConsistentRead(ScalarValue("ConsistentRead")):
         return self.set(True)
 
 
-class ExclusiveStartKey(ScalarValue("ExclusiveStartKey")):
+class ExclusiveStartKey(OptionalItemParameter):
+    def __init__(self, parent):
+        super(ExclusiveStartKey, self).__init__("ExclusiveStartKey", parent)
+
     def set(self, key):
         """
         Set ExclusiveStartKey. The request will only scan items that are after this key.
         This is typically the :attr:`~{}Response.last_evaluated_key` of a previous response.
         """
-        return super(ExclusiveStartKey, self).set(_convert_dict_to_db(key))
+        return super(ExclusiveStartKey, self).set(key)
 
 
-class ExpressionAttributeNames(DictValue("ExpressionAttributeNames")):
+class ExpressionAttributeNames(OptionalDictOfStringParameter):
+    def __init__(self, parent):
+        super(ExpressionAttributeNames, self).__init__("ExpressionAttributeNames", parent)
+
     def add(self, synonym, name):
         """
         Add a synonym for an attribute name to ExpressionAttributeNames.
@@ -152,15 +252,21 @@ class ExpressionAttributeNames(DictValue("ExpressionAttributeNames")):
         return super(ExpressionAttributeNames, self).add("#" + synonym, name)
 
 
-class ExpressionAttributeValues(DictValue("ExpressionAttributeValues")):
+class ExpressionAttributeValues(OptionalDictOfValueParameter):
+    def __init__(self, parent):
+        super(ExpressionAttributeValues, self).__init__("ExpressionAttributeValues", parent)
+
     def add(self, name, value):
         """
         Add a named value to ExpressionAttributeValues.
         """
-        return super(ExpressionAttributeValues, self).add(":" + name, _convert_value_to_db(value))
+        return super(ExpressionAttributeValues, self).add(":" + name, value)
 
 
-class FilterExpression(ScalarValue("FilterExpression")):
+class FilterExpression(OptionalStringParameter):
+    def __init__(self, parent):
+        super(FilterExpression, self).__init__("FilterExpression", parent)
+
     def set(self, expression):
         """
         Set the FilterExpression. The response will contain only items that match.
@@ -168,7 +274,10 @@ class FilterExpression(ScalarValue("FilterExpression")):
         return super(FilterExpression, self).set(expression)
 
 
-class Limit(ScalarValue("Limit")):
+class Limit(OptionalIntParameter):
+    def __init__(self, parent):
+        super(Limit, self).__init__("Limit", parent)
+
     def set(self, limit):
         """
         Set Limit. The request will scan at most this number of items.
@@ -176,17 +285,32 @@ class Limit(ScalarValue("Limit")):
         return super(Limit, self).set(limit)
 
 
-class ProjectionExpression(CommaSeparatedStringsValue("ProjectionExpression")):
+class ProjectionExpression(object):
+    def __init__(self, parent):
+        self.__names = []
+        self.__parent = parent
+
+    @property
+    def payload(self):
+        data = {}
+        if len(self.__names) != 0:
+            data["ProjectionExpression"] = ", ".join(self.__names)
+        return data
+
     @variadic(basestring)
     def add(self, names):
         """
         Add name(s) to ProjectionExpression.
         The request will return only projected attributes.
         """
-        return super(ProjectionExpression, self).add(names)
+        self.__names.extend(names)
+        return self.__parent
 
 
-class ReturnConsumedCapacity(ScalarValue("ReturnConsumedCapacity")):
+class ReturnConsumedCapacity(OptionalStringParameter):
+    def __init__(self, parent):
+        super(ReturnConsumedCapacity, self).__init__("ReturnConsumedCapacity", parent)
+
     def indexes(self):
         """
         Set ReturnConsumedCapacity to INDEXES.
@@ -209,7 +333,10 @@ class ReturnConsumedCapacity(ScalarValue("ReturnConsumedCapacity")):
         return self.set("TOTAL")
 
 
-class ReturnItemCollectionMetrics(ScalarValue("ReturnItemCollectionMetrics")):
+class ReturnItemCollectionMetrics(OptionalStringParameter):
+    def __init__(self, parent):
+        super(ReturnItemCollectionMetrics, self).__init__("ReturnItemCollectionMetrics", parent)
+
     def none(self):
         """
         Set ReturnItemCollectionMetrics to NONE.
@@ -225,7 +352,10 @@ class ReturnItemCollectionMetrics(ScalarValue("ReturnItemCollectionMetrics")):
         return self.set("SIZE")
 
 
-class ReturnValues(ScalarValue("ReturnValues")):
+class ReturnValues(OptionalStringParameter):
+    def __init__(self, parent):
+        super(ReturnValues, self).__init__("ReturnValues", parent)
+
     def all_new(self):
         """
         Set ReturnValues to ALL_NEW.
@@ -262,7 +392,10 @@ class ReturnValues(ScalarValue("ReturnValues")):
         return self.set("UPDATED_OLD")
 
 
-class Select(ScalarValue("Select")):
+class Select(OptionalStringParameter):
+    def __init__(self, parent):
+        super(Select, self).__init__("Select", parent)
+
     def all_attributes(self):
         """
         Set Select to ALL_ATTRIBUTES. The response will contain all attributes of the matching items.
@@ -292,6 +425,9 @@ def proxy(*proxy_args):
         "expression_attribute_name": ExpressionAttributeNames.add,
         "expression_attribute_value": ExpressionAttributeValues.add,
         "filter_expression": FilterExpression.set,
+        "index_name": IndexName.set,
+        "item": Item.set,
+        "key": Key.set,
         "limit": Limit.set,
         "project": ProjectionExpression.add,
         "return_consumed_capacity_indexes": ReturnConsumedCapacity.indexes,
@@ -307,14 +443,20 @@ def proxy(*proxy_args):
         "select_all_attributes": Select.all_attributes,
         "select_all_projected_attributes": Select.all_projected_attributes,
         "select_count": Select.count,
+        "table_name": TableName.set,
     }
+
+    def patch(method, format_args):
+        base = bases[method.__name__]
+        assert inspect.getargspec(method) == inspect.getargspec(base), method
+        method.__doc__ = base.__doc__.format(*format_args) + "\n" + method.__doc__
 
     if len(proxy_args) != 1 or isinstance(proxy_args[0], basestring):
         def decorator(method):
-            method.__doc__ = bases[method.__name__].__doc__.format(*proxy_args) + "\n" + method.__doc__
+            patch(method, proxy_args)
             return method
         return decorator
     else:
-        method, = proxy_args
-        method.__doc__ = bases[method.__name__].__doc__.format() + "\n" + method.__doc__
+        method = proxy_args[0]
+        patch(method, ())
         return method

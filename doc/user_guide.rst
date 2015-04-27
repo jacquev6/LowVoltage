@@ -86,7 +86,7 @@ It does convert between :ref:`python-types` and DynamoDB notation though.
 
     >>> table = "LowVoltage.Tests.Doc.1"
     >>> connection(GetItem(table, {"h": 0})).item
-    {u'h': 0, u'gr': 0, u'gh': 0}
+    {u'h': 0, u'gr': 10, u'gh': 0}
 
 The :ref:`compounds` layer provides helper functions that intend to complete actions in their simplest use cases.
 For example :class:`.BatchGetItem` is limited to get 100 keys at once and requires processing :attr:`.BatchGetItemResponse.unprocessed_keys`, so we provide :func:`.iterate_batch_get_item` to do that.
@@ -100,15 +100,37 @@ actions are atomic while compounds are able to perform several actions.
 
 Someday, maybe, we'll write a Table abstraction and implement an "active record" pattern? It would be even simpler than compounds, but less flexible.
 
-Action building
-===============
+.. _building-actions:
 
-DynamoDB actions typically receive a lot of arguments.
-We chose to expose them using `method chaining <https://en.wikipedia.org/wiki/Method_chaining#Python>`__ to reduce the risk of giving them in the wrong order.
-We believe this gives a better interface in our case than just encouraging clients to use named parameters.
+Building actions
+================
 
-    >>> Query(table2).index_name("lsi").key_eq("h", 0).key_ge("r2", 10)
-    <LowVoltage.actions.query.Query object at ...>
+@todo Implement what's described bellow in CreateTable, UpdateTable, BatchGetItem, BatchWriteItem
+
+DynamoDB actions typically receive a lot of mandatory and optional parameters.
+
+When you build an action, you *can* pass all mandatory parameters to the constructor.
+You may want to use named parameters to reduce the risk of giving them in the wrong order.
+
+    >>> GetItem("Table", {"h": 0})
+    <LowVoltage.actions.get_item.GetItem object at ...>
+
+Optional parameters are exposed only using `method chaining <https://en.wikipedia.org/wiki/Method_chaining#Python>`__ to avoid giving them in the wrong order.
+
+    >>> GetItem("Table", {"h": 0}).return_consumed_capacity_total()
+    <LowVoltage.actions.get_item.GetItem object at ...>
+
+Alternatively, mandatory parameters can be set using method chaining as well.
+
+    >>> GetItem().table_name("Table").key({"h": 0})
+    <LowVoltage.actions.get_item.GetItem object at ...>
+
+If you try to pass an action with missing mandatory parameters, you'll get a :exc:`.BuilderError`:
+
+    >>> connection(GetItem().key({"h": 0}))
+    Traceback (most recent call last):
+      ...
+    BuilderError: ...
 
 Active resource
 ---------------
@@ -132,7 +154,7 @@ Variadic functions
 ------------------
 
 Some methods, like :meth:`.BatchGetItem.keys` are variadic.
-But a special kind of variadic: not only do they accept any number of arguments, but for greater flexibility those arguments can also be iterable.
+But a special kind of variadic: not only do they accept any number of parameters, but for greater flexibility those arguments can also be iterable.
 
     >>> (BatchGetItem().table("Table1")
     ...   .keys({"h": 0})
