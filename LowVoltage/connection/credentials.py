@@ -41,6 +41,20 @@ class StaticCredentials(object):
         return self.__key, self.__secret, self.__token
 
 
+class StaticCredentialsUnitTests(_tst.UnitTests):
+    def test_without_token(self):
+        self.assertEqual(
+            StaticCredentials("a", "b").get(),
+            ("a", "b", None)
+        )
+
+    def test_with_token(self):
+        self.assertEqual(
+            StaticCredentials("a", "b", "c").get(),
+            ("a", "b", "c")
+        )
+
+
 class EnvironmentCredentials(object):
     """
     Credential provider reading the ``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY`` and optionally ``AWS_SECURITY_TOKEN`` environment variables.
@@ -52,6 +66,26 @@ class EnvironmentCredentials(object):
 
     def get(self):
         return (os.environ["AWS_ACCESS_KEY_ID"], os.environ["AWS_SECRET_ACCESS_KEY"], os.environ.get("AWS_SECURITY_TOKEN"))
+
+
+class EnvironmentCredentialsUnitTests(_tst.UnitTests):
+    def test_without_token(self):
+        os.environ["AWS_ACCESS_KEY_ID"] = "a"
+        os.environ["AWS_SECRET_ACCESS_KEY"] = "b"
+        os.environ.pop("AWS_SECURITY_TOKEN", None)
+        self.assertEqual(
+            EnvironmentCredentials().get(),
+            ("a", "b", None)
+        )
+
+    def test_with_token(self):
+        os.environ["AWS_ACCESS_KEY_ID"] = "a"
+        os.environ["AWS_SECRET_ACCESS_KEY"] = "b"
+        os.environ["AWS_SECURITY_TOKEN"] = "c"
+        self.assertEqual(
+            EnvironmentCredentials().get(),
+            ("a", "b", "c")
+        )
 
 
 class Ec2RoleCredentials(object):
