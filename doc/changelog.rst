@@ -2,8 +2,13 @@
 Changelog
 =========
 
-2015/04/27, v0.7.0
+2015/04/27, v0.7.1
 ==================
+
+- Fix integration tests. No change in code.
+
+2015/04/27, v0.7.0 (tagged but not published)
+=============================================
 
 - A few hours after writing "I believe the interface is stable", I had an aha moment and had to change the :ref:`compounds`, making them all functions instead of a mix of classes and badly named functions.
 - The constructors of :ref:`Actions` now optionaly accept the mandatory parameters of the action, as descibed in :ref:`building-actions`. I had to change the :class:`.BatchGetItem` and :class:`.BatchWriteItem` constructor: they don't accept unprocessed keys/items anymore.

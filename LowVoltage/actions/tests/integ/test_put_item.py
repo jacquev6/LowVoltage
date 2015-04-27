@@ -47,10 +47,10 @@ class PutItemLocalIntegTests(_tst.LocalIntegTestsWithTableH):
         )
 
     def test_return_old_values(self):
-        self.connection(PutItem("Aaa", {"h": u"return", "a": b"yyy"}))
+        self.connection(_lv.PutItem("Aaa", {"h": u"return", "a": b"yyy"}))
 
         r = self.connection(
-            PutItem("Aaa", {"h": u"return", "b": b"xxx"}).return_values_all_old()
+            _lv.PutItem("Aaa", {"h": u"return", "b": b"xxx"}).return_values_all_old()
         )
 
         self.assertEqual(r.attributes, {"h": u"return", "a": b"yyy"})

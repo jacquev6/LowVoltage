@@ -455,13 +455,13 @@ class ProvisionedThroughputDescriptionUnitTests(_tst.UnitTests):
 
     def test_all_set(self):
         r = ProvisionedThroughputDescription(
-            LastDecreaseDateTime=1430148376.1,
+            LastDecreaseDateTime=1430148376.2,
             LastIncreaseDateTime=1430148384.2,
             NumberOfDecreasesToday=4,
             ReadCapacityUnits=5,
             WriteCapacityUnits=6,
         )
-        self.assertEqual(r.last_decrease_date_time, datetime.datetime(2015, 4, 27, 15, 26, 16, 100000))
+        self.assertEqual(r.last_decrease_date_time, datetime.datetime(2015, 4, 27, 15, 26, 16, 200000))
         self.assertEqual(r.last_increase_date_time, datetime.datetime(2015, 4, 27, 15, 26, 24, 200000))
         self.assertEqual(r.number_of_decreases_today, 4)
         self.assertEqual(r.read_capacity_units, 5)

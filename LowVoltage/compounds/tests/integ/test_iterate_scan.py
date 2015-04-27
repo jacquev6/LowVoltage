@@ -26,6 +26,6 @@ class ScanIteratorLocalIntegTests(_tst.LocalIntegTestsWithTableH):
 
     def test_parallel_scan(self):
         keys = []
-        for segment in parallelize_scan(_lv.Scan("Aaa"), 3):
-            keys.extend(item["h"] for item in iterate_scan(self.connection, segment))
+        for segment in _lv.parallelize_scan(_lv.Scan("Aaa"), 3):
+            keys.extend(item["h"] for item in _lv.iterate_scan(self.connection, segment))
         self.assertEqual(sorted(keys), self.keys)

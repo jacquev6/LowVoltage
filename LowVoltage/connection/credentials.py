@@ -68,26 +68,6 @@ class EnvironmentCredentials(object):
         return (os.environ["AWS_ACCESS_KEY_ID"], os.environ["AWS_SECRET_ACCESS_KEY"], os.environ.get("AWS_SECURITY_TOKEN"))
 
 
-class EnvironmentCredentialsUnitTests(_tst.UnitTests):
-    def test_without_token(self):
-        os.environ["AWS_ACCESS_KEY_ID"] = "a"
-        os.environ["AWS_SECRET_ACCESS_KEY"] = "b"
-        os.environ.pop("AWS_SECURITY_TOKEN", None)
-        self.assertEqual(
-            EnvironmentCredentials().get(),
-            ("a", "b", None)
-        )
-
-    def test_with_token(self):
-        os.environ["AWS_ACCESS_KEY_ID"] = "a"
-        os.environ["AWS_SECRET_ACCESS_KEY"] = "b"
-        os.environ["AWS_SECURITY_TOKEN"] = "c"
-        self.assertEqual(
-            EnvironmentCredentials().get(),
-            ("a", "b", "c")
-        )
-
-
 class Ec2RoleCredentials(object):
     """
     Credentials provider using EC2 instance metadata to retrieve temporary, automatically rotated, credentials

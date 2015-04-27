@@ -18,7 +18,7 @@ class ConnectionLocalIntegTests(_tst.LocalIntegTests):
 
     def test_network_error(self):
         connection = _lv.Connection("us-west-2", _lv.StaticCredentials("DummyKey", "DummySecret"), "http://localhost:65555/", _lv.ExponentialBackoffRetryPolicy(0, 1, 3))
-        with self.assertRaises(_exn.NetworkError):
+        with self.assertRaises(_lv.NetworkError):
             connection(self.TestAction("ListTables", {}))
 
     def test_request(self):
@@ -27,9 +27,9 @@ class ConnectionLocalIntegTests(_tst.LocalIntegTests):
         self.assertEqual(r.kwds, {"TableNames": []})
 
     def test_client_error(self):
-        with self.assertRaises(_exn.InvalidAction):
+        with self.assertRaises(_lv.InvalidAction):
             self.connection(self.TestAction("UnexistingAction", {}))
 
     def test_unexisting_table(self):
-        with self.assertRaises(_exn.ResourceNotFoundException):
+        with self.assertRaises(_lv.ResourceNotFoundException):
             self.connection(self.TestAction("GetItem", {"TableName": "Bbb"}))
