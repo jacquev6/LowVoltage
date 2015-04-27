@@ -35,3 +35,25 @@ def wait_for_table_deletion(connection, table):
             time.sleep(3)
         except _lv.ResourceNotFoundException:
             break
+
+
+class WaitForTableDeletionUnitTests(_tst.UnitTestsWithMocks):
+    def setUp(self):
+        super(WaitForTableDeletionUnitTests, self).setUp()
+        self.connection = self.mocks.create("connection")
+        self.sleep = self.mocks.replace("time.sleep")
+
+    def test(self):
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker("DescribeTable", {"TableName": "Table"})
+        ).andReturn(
+            _lv.DescribeTableResponse(Table={"TableStatus": "DELETING"})
+        )
+        self.sleep.expect(3)
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker("DescribeTable", {"TableName": "Table"})
+        ).andRaise(
+            _lv.ResourceNotFoundException
+        )
+
+        wait_for_table_deletion(self.connection.object, "Table")

@@ -28,3 +28,44 @@ def iterate_query(connection, query):
         r = connection(query)
         for item in r.items:
             yield item
+
+
+class IterateQueryUnitTests(_tst.UnitTestsWithMocks):
+    def setUp(self):
+        super(IterateQueryUnitTests, self).setUp()
+        self.connection = self.mocks.create("connection")
+
+    def test(self):
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker(
+                "Query",
+                {
+                    "TableName": "Table",
+                    "KeyConditions": {"h": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "0"}]}}
+                }
+            )
+        ).andReturn(
+            _lv.QueryResponse(
+                Items=[{"h": {"N": "0"}, "r": {"S": "foo"}}, {"h": {"N": "0"}, "r": {"S": "bar"}}],
+                LastEvaluatedKey={"h": {"N": "0"}, "r": {"S": u"bar"}},
+            )
+        )
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker(
+                "Query",
+                {
+                    "TableName": "Table",
+                    "KeyConditions": {"h": {"ComparisonOperator": "EQ", "AttributeValueList": [{"N": "0"}]}},
+                    "ExclusiveStartKey": {"h": {"N": "0"}, "r": {"S": "bar"}},
+                }
+            )
+        ).andReturn(
+            _lv.QueryResponse(
+                Items=[{"h": {"N": "0"}, "r": {"S": "baz"}}],
+            )
+        )
+
+        self.assertEqual(
+            list(iterate_query(self.connection.object, _lv.Query("Table").key_eq("h", 0))),
+            [{'h': 0, 'r': 'foo'}, {'h': 0, 'r': 'bar'}, {'h': 0, 'r': 'baz'}]
+        )

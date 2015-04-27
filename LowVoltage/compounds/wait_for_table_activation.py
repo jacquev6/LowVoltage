@@ -34,6 +34,51 @@ def wait_for_table_activation(connection, table):
     """
 
     r = connection(_lv.DescribeTable(table))
-    while r.table.table_status != "ACTIVE" or (r.table.global_secondary_indexes is not None and any(gsi.index_status != "ACTIVE" for gsi in r.table.global_secondary_indexes)):
+    while not _table_is_fully_active(r.table):
         time.sleep(3)
         r = connection(_lv.DescribeTable(table))
+
+
+def _table_is_fully_active(table):
+    if table.global_secondary_indexes is not None:
+        for gsi in table.global_secondary_indexes:
+            if gsi.index_status != "ACTIVE":
+                return False
+    return table.table_status == "ACTIVE"
+
+
+class WaitForTableActivationUnitTests(_tst.UnitTestsWithMocks):
+    def setUp(self):
+        super(WaitForTableActivationUnitTests, self).setUp()
+        self.connection = self.mocks.create("connection")
+        self.sleep = self.mocks.replace("time.sleep")
+
+    def test_table_creating(self):
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker("DescribeTable", {"TableName": "Table"})
+        ).andReturn(
+            _lv.DescribeTableResponse(Table={"TableStatus": "CREATING"})
+        )
+        self.sleep.expect(3)
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker("DescribeTable", {"TableName": "Table"})
+        ).andReturn(
+            _lv.DescribeTableResponse(Table={"TableStatus": "ACTIVE"})
+        )
+
+        wait_for_table_activation(self.connection.object, "Table")
+
+    def test_gsi_creating(self):
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker("DescribeTable", {"TableName": "Table"})
+        ).andReturn(
+            _lv.DescribeTableResponse(Table={"TableStatus": "ACTIVE", "GlobalSecondaryIndexes": [{"IndexStatus": "CREATING"}]})
+        )
+        self.sleep.expect(3)
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker("DescribeTable", {"TableName": "Table"})
+        ).andReturn(
+            _lv.DescribeTableResponse(Table={"TableStatus": "ACTIVE", "GlobalSecondaryIndexes": [{"IndexStatus": "ACTIVE"}]})
+        )
+
+        wait_for_table_activation(self.connection.object, "Table")

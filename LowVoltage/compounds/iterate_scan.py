@@ -44,7 +44,7 @@ def parallelize_scan(scan, total_segments):
 
     >>> segments = parallelize_scan(Scan(table), 3)
 
-    (You would typically iterate other each segment in a different thread.)
+    Note that you would typically iterate other each segment in a different thread.
 
     >>> for segment in segments:
     ...   print "Segment"
@@ -68,3 +68,47 @@ def parallelize_scan(scan, total_segments):
         copy.deepcopy(scan).segment(i, total_segments)
         for i in range(total_segments)
     ]
+
+
+class IterateScanUnitTests(_tst.UnitTestsWithMocks):
+    def setUp(self):
+        super(IterateScanUnitTests, self).setUp()
+        self.connection = self.mocks.create("connection")
+
+    def test_iterate_scan(self):
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker(
+                "Scan",
+                {
+                    "TableName": "Table",
+                }
+            )
+        ).andReturn(
+            _lv.QueryResponse(
+                Items=[{"h": {"N": "0"}, "r": {"S": "foo"}}, {"h": {"N": "0"}, "r": {"S": "bar"}}],
+                LastEvaluatedKey={"h": {"N": "0"}, "r": {"S": u"bar"}},
+            )
+        )
+        self.connection.expect._call_.withArguments(
+            self.ActionChecker(
+                "Scan",
+                {
+                    "TableName": "Table",
+                    "ExclusiveStartKey": {"h": {"N": "0"}, "r": {"S": "bar"}},
+                }
+            )
+        ).andReturn(
+            _lv.QueryResponse(
+                Items=[{"h": {"N": "0"}, "r": {"S": "baz"}}],
+            )
+        )
+
+        self.assertEqual(
+            list(iterate_scan(self.connection.object, _lv.Scan("Table"))),
+            [{'h': 0, 'r': 'foo'}, {'h': 0, 'r': 'bar'}, {'h': 0, 'r': 'baz'}]
+        )
+
+    def test_parallelize_scan(self):
+        s1, s2 = parallelize_scan(_lv.Scan("Table"), 2)
+        self.assertEqual(s1.payload, {"TableName": "Table", "Segment": 0, "TotalSegments": 2})
+        self.assertEqual(s2.payload, {"TableName": "Table", "Segment": 1, "TotalSegments": 2})
