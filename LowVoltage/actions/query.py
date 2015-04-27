@@ -128,6 +128,9 @@ class Query(Action):
     """
 
     def __init__(self, table_name=None):
+        """
+        Passing ``table_name`` to the constructor is like calling :meth:`table_name` on the new instance.
+        """
         super(Query, self).__init__("Query", QueryResponse)
         self.__consistent_read = ConsistentRead(self)
         self.__exclusive_start_key = ExclusiveStartKey(self)

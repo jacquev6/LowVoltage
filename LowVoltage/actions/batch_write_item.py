@@ -80,6 +80,9 @@ class BatchWriteItem(Action):
     """
 
     def __init__(self, table=None, put=[], delete=[]):
+        """
+        Passing ``table`` (and ``put`` and ``delete``) to the constructor is like calling :meth:`table` on the new instance.
+        """
         super(BatchWriteItem, self).__init__("BatchWriteItem", BatchWriteItemResponse)
         self.__previous_unprocessed_items = None
         self.__tables = {}

@@ -76,6 +76,10 @@ class GetItem(Action):
     """
 
     def __init__(self, table_name=None, key=None):
+        """
+        Passing ``table_name`` to the constructor is like calling :meth:`table_name` on the new instance.
+        Passing ``key`` to the constructor is like calling :meth:`key` on the new instance.
+        """
         super(GetItem, self).__init__("GetItem", GetItemResponse)
         self.__consistent_read = ConsistentRead(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)

@@ -81,6 +81,9 @@ class CreateTable(Action):
     """
 
     def __init__(self, table_name=None):
+        """
+        Passing ``table_name`` to the constructor is like calling :meth:`table_name` on the new instance.
+        """
         super(CreateTable, self).__init__("CreateTable", CreateTableResponse)
         self.__table_name = TableName(self, table_name)
         self._hash_key = None

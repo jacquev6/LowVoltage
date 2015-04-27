@@ -93,6 +93,10 @@ class DeleteItem(Action):
     """
 
     def __init__(self, table_name=None, key=None):
+        """
+        Passing ``table_name`` to the constructor is like calling :meth:`table_name` on the new instance.
+        Passing ``key`` to the constructor is like calling :meth:`key` on the new instance.
+        """
         super(DeleteItem, self).__init__("DeleteItem", DeleteItemResponse)
         self.__condition_expression = ConditionExpression(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)

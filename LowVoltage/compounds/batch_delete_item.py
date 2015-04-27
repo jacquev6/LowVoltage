@@ -30,9 +30,6 @@ def batch_delete_item(connection, table, keys):
         if isinstance(r.unprocessed_items, dict) and table in r.unprocessed_items:
             unprocessed_items.extend(r.unprocessed_items[table])
 
-    # @todo Maybe wait a bit before retrying unprocessed items? Same in batch_put_item and iterate_batch_get_item.
-    # @todo In the first loop, maybe wait a bit before next request if we get unprocessed items? Might not be a good idea.
-
     while len(unprocessed_items) != 0:
         r = connection(_lv.BatchWriteItem().previous_unprocessed_items({table: unprocessed_items[:25]}))
         unprocessed_items = unprocessed_items[25:]

@@ -79,6 +79,10 @@ class PutItem(Action):
     """
 
     def __init__(self, table_name=None, item=None):
+        """
+        Passing ``table_name`` to the constructor is like calling :meth:`table_name` on the new instance.
+        Passing ``item`` to the constructor is like calling :meth:`item` on the new instance.
+        """
         super(PutItem, self).__init__("PutItem", PutItemResponse)
         self.__condition_expression = ConditionExpression(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)

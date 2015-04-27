@@ -80,6 +80,10 @@ class UpdateItem(Action):
     """
 
     def __init__(self, table_name=None, key=None):
+        """
+        Passing ``table_name`` to the constructor is like calling :meth:`table_name` on the new instance.
+        Passing ``key`` to the constructor is like calling :meth:`key` on the new instance.
+        """
         super(UpdateItem, self).__init__("UpdateItem", UpdateItemResponse)
         self.__set = {}
         self.__remove = []

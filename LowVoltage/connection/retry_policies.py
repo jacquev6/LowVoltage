@@ -39,7 +39,6 @@ class ExponentialBackoffRetryPolicy(object):
         self.__max_retries = max_retries
 
     def retry(self, action, exceptions):
-        # @todo Should we wait different times for different errors?
         if len(exceptions) > self.__max_retries:
             return None
         else:

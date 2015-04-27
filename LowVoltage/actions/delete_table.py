@@ -69,6 +69,9 @@ class DeleteTable(Action):
     """
 
     def __init__(self, table_name=None):
+        """
+        Passing ``table_name`` to the constructor is like calling :meth:`table_name` on the new instance.
+        """
         super(DeleteTable, self).__init__("DeleteTable", DeleteTableResponse)
         self.__table_name = TableName(self, table_name)
 

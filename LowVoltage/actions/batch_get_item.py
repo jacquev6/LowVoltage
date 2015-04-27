@@ -92,7 +92,7 @@ class BatchGetItem(Action):
     @variadic(dict)
     def __init__(self, table=None, keys=[]):
         """
-        @todoc Document the constructors of classes that accept optional params.
+        Passing ``table`` (and ``keys``) to the constructor is like calling :meth:`table` on the new instance.
         """
         super(BatchGetItem, self).__init__("BatchGetItem", BatchGetItemResponse)
         self.__previous_unprocessed_keys = None

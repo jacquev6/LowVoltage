@@ -94,6 +94,9 @@ class UpdateTable(Action):
     """
 
     def __init__(self, table_name=None):
+        """
+        Passing ``table_name`` to the constructor is like calling :meth:`table_name` on the new instance.
+        """
         super(UpdateTable, self).__init__("UpdateTable", UpdateTableResponse)
         self.__table_name = TableName(self, table_name)
         self.__attribute_definitions = {}
