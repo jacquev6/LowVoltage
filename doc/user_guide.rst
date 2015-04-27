@@ -105,8 +105,6 @@ Someday, maybe, we'll write a Table abstraction and implement an "active record"
 Building actions
 ================
 
-@todo Implement what's described bellow in CreateTable, UpdateTable, BatchGetItem, BatchWriteItem
-
 DynamoDB actions typically receive a lot of mandatory and optional parameters.
 
 When you build an action, you *can* pass all mandatory parameters to the constructor.

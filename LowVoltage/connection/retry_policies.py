@@ -3,8 +3,6 @@
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
 """
-@todo Link to user guide (error management).
-
 Some errors are retryable: :exc:`.NetworkError` or :exc:`.ProvisionedThroughputExceededException` for example.
 When they happen, it makes sense to wait for a short while and then retry the request.
 Retry policies decide if it's worth retrying and how long to wait.
