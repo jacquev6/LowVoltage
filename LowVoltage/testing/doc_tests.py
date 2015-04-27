@@ -33,7 +33,14 @@ def global_setup():
     _lv.batch_put_item(
         connection,
         table1,
-        [{"h": h, "gh": 0, "gr": 0} for h in range(10)],
+        [{"h": h, "gh": h * h, "gr": 10 - 2 * h} for h in range(5)],
+    )
+
+    _lv.wait_for_table_activation(connection, table1)
+    _lv.batch_put_item(
+        connection,
+        table1,
+        [{"h": h, "a": 0} for h in range(5, 10)],
     )
 
     _lv.wait_for_table_activation(connection, table2)

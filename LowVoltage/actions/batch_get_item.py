@@ -204,7 +204,7 @@ class BatchGetItem(Action):
         return self
 
     @proxy
-    def expression_attribute_name(self, name, path):
+    def expression_attribute_name(self, synonym, name):
         """
         :raise: :exc:`.BuilderError` if called when no table is active.
 
@@ -218,7 +218,7 @@ class BatchGetItem(Action):
         [{u'h': 0}]
         """
         self.__check_active_table()
-        self.__active_table.expression_attribute_names.add(name, path)
+        self.__active_table.expression_attribute_names.add(synonym, name)
         return self
 
     @proxy

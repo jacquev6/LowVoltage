@@ -23,16 +23,18 @@ import LowVoltage.testing as _tst
 from .action import Action
 from .conversion import _convert_db_to_dict
 from .next_gen_mixins import proxy
+from .next_gen_mixins import OptionalIntParameter
 from .next_gen_mixins import (
     ExclusiveStartKey,
     ExpressionAttributeNames,
     ExpressionAttributeValues,
     FilterExpression,
+    IndexName,
     Limit,
     ProjectionExpression,
     ReturnConsumedCapacity,
-    ScalarValue,
     Select,
+    TableName,
 )
 from .return_types import ConsumedCapacity, _is_dict, _is_int, _is_list_of_dict
 
@@ -115,59 +117,48 @@ class Scan(Action):
     The `Scan request <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_RequestParameters>`__.
     """
 
-    def __init__(self, table_name):
+    def __init__(self, table_name=None):
         super(Scan, self).__init__("Scan", ScanResponse)
-        self.__table_name = table_name
         self.__exclusive_start_key = ExclusiveStartKey(self)
         self.__expression_attribute_names = ExpressionAttributeNames(self)
         self.__expression_attribute_values = ExpressionAttributeValues(self)
         self.__filter_expression = FilterExpression(self)
+        self.__index_name = IndexName(self)
         self.__limit = Limit(self)
         self.__projection_expression = ProjectionExpression(self)
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
-        self.__segment = ScalarValue("Segment", self)
+        self.__segment = OptionalIntParameter("Segment", self)
         self.__select = Select(self)
-        self.__total_segments = ScalarValue("TotalSegments", self)
+        self.__table_name = TableName(self, table_name)
+        self.__total_segments = OptionalIntParameter("TotalSegments", self)
 
     @property
     def payload(self):
-        data = {"TableName": self.__table_name}
+        data = {}
         data.update(self.__exclusive_start_key.payload)
         data.update(self.__expression_attribute_names.payload)
         data.update(self.__expression_attribute_values.payload)
         data.update(self.__filter_expression.payload)
+        data.update(self.__index_name.payload)
         data.update(self.__limit.payload)
         data.update(self.__projection_expression.payload)
         data.update(self.__return_consumed_capacity.payload)
         data.update(self.__segment.payload)
         data.update(self.__select.payload)
+        data.update(self.__table_name.payload)
         data.update(self.__total_segments.payload)
         return data
 
-    def segment(self, segment, total_segments):
+    @proxy
+    def table_name(self, table_name):
         """
-        Set Segment and TotalSegments for a `parallel scan <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#QueryAndScanParallelScan>`__.
-
-        Items will be partitioned in ``total_segments`` segments of approximately the same size,
-        ans only the items of the ``segment``-th segment will be returned in this request.
-
-        :func:`.parallelize_scan` does that for you.
-
         >>> connection(
-        ...   Scan(table)
-        ...     .project("h")
-        ...     .segment(0, 2)
-        ... ).items
-        [{u'h': 7}, {u'h': 8}, {u'h': 3}, {u'h': 2}, {u'h': 9}, {u'h': 4}]
-        >>> connection(
-        ...   Scan(table)
-        ...     .project("h")
-        ...     .segment(1, 2)
-        ... ).items
-        [{u'h': 6}, {u'h': 1}, {u'h': 0}, {u'h': 5}]
+        ...   Scan()
+        ...     .table_name(table)
+        ... )
+        <LowVoltage.actions.scan.ScanResponse ...>
         """
-        self.__segment.set(segment)
-        return self.__total_segments.set(total_segments)
+        return self.__table_name.set(table_name)
 
     @proxy("Scan")
     def exclusive_start_key(self, key):
@@ -193,38 +184,18 @@ class Scan(Action):
         return self.__exclusive_start_key.set(key)
 
     @proxy
-    def limit(self, limit):
+    def expression_attribute_name(self, synonym, name):
         """
-        See :meth:`exclusive_start_key` for an example.
+        See :meth:`filter_expression` for an example.
         """
-        return self.__limit.set(limit)
+        return self.__expression_attribute_names.add(synonym, name)
 
     @proxy
-    def select_count(self):
+    def expression_attribute_value(self, name, value):
         """
-        >>> r = connection(Scan(table).select_count())
-        >>> r.count
-        10L
-        >>> print r.items
-        None
+        See :meth:`filter_expression` for an example.
         """
-        return self.__select.count()
-
-    @proxy
-    def select_all_attributes(self):
-        """
-        >>> connection(Scan(table).select_all_attributes()).items
-        [{u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}]
-        """
-        return self.__select.all_attributes()
-
-    @proxy
-    def project(self, *names):
-        """
-        >>> connection(Scan(table).project("h")).items
-        [{u'h': 7}, {u'h': 8}, {u'h': 3}, {u'h': 2}, {u'h': 9}, {u'h': 4}, {u'h': 6}, {u'h': 1}, {u'h': 0}, {u'h': 5}]
-        """
-        return self.__projection_expression.add(*names)
+        return self.__expression_attribute_values.add(name, value)
 
     @proxy
     def filter_expression(self, expression):
@@ -240,18 +211,30 @@ class Scan(Action):
         return self.__filter_expression.set(expression)
 
     @proxy
-    def expression_attribute_name(self, synonym, name):
+    def index_name(self, index_name):
         """
-        See :meth:`filter_expression` for an example.
+        >>> connection(
+        ...   Scan(table)
+        ...     .index_name("gsi")
+        ... ).items
+        []
         """
-        return self.__expression_attribute_names.add(synonym, name)
+        return self.__index_name.set(index_name)
 
     @proxy
-    def expression_attribute_value(self, name, value):
+    def limit(self, limit):
         """
-        See :meth:`filter_expression` for an example.
+        See :meth:`exclusive_start_key` for an example.
         """
-        return self.__expression_attribute_values.add(name, value)
+        return self.__limit.set(limit)
+
+    @proxy
+    def project(self, *names):
+        """
+        >>> connection(Scan(table).project("h")).items
+        [{u'h': 7}, {u'h': 8}, {u'h': 3}, {u'h': 2}, {u'h': 9}, {u'h': 4}, {u'h': 6}, {u'h': 1}, {u'h': 0}, {u'h': 5}]
+        """
+        return self.__projection_expression.add(*names)
 
     @proxy
     def return_consumed_capacity_total(self):
@@ -274,6 +257,50 @@ class Scan(Action):
         None
         """
         return self.__return_consumed_capacity.none()
+
+    def segment(self, segment, total_segments):
+        """
+        Set Segment and TotalSegments for a `parallel scan <http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#QueryAndScanParallelScan>`__.
+
+        Items will be partitioned in ``total_segments`` segments of approximately the same size,
+        and only the items of the ``segment``-th segment will be returned in this request.
+
+        :func:`.parallelize_scan` does that for you.
+
+        >>> connection(
+        ...   Scan(table)
+        ...     .project("h")
+        ...     .segment(0, 2)
+        ... ).items
+        [{u'h': 7}, {u'h': 8}, {u'h': 3}, {u'h': 2}, {u'h': 9}, {u'h': 4}]
+        >>> connection(
+        ...   Scan(table)
+        ...     .project("h")
+        ...     .segment(1, 2)
+        ... ).items
+        [{u'h': 6}, {u'h': 1}, {u'h': 0}, {u'h': 5}]
+        """
+        self.__segment.set(segment)
+        return self.__total_segments.set(total_segments)
+
+    @proxy
+    def select_count(self):
+        """
+        >>> r = connection(Scan(table).select_count())
+        >>> r.count
+        10L
+        >>> print r.items
+        None
+        """
+        return self.__select.count()
+
+    @proxy
+    def select_all_attributes(self):
+        """
+        >>> connection(Scan(table).select_all_attributes()).items
+        [{u'h': 7, u'gr': 0, u'gh': 0}, {u'h': 8, u'gr': 0, u'gh': 0}, {u'h': 3, u'gr': 0, u'gh': 0}, {u'h': 2, u'gr': 0, u'gh': 0}, {u'h': 9, u'gr': 0, u'gh': 0}, {u'h': 4, u'gr': 0, u'gh': 0}, {u'h': 6, u'gr': 0, u'gh': 0}, {u'h': 1, u'gr': 0, u'gh': 0}, {u'h': 0, u'gr': 0, u'gh': 0}, {u'h': 5, u'gr': 0, u'gh': 0}]
+        """
+        return self.__select.all_attributes()
 
 
 class ScanUnitTests(_tst.UnitTests):

@@ -2,6 +2,7 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
+import numbers
 import inspect
 import functools
 
@@ -86,12 +87,38 @@ class OptionalScalarParameter(ScalarParameter):
         return data
 
 
+class OptionalDictParameter(object):
+    def __init__(self, name, parent):
+        self._name = name
+        self._parent = parent
+        self._values = {}
+
+    def add(self, key, value):
+        self._values[key] = self._convert(value)
+        return self._parent
+
+    @property
+    def payload(self):
+        data = {}
+        if len(self._values) != 0:
+            data[self._name] = self._values
+        return data
+
+
 class StringParameterMixin(object):
     def _convert(self, s):
         if isinstance(s, basestring):
             return s
         else:
             raise TypeError("Parameter {} must be a string.".format(self._name))
+
+
+class IntParameterMixin(object):
+    def _convert(self, i):
+        if isinstance(i, numbers.Integral):
+            return i
+        else:
+            raise TypeError("Parameter {} must be an integer.".format(self._name))
 
 
 class BoolParameterMixin(object):
@@ -110,16 +137,15 @@ class ItemParameterMixin(object):
             raise TypeError("Parameter {} must be a dict.".format(self._name))
 
 
-class MandatoryStringParameter(MandatoryScalarParameter, StringParameterMixin):
-    pass
+class OptionalItemParameter(OptionalScalarParameter, ItemParameterMixin): pass
+class OptionalIntParameter(OptionalScalarParameter, IntParameterMixin): pass
+class OptionalBoolParameter(OptionalScalarParameter, BoolParameterMixin): pass
+class OptionalStringParameter(OptionalScalarParameter, StringParameterMixin): pass
 
-
-class MandatoryItemParameter(MandatoryScalarParameter, ItemParameterMixin):
-    pass
-
-
-class OptionalBoolParameter(OptionalScalarParameter, BoolParameterMixin):
-    pass
+class MandatoryItemParameter(MandatoryScalarParameter, ItemParameterMixin): pass
+class MandatoryIntParameter(MandatoryScalarParameter, IntParameterMixin): pass
+class MandatoryBoolParameter(MandatoryScalarParameter, BoolParameterMixin): pass
+class MandatoryStringParameter(MandatoryScalarParameter, StringParameterMixin): pass
 
 
 class TableName(MandatoryStringParameter):
@@ -137,22 +163,33 @@ class Key(MandatoryItemParameter):
     def __init__(self, parent, value):
         super(Key, self).__init__("Key", parent, value)
 
-    def set(self, table_name):
+    def set(self, key):
         """
         Set Key. Mandatory, can also be set in the constructor.
         """
-        return super(Key, self).set(table_name)
+        return super(Key, self).set(key)
 
 
 class Item(MandatoryItemParameter):
     def __init__(self, parent, value):
         super(Item, self).__init__("Item", parent, value)
 
-    def set(self, table_name):
+    def set(self, item):
         """
         Set Item. Mandatory, can also be set in the constructor.
         """
-        return super(Item, self).set(table_name)
+        return super(Item, self).set(item)
+
+
+class IndexName(OptionalStringParameter):
+    def __init__(self, parent):
+        super(IndexName, self).__init__("IndexName", parent)
+
+    def set(self, index_name):
+        """
+        Set IndexName. The request will use this index instead of the table key.
+        """
+        return super(IndexName, self).set(index_name)
 
 
 def ScalarValue(name, parent=None, value=None):
@@ -410,6 +447,7 @@ def proxy(*proxy_args):
         "expression_attribute_name": ExpressionAttributeNames.add,
         "expression_attribute_value": ExpressionAttributeValues.add,
         "filter_expression": FilterExpression.set,
+        "index_name": IndexName.set,
         "item": Item.set,
         "key": Key.set,
         "limit": Limit.set,
@@ -430,12 +468,17 @@ def proxy(*proxy_args):
         "table_name": TableName.set,
     }
 
+    def patch(method, format_args):
+        base = bases[method.__name__]
+        assert inspect.getargspec(method) == inspect.getargspec(base), method
+        method.__doc__ = base.__doc__.format(*format_args) + "\n" + method.__doc__
+
     if len(proxy_args) != 1 or isinstance(proxy_args[0], basestring):
         def decorator(method):
-            method.__doc__ = bases[method.__name__].__doc__.format(*proxy_args) + "\n" + method.__doc__
+            patch(method, proxy_args)
             return method
         return decorator
     else:
-        method, = proxy_args
-        method.__doc__ = bases[method.__name__].__doc__.format() + "\n" + method.__doc__
+        method = proxy_args[0]
+        patch(method, ())
         return method
