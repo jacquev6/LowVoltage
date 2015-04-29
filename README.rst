@@ -41,6 +41,10 @@ Questions? Remarks? Bugs? Want to contribute? `Open an issue <https://github.com
 .. image:: https://img.shields.io/github/issues/jacquev6/LowVoltage.svg
     :target: https://github.com/jacquev6/LowVoltage/issues
 
+.. image:: https://badge.waffle.io/jacquev6/lowvoltage.png?label=ready&title=Ready
+    :target: https://waffle.io/jacquev6/lowvoltage
+    :alt: 'Stories in Ready'
+
 .. image:: https://img.shields.io/github/forks/jacquev6/LowVoltage.svg
     :target: https://github.com/jacquev6/LowVoltage/network
 
