@@ -1,6 +1,3 @@
-.. image:: https://badge.waffle.io/jacquev6/lowvoltage.png?label=ready&title=Ready 
- :target: https://waffle.io/jacquev6/lowvoltage
- :alt: 'Stories in Ready'
 LowVoltage is a standalone Python (2.7+ and 3.4+) client for `DynamoDB <http://aws.amazon.com/documentation/dynamodb/>`__
 that doesn't hide any feature of `the API <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html>`__.
 
@@ -43,6 +40,10 @@ Questions? Remarks? Bugs? Want to contribute? `Open an issue <https://github.com
 
 .. image:: https://img.shields.io/github/issues/jacquev6/LowVoltage.svg
     :target: https://github.com/jacquev6/LowVoltage/issues
+
+.. image:: https://badge.waffle.io/jacquev6/lowvoltage.png?label=ready&title=Ready
+    :target: https://waffle.io/jacquev6/lowvoltage
+    :alt: 'Stories in Ready'
 
 .. image:: https://img.shields.io/github/forks/jacquev6/LowVoltage.svg
     :target: https://github.com/jacquev6/LowVoltage/network
