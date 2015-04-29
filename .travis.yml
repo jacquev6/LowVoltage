@@ -6,7 +6,7 @@ install:
 - pip install sphinx coveralls
 script:
 - coverage run "--include=LowVoltage/*" setup.py test
-- if [ "v$TRAVIS_PYTHON_VERSION" == "v2.7" ]; then python setup.py build_sphinx --builder=doctest; fi
+- if [ "v$TRAVIS_PYTHON_VERSION" == "v2.7" -a "x$AWS_ACCESS_KEY_ID" != "x" ]; then python setup.py build_sphinx --builder=doctest; fi
 after_success:
 - coveralls
 deploy:
