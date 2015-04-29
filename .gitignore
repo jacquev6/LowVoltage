@@ -6,3 +6,4 @@
 *.pyc
 /build/
 /htmlcov/
+/.eggs

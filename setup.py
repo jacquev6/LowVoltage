@@ -33,6 +33,7 @@ setuptools.setup(
         "Topic :: Database",
     ],
     install_requires=["requests>=2.2"],
+    tests_require=["testresources", "MockMockMock"],
     test_suite="LowVoltage.tests" if "AWS_ACCESS_KEY_ID" in os.environ else "LowVoltage.tests.local",
     test_loader="testresources:TestLoader",
     use_2to3=True,
