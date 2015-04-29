@@ -90,7 +90,7 @@ class BatchGetItem(Action):
     """
 
     @variadic(dict)
-    def __init__(self, table=None, keys=[]):
+    def __init__(self, table=None, *keys):
         """
         Passing ``table`` (and ``keys``) to the constructor is like calling :meth:`table` on the new instance.
         """
@@ -100,7 +100,7 @@ class BatchGetItem(Action):
         self.__active_table = None
         self.__return_consumed_capacity = ReturnConsumedCapacity(self)
         if table is not None:
-            self.table(table, keys)
+            self.table(table, *keys)
 
     @property
     def payload(self):
@@ -131,7 +131,7 @@ class BatchGetItem(Action):
             return data
 
     @variadic(dict)
-    def table(self, name, keys):
+    def table(self, name, *keys):
         """
         Set the active table. Calls to methods like :meth:`keys` or :meth:`consistent_read_true` will apply to this table.
 
@@ -153,11 +153,11 @@ class BatchGetItem(Action):
         if name not in self.__tables:
             self.__tables[name] = self._Table(self)
         self.__active_table = self.__tables[name]
-        self.keys(keys)
+        self.keys(*keys)
         return self
 
     @variadic(dict)
-    def keys(self, keys):
+    def keys(self, *keys):
         """
         Add keys to get from the active table.
 

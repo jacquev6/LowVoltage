@@ -145,12 +145,12 @@ class BatchWriteItem(Action):
         if name not in self.__tables:
             self.__tables[name] = self._Table(self)
         self.__active_table = self.__tables[name]
-        self.put(put)
-        self.delete(delete)
+        self.put(*put)
+        self.delete(*delete)
         return self
 
     @variadic(dict)
-    def put(self, items):
+    def put(self, *items):
         """
         Add items to put in the active table.
 
@@ -167,7 +167,7 @@ class BatchWriteItem(Action):
         return self
 
     @variadic(dict)
-    def delete(self, keys):
+    def delete(self, *keys):
         """
         Add keys to delete from the active table.
 

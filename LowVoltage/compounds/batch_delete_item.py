@@ -8,7 +8,7 @@ from LowVoltage.variadic import variadic
 
 
 @variadic(dict)
-def batch_delete_item(connection, table, keys):
+def batch_delete_item(connection, table, *keys):
     """
     Make as many :class:`.BatchWriteItem` actions as needed to delete all specified keys.
     Including processing :attr:`.BatchWriteItemResponse.unprocessed_items`.
@@ -21,7 +21,7 @@ def batch_delete_item(connection, table, keys):
     ...   {"h": 2}
     ... )
     """
-
+    keys = list(keys)
     unprocessed_items = []
 
     while len(keys) != 0:

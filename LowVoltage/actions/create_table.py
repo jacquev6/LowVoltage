@@ -298,7 +298,7 @@ class CreateTable(Action):
         return self
 
     @variadic(basestring)
-    def project(self, attrs):
+    def project(self, *attrs):
         """
         Set ProjectionType to INCLUDE for the active index and add names to NonKeyAttributes.
 

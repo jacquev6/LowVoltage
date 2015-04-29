@@ -8,7 +8,7 @@ from LowVoltage.variadic import variadic
 
 
 @variadic(dict)
-def iterate_batch_get_item(connection, table, keys):
+def iterate_batch_get_item(connection, table, *keys):
     """
     Make as many :class:`.BatchGetItem` actions as needed to iterate over all specified items.
     Including processing :attr:`.BatchGetItemResponse.unprocessed_keys`.
@@ -25,6 +25,7 @@ def iterate_batch_get_item(connection, table, keys):
 
     Note that items are returned in an unspecified order.
     """
+    keys = list(keys)
     unprocessed_keys = []
 
     while len(keys) != 0:

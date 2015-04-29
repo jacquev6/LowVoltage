@@ -8,7 +8,7 @@ from LowVoltage.variadic import variadic
 
 
 @variadic(dict)
-def batch_put_item(connection, table, items):
+def batch_put_item(connection, table, *items):
     """
     Make as many :class:`.BatchWriteItem` actions as needed to put all specified items.
     Including processing :attr:`.BatchWriteItemResponse.unprocessed_items`.
@@ -21,7 +21,7 @@ def batch_put_item(connection, table, items):
     ...   {"h": 2, "a": 33, "b": 22},
     ... )
     """
-
+    items = list(items)
     unprocessed_items = []
 
     while len(items) != 0:

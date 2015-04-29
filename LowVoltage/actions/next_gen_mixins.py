@@ -251,7 +251,7 @@ class ProjectionExpression(object):
         return data
 
     @variadic(basestring)
-    def add(self, names):
+    def add(self, *names):
         """
         Add name(s) to ProjectionExpression.
         The request will return only projected attributes.
