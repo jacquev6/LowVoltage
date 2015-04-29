@@ -20,6 +20,9 @@ Questions? Remarks? Bugs? Want to contribute? `Open an issue <https://github.com
 .. image:: https://img.shields.io/codeclimate/github/jacquev6/LowVoltage.svg
     :target: https://codeclimate.com/github/jacquev6/LowVoltage
 
+.. image:: https://img.shields.io/scrutinizer/g/jacquev6/LowVoltage.svg
+    :target: https://scrutinizer-ci.com/g/jacquev6/LowVoltage
+
 .. image:: https://img.shields.io/pypi/dm/LowVoltage.svg
     :target: https://pypi.python.org/pypi/LowVoltage
 
