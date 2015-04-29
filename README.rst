@@ -53,6 +53,8 @@ Install from PyPI::
 
     $ pip install LowVoltage
 
+.. Warning, these are NOT doctests because doctests aren't displayed on GitHub.
+
 Import the package and create a connection (assuming your ``AWS_ACCESS_KEY_ID`` and ``AWS_SECRET_ACCESS_KEY`` environment variables are set)::
 
     >>> from LowVoltage import *
