@@ -2,15 +2,10 @@
 
 # Copyright 2014-2015 Vincent Jacques <vincent@vincent-jacques.net>
 
-import docutils.utils
-
-import sphinx.environment
-
-
 master_doc = "index"
 project = "LowVoltage"
-copyright = "2015, Vincent Jacques"
-author = "Vincent Jacques"
+author = '<a href="http://vincent-jacques.net/contact">Vincent Jacques</a>'
+copyright = "{} 2014-2015".format(author)
 extensions = []
 
 
@@ -21,41 +16,21 @@ nitpick_ignore = [
     ("py:exc", "TypeError"),
 ]
 
-# http://stackoverflow.com/a/28778969/905845
-acknowledged_warnings = [
-    "nonlocal image URI found: https://img.shields.io/travis/jacquev6/LowVoltage/master.svg",
-    "nonlocal image URI found: https://img.shields.io/coveralls/jacquev6/LowVoltage/master.svg",
-    "nonlocal image URI found: https://img.shields.io/codeclimate/github/jacquev6/LowVoltage.svg",
-    "nonlocal image URI found: https://img.shields.io/pypi/dm/LowVoltage.svg",
-    "nonlocal image URI found: https://img.shields.io/pypi/l/LowVoltage.svg",
-    "nonlocal image URI found: https://img.shields.io/pypi/v/LowVoltage.svg",
-    "nonlocal image URI found: https://pypip.in/py_versions/LowVoltage/badge.svg",
-    "nonlocal image URI found: https://pypip.in/status/LowVoltage/badge.svg",
-    "nonlocal image URI found: https://img.shields.io/github/issues/jacquev6/LowVoltage.svg",
-    "nonlocal image URI found: https://img.shields.io/github/forks/jacquev6/LowVoltage.svg",
-    "nonlocal image URI found: https://img.shields.io/github/stars/jacquev6/LowVoltage.svg",
-]
-def warn_node(self, msg, node):
-    if msg not in acknowledged_warnings:
-        self._warnfunc(msg, "%s:%s" % docutils.utils.get_source_line(node))
-sphinx.environment.BuildEnvironment.warn_node = warn_node
-
 
 # https://github.com/bitprophet/alabaster
 # html_theme_path
 extensions.append("alabaster")
 html_theme = "alabaster"
 html_sidebars = {
-    "**": [
-        "about.html", "navigation.html", "searchbox.html",
-    ]
+    "**": ["about.html", "navigation.html", "searchbox.html"],
 }
 html_theme_options = {
     "github_user": "jacquev6",
-    "github_repo": "LowVoltage",
+    "github_repo": project,
     "github_banner": True,
     "travis_button": True,
 }
+
 
 # http://sphinx-doc.org/ext/autodoc.html
 extensions.append("sphinx.ext.autodoc")
