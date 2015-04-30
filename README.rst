@@ -32,12 +32,6 @@ Questions? Remarks? Bugs? Want to contribute? `Open an issue <https://github.com
 .. image:: https://img.shields.io/pypi/v/LowVoltage.svg
     :target: https://pypi.python.org/pypi/LowVoltage
 
-.. image:: https://pypip.in/py_versions/LowVoltage/badge.svg
-    :target: https://pypi.python.org/pypi/LowVoltage
-
-.. image:: https://pypip.in/status/LowVoltage/badge.svg
-    :target: https://pypi.python.org/pypi/LowVoltage
-
 .. image:: https://img.shields.io/github/issues/jacquev6/LowVoltage.svg
     :target: https://github.com/jacquev6/LowVoltage/issues
 
