@@ -69,6 +69,7 @@ class WaitForTableActivationUnitTests(_tst.UnitTestsWithMocks):
         ).andReturn(
             _lv.DescribeTableResponse(Table={"TableStatus": "ACTIVE"})
         )
+        self.sleep.expect(3)
 
         wait_for_table_activation(self.connection.object, "Table")
 
@@ -84,5 +85,6 @@ class WaitForTableActivationUnitTests(_tst.UnitTestsWithMocks):
         ).andReturn(
             _lv.DescribeTableResponse(Table={"TableStatus": "ACTIVE", "GlobalSecondaryIndexes": [{"IndexStatus": "ACTIVE"}]})
         )
+        self.sleep.expect(3)
 
         wait_for_table_activation(self.connection.object, "Table")
