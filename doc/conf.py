@@ -5,7 +5,7 @@
 master_doc = "index"
 project = "LowVoltage"
 author = '<a href="http://vincent-jacques.net/contact">Vincent Jacques</a>'
-copyright = "{} 2014-2015".format(author)
+copyright = "2014-2015 {}".format(author)
 extensions = []
 
 
