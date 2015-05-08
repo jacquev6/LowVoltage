@@ -37,6 +37,10 @@ def wait_for_table_activation(connection, table):
     while not _table_is_fully_active(r.table):
         time.sleep(3)
         r = connection(_lv.DescribeTable(table))
+    # Unfortunately, DescribeTable seems to perform an eventually consistent read.
+    # Without the next line, I've seen the doctest fail with a table status == "CREATING"
+    # after the wait. So, let's wait a bit more :-/
+    time.sleep(3)
 
 
 def _table_is_fully_active(table):
