@@ -59,19 +59,17 @@ Install from PyPI::
 
     $ pip install LowVoltage
 
-.. Warning, these are NOT doctests because doctests aren't displayed on GitHub.
+Import the package and create a connection (assuming your ``AWS_ACCESS_KEY_ID`` and ``AWS_SECRET_ACCESS_KEY`` environment variables are set):
 
-Import the package and create a connection (assuming your ``AWS_ACCESS_KEY_ID`` and ``AWS_SECRET_ACCESS_KEY`` environment variables are set)::
+>>> from LowVoltage import *
+>>> connection = Connection("us-west-2", EnvironmentCredentials())
 
-    >>> from LowVoltage import *
-    >>> connection = Connection("us-west-2", EnvironmentCredentials())
+Assuming you have a table named ``"LowVoltage.Tests.Doc.1"`` with a hash key on the number attribute ``"h"``, you can put an item and get it back:
 
-Assuming you have a table named ``"LowVoltage.Tests.Doc.1"`` with a hash key on the number attribute ``"h"``, you can put an item and get it back::
+>>> table = "LowVoltage.Tests.Doc.1"
 
-    >>> table = "LowVoltage.Tests.Doc.1"
+>>> connection(PutItem(table, {"h": 0, "a": 42, "b": u"bar"}))
+<LowVoltage.actions.put_item.PutItemResponse ...>
 
-    >>> connection(PutItem(table, {"h": 0, "a": 42, "b": u"bar"}))
-    <LowVoltage.actions.put_item.PutItemResponse ...>
-
-    >>> connection(GetItem(table, {"h": 0})).item
-    {u'a': 42, u'h': 0, u'b': u'bar'}
+>>> connection(GetItem(table, {"h": 0})).item
+{u'a': 42, u'h': 0, u'b': u'bar'}
