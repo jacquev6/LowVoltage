@@ -6,7 +6,7 @@
 import os
 import setuptools
 
-version = "0.7.1"
+version = "0.7.2"
 
 
 setuptools.setup(
@@ -32,8 +32,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3.4",
         "Topic :: Database",
     ],
-    install_requires=["requests>=2.2"],
-    tests_require=["testresources", "MockMockMock"],
+    install_requires=["requests>=2.1"],
+    tests_require=["testresources", "MockMockMock<0.6.0"],
     test_suite="LowVoltage.tests" if "AWS_ACCESS_KEY_ID" in os.environ else "LowVoltage.tests.local",
     test_loader="testresources:TestLoader",
     use_2to3=True,
