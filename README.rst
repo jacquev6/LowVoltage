@@ -5,7 +5,7 @@ It's licensed under the `MIT license <http://choosealicense.com/licenses/mit/>`_
 It depends only on the excellent `python-requests <http://python-requests.org>`__ library.
 It's available on the `Python package index <http://pypi.python.org/pypi/LowVoltage>`__, its `documentation is hosted by Python <http://pythonhosted.org/LowVoltage>`__ and its source code is on `GitHub <https://github.com/jacquev6/LowVoltage>`__.
 
-It's currently in the beta stage, meaning I believe the interface will be faily stable but may still change if we have good reasons to do so.
+It's currently in the beta stage, meaning I believe the interface will be fairly stable but may still change if we have good reasons to do so.
 Please have a look to the `changelog <http://pythonhosted.org/LowVoltage/changelog.html>`__ when updating between v0.x releases.
 I'll do my best to respect `semantic versioning <http://semver.org/>`__.
 
