@@ -42,6 +42,8 @@ from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict
 
 class DeleteItemResponse(object):
     """
+    DeleteItemResponse()
+
     The `DeleteItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html#API_DeleteItem_ResponseElements>`__
     """
 

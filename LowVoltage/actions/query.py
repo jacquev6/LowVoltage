@@ -40,6 +40,8 @@ from .return_types import ConsumedCapacity, _is_dict, _is_int, _is_list_of_dict
 
 class QueryResponse(object):
     """
+    QueryResponse()
+
     The `Query response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html#API_Query_ResponseElements>`__.
     """
 

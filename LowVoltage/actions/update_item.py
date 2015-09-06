@@ -29,6 +29,8 @@ from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict
 
 class UpdateItemResponse(object):
     """
+    UpdateItemResponse()
+
     The `UpdateItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html#API_UpdateItem_ResponseElements>`__.
     """
 

@@ -23,6 +23,8 @@ from .next_gen_mixins import OptionalIntParameter, OptionalStringParameter
 
 class ListTablesResponse(object):
     """
+    ListTablesResponse()
+
     The `ListTables response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ListTables.html#API_ListTables_ResponseElements>`__.
     """
 

@@ -28,6 +28,8 @@ from .return_types import ItemCollectionMetrics, ConsumedCapacity, _is_dict
 
 class PutItemResponse(object):
     """
+    PutItemResponse()
+
     The `PutItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html#API_PutItem_ResponseElements>`__.
     """
 

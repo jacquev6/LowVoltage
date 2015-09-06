@@ -42,6 +42,8 @@ from .next_gen_mixins import (
 
 class DeleteTableResponse(object):
     """
+    DeleteTableResponse()
+
     The `DeleteTable response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteTable.html#API_DeleteTable_ResponseElements>`__.
     """
 

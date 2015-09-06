@@ -36,6 +36,8 @@ from .return_types import ConsumedCapacity, _is_dict, _is_list_of_dict
 
 class BatchGetItemResponse(object):
     """
+    BatchGetItemResponse()
+
     The `BatchGetItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html#API_BatchGetItem_ResponseElements>`__
     """
 

@@ -54,6 +54,8 @@ from .return_types import TableDescription, _is_dict
 
 class CreateTableResponse(object):
     """
+    CreateTableResponse()
+
     The `CreateTable response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_CreateTable.html#API_CreateTable_ResponseElements>`__.
     """
 

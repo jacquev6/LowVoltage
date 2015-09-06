@@ -41,6 +41,8 @@ from .return_types import ConsumedCapacity, _is_dict, _is_int, _is_list_of_dict
 
 class ScanResponse(object):
     """
+    ScanResponse()
+
     The `Scan response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html#API_Scan_ResponseElements>`__.
     """
 

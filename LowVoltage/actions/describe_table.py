@@ -30,6 +30,8 @@ from .next_gen_mixins import (
 
 class DescribeTableResponse(object):
     """
+    DescribeTableResponse()
+
     The `DescribeTable response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DescribeTable.html#API_DescribeTable_ResponseElements>`__.
     """
 

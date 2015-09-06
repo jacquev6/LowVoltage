@@ -24,6 +24,8 @@ from .return_types import ConsumedCapacity, ItemCollectionMetrics, _is_dict, _is
 
 class BatchWriteItemResponse(object):
     """
+    BatchWriteItemResponse()
+
     The `BatchWriteItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html#API_BatchWriteItem_ResponseElements>`__.
     """
 

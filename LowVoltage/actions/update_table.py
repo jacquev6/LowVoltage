@@ -67,6 +67,8 @@ from .return_types import TableDescription, _is_dict
 
 class UpdateTableResponse(object):
     """
+    UpdateTableResponse()
+
     The `UpdateTable response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateTable.html#API_UpdateTable_ResponseElements>`__.
     """
 

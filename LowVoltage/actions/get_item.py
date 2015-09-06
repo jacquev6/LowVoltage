@@ -37,6 +37,8 @@ from .return_types import ConsumedCapacity, _is_dict
 
 class GetItemResponse(object):
     """
+    GetItemResponse()
+
     The `GetItem response <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html#API_GetItem_ResponseElements>`__
     """
 
