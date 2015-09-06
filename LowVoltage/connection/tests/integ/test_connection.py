@@ -27,7 +27,7 @@ class ConnectionLocalIntegTests(_tst.LocalIntegTests):
         self.assertEqual(r.kwds, {"TableNames": []})
 
     def test_client_error(self):
-        with self.assertRaises(_lv.InvalidAction):
+        with self.assertRaises(_lv.UnknownOperationException):
             self.connection(self.TestAction("UnexistingAction", {}))
 
     def test_unexisting_table(self):

@@ -226,6 +226,13 @@ class SerializationException(ClientError):
     """
 
 
+class UnknownOperationException(ClientError):
+    """
+    Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
+    Seems to be raised instead of :exc:`InvalidAction`.
+    """
+
+
 class UnrecognizedClientException(ClientError):
     """
     Exception `not documented <http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/CommonErrors.html>`__.
@@ -261,6 +268,7 @@ client_errors = sorted(
         ("AccessDeniedException", AccessDeniedException),
         ("InvalidSignatureException", InvalidSignatureException),
         ("SerializationException", SerializationException),
+        ("UnknownOperationException", UnknownOperationException),
         ("UnrecognizedClientException", UnrecognizedClientException),
     ],
     key=lambda (prefix, cls): -len(prefix)
