@@ -179,8 +179,10 @@ class Ec2RoleCredentialsUnitTests(_tst.UnitTestsWithMocks):
         self.assertEqual(credentials.get(), ("key3", "secret3", "token3"))
 
     def test_network_error_during_construction(self):
+        self.session.expect.get("http://169.254.169.254/latest/meta-data/iam/security-credentials/").andRaise(requests.exceptions.RequestException)
+
         with self.assertRaises(_exn.NetworkError):
-            Ec2RoleCredentials()
+            Ec2RoleCredentials(self.session.object)
 
     def test_unknown_error_during_construction(self):
         self.session.expect.get("http://169.254.169.254/latest/meta-data/iam/security-credentials/").andRaise(Exception)
