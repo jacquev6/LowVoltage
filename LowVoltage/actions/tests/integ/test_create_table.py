@@ -99,7 +99,7 @@ class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
             catcher.exception.args,
             ({
                 "__type": "com.amazon.coral.validate#ValidationException",
-                "Message": "The number of attributes in key schema must match the number of attributesdefined in attribute definitions.",
+                "message": "The number of attributes in key schema must match the number of attributesdefined in attribute definitions.",
             },)
         )
 
@@ -113,7 +113,7 @@ class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
             catcher.exception.args,
             ({
                 "__type": "com.amazon.coral.validate#ValidationException",
-                "Message": "Hash Key not specified in Attribute Definitions.  Type unknown.",
+                "message": "Hash Key not specified in Attribute Definitions.  Type unknown.",
             },)
         )
 
@@ -126,6 +126,6 @@ class CreateTableErrorLocalIntegTests(_tst.LocalIntegTests):
             catcher.exception.args,
             ({
                 "__type": "com.amazon.coral.validate#ValidationException",
-                "Message": "No Attribute Schema Defined",
+                "message": "No Attribute Schema Defined",
             },)
         )
